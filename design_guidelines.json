@@ -1,0 +1,116 @@
+{
+  "project_context": {
+    "domain": "Education Technology (Government Sector)",
+    "target_audience": "Indian Government School Teachers (moderate digital literacy, ages 30-55)",
+    "primary_workflow": "Upload, Review, Override, Analyze AI-evaluated answer sheets",
+    "theme": "light",
+    "archetype": "Archetype 4 (Swiss & High-Contrast) + Archetype 1 (Organic & Earthy)"
+  },
+  "design_principles": {
+    "clarity_first": "One primary action per screen. No hidden hover interactions.",
+    "trustworthy_ai": "AI must feel like a helpful assistant, not an absolute authority. Use 'Suggestions' instead of 'Final Marks'.",
+    "legibility": "Large fonts, high contrast, plain language. No technical jargon.",
+    "cultural_familiarity": "Warm, earthy undertones reflecting Indian academic environments (paper textures, academic blues, terracotta warnings)."
+  },
+  "typography": {
+    "font_strategy": "High legibility, distinct character shapes. Inter is banned.",
+    "primary_heading_font": "Outfit",
+    "body_font": "IBM Plex Sans",
+    "hierarchy": {
+      "h1": "text-3xl md:text-4xl font-semibold tracking-tight text-stone-900",
+      "h2": "text-2xl md:text-3xl font-medium tracking-tight text-stone-900",
+      "h3": "text-xl font-medium text-stone-800",
+      "body": "text-base md:text-lg leading-relaxed text-stone-700",
+      "small_labels": "text-sm font-semibold tracking-[0.05em] uppercase text-stone-500"
+    }
+  },
+  "color_palette": {
+    "background": "bg-stone-50 (warm paper feel, reduces eye strain compared to pure white)",
+    "surface": "bg-white (for cards and content areas)",
+    "primary": {
+      "DEFAULT": "blue-800 (#1e40af - Academic Blue, trustworthy and authoritative)",
+      "hover": "blue-900",
+      "light": "blue-50"
+    },
+    "text": {
+      "primary": "stone-900",
+      "secondary": "stone-600",
+      "disabled": "stone-400"
+    },
+    "semantic_ai": {
+      "high_confidence": "emerald-700 (bg-emerald-50) - 'Looks Good'",
+      "needs_review": "amber-700 (bg-amber-50) - 'Needs Review / Low Confidence'",
+      "deduction": "rose-700 (bg-rose-50) - 'Marks Deducted'"
+    },
+    "borders": "stone-200"
+  },
+  "layout_and_spacing": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "bento_spacing": "gap-6 md:gap-8",
+    "card_padding": "p-6 md:p-8",
+    "interaction_targets": "Minimum 48px height for all buttons and inputs (touch-friendly for tablets/phones)."
+  },
+  "components_strategy": {
+    "cards": "Flat white background, 1px solid border-stone-200, subtle shadow-sm. No floating neon shadows.",
+    "buttons": {
+      "primary": "bg-blue-800 text-white hover:bg-blue-900 rounded-lg font-medium transition-colors",
+      "secondary": "bg-white text-stone-700 border border-stone-300 hover:bg-stone-50 rounded-lg",
+      "override": "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200"
+    },
+    "inputs": "Explicit borders (border-stone-300), obvious focus states (ring-2 ring-blue-800). No floating labels.",
+    "badges": "Soft background (e.g., bg-amber-50) with high-contrast text (text-amber-800) and an icon.",
+    "libraries": [
+      "lucide-react (for clear, standard icons)",
+      "recharts (for simple classroom insights)",
+      "shadcn/ui (highly customized to remove the default 'Vercel' look, replacing rounded-md with rounded-lg, and using stone colors)"
+    ]
+  },
+  "screens_and_interactions": {
+    "global_navigation": {
+      "layout": "Sticky top header. bg-white border-b border-stone-200.",
+      "elements": "Brand Logo (Text: 'EvalAssist'), User Avatar, and a prominent Language Toggle (EN | HI | TE)."
+    },
+    "1_dashboard": {
+      "layout": "Control Room Grid (Dense but clear).",
+      "kpi_cards": "Top row: 3 cards (Total Papers, Pending Review, Avg Score). Large metrics.",
+      "main_action": "Massive 'Upload New Assessment' button/card with icon.",
+      "lists": "Table of recent assessments with Status badges (Processing, Action Needed, Completed)."
+    },
+    "2_upload_assessment": {
+      "layout": "Centered constrained container (max-w-3xl).",
+      "dropzone": "Large dashed border area (border-2 border-dashed border-stone-300 bg-stone-50 p-12 text-center). Clear instructions: 'Click or drag papers here'.",
+      "metadata_form": "Simple selects for Class, Subject, and Assessment Type."
+    },
+    "3_processing_state": {
+      "layout": "Centered status card.",
+      "animation": "Simple pulsing progress bar or step-by-step checklist (1. Scanning -> 2. Reading Handwriting -> 3. Evaluating). Avoid hyper-futuristic AI loaders."
+    },
+    "4_review_and_override_screen": {
+      "layout": "CRITICAL: Split Pane Layout. Left side (Image), Right side (Evaluation logic).",
+      "left_pane": "Sticky/fixed while scrolling right pane. Shows the scanned answer sheet (use mock image). Include basic Zoom In/Out controls.",
+      "right_pane": "Scrollable list of Question Evaluation Cards.",
+      "question_card": {
+        "header": "Question Number & Max Marks.",
+        "ai_reasoning": "Clear text block explaining why marks were given/deducted.",
+        "confidence_badge": "Shows 'High Confidence' or 'Needs Review'.",
+        "override_action": "Prominent number input field for the teacher to change the mark. Automatically recalculates total."
+      },
+      "footer": "Sticky bottom bar on right pane: 'Save & Next Paper' button and 'Running Total: X/40'."
+    },
+    "5_classroom_insights": {
+      "layout": "Standard single-column reading layout.",
+      "visuals": "Simple Recharts BarChart for score distribution. List of 'Common Learning Gaps' (e.g., '60% of students struggled with Diagram of Cell').",
+      "actions": "'Download Report (CSV)' button."
+    }
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text against colored backgrounds is at least 4.5:1 ratio.",
+    "testing_attributes": "All interactive elements MUST have explicit data-testid attributes (e.g., data-testid='upload-submit-button', data-testid='mark-override-input-q1').",
+    "language": "UI must be built to support dynamic text strings for the EN/HI/TE language switcher."
+  },
+  "media": {
+    "mock_answer_sheet_image": "https://images.unsplash.com/photo-1674702693637-330943cdf0a1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwyfHxiaW9sb2d5JTIwZGlhZ3JhbSUyMG5vdGVib29rfGVufDB8fHx8MTc4MTIwNTI5OXww&ixlib=rb-4.1.0&q=85",
+    "dashboard_empty_state_illustration": "https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwyfHxzdGFjayUyMG9mJTIwZXhhbSUyMHBhcGVyc3xlbnwwfHx8fDE3ODEyMDUyOTl8MA&ixlib=rb-4.1.0&q=85",
+    "teacher_avatar_fallback": "https://images.unsplash.com/photo-1522661067900-ab829854a57f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwzfHxpbmRpYW4lMjBzY2hvb2wlMjB0ZWFjaGVyfGVufDB8fHx8MTc4MTIwNTI5OXww&ixlib=rb-4.1.0&q=85"
+  }
+}

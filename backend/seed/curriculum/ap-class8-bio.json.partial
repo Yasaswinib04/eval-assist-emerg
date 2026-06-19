@@ -1,0 +1,556 @@
+{
+  "_id": "ap-class8-bio-v1",
+  "board": "Andhra Pradesh State Board",
+  "class": "Class 8",
+  "subject": "Biology",
+  "language": "en",
+  "version": 1,
+  "chapters": [
+    {
+      "id": "ch1",
+      "name": "Cell \u2014 Structure & Functions",
+      "order": 1,
+      "color": "blue",
+      "concepts": [
+        {
+          "name": "Cell Structure",
+          "keywords": [
+            "cell membrane",
+            "cytoplasm",
+            "nucleus"
+          ],
+          "description": "The basic components of a cell are cell membrane, cytoplasm and nucleus.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c1"
+        },
+        {
+          "name": "Cell Functions",
+          "keywords": [
+            "organs",
+            "tissues",
+            "specialised cells"
+          ],
+          "description": "Different organs of a plant perform specific/specialised functions.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c2"
+        },
+        {
+          "name": "Cell Membrane",
+          "keywords": [
+            "cell membrane",
+            "cytoplasm"
+          ],
+          "description": "The size of the cells has no relation with the size of the body of the animal or substance between the nucleus and the cell membrane is called cytoplasm.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c3"
+        },
+        {
+          "name": "Cytoplasm",
+          "keywords": [
+            "cytoplasm",
+            "nucleus"
+          ],
+          "description": "It is the jelly-like substance in which the nucleus and other organelles are suspended.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c4"
+        },
+        {
+          "name": "Nucleus",
+          "keywords": [
+            "nucleus",
+            "chromosomes"
+          ],
+          "description": "The central dense round body in the centre is called the nucleus.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c5"
+        },
+        {
+          "name": "Prokaryotes vs Eukaryotes",
+          "keywords": [
+            "prokaryotes",
+            "eukaryotes"
+          ],
+          "description": "Organisms with these kinds of cells are called prokaryotes, while all organisms other than bacteria and blue green algae are called eukaryotes.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c6"
+        },
+        {
+          "name": "Cell Organelles",
+          "keywords": [
+            "plastids",
+            "chloroplasts"
+          ],
+          "description": "Green coloured plastids are called chloroplasts.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch1-c7"
+        },
+        {
+          "name": "Cell Division",
+          "keywords": [
+            "mitosis",
+            "meiosis"
+          ],
+          "description": "The process of cell division results in the production of new cells.",
+          "prerequisites": [],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Understand"
+          ],
+          "id": "ch1-c8"
+        }
+      ]
+    },
+    {
+      "id": "ch2",
+      "name": "Microorganisms \u2014 Friend and Foe",
+      "order": 2,
+      "color": "emerald",
+      "concepts": [
+        {
+          "name": "Microorganisms",
+          "keywords": [
+            "microbes",
+            "viruses"
+          ],
+          "description": "Living organisms that are too small to be seen with the naked eye.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch2-c1"
+        },
+        {
+          "name": "Types of Microorganisms",
+          "keywords": [
+            "bacteria",
+            "algae",
+            "protozoa"
+          ],
+          "description": "Single-celled or multicellular organisms that live in various environments.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch2-c2"
+        },
+        {
+          "name": "Fermentation",
+          "keywords": [
+            "yeast",
+            "carbon dioxide"
+          ],
+          "description": "Process of converting sugar into alcohol.",
+          "prerequisites": [],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Understand"
+          ],
+          "id": "ch2-c3"
+        },
+        {
+          "name": "Antibiotics",
+          "keywords": [
+            "antibiotic tablets",
+            "injections"
+          ],
+          "description": "Medicines that kill or inhibit the growth of microorganisms.",
+          "prerequisites": [],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Understand"
+          ],
+          "id": "ch2-c4"
+        },
+        {
+          "name": "Harmful Microorganisms",
+          "keywords": [
+            "diseases",
+            "communicable diseases"
+          ],
+          "description": "Microorganisms that cause diseases in humans.",
+          "prerequisites": [],
+          "difficulty": "Hard",
+          "expectedSkills": [
+            "Analyze"
+          ],
+          "id": "ch2-c5"
+        },
+        {
+          "name": "Prevention and Control of Diseases",
+          "keywords": [
+            "vaccination",
+            "pasteurisation"
+          ],
+          "description": "Methods to prevent the spread of diseases caused by microorganisms.",
+          "prerequisites": [],
+          "difficulty": "Hard",
+          "expectedSkills": [
+            "Analyze"
+          ],
+          "id": "ch2-c6"
+        },
+        {
+          "name": "Nitrogen Fixation",
+          "keywords": [
+            "Rhizobium",
+            "symbiotic relationship"
+          ],
+          "description": "Process of converting nitrogenous wastes into usable compounds.",
+          "prerequisites": [],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Understand"
+          ],
+          "id": "ch2-c7"
+        },
+        {
+          "name": "Nitrogen Cycle",
+          "keywords": [
+            "nitrogen gas",
+            "atmosphere"
+          ],
+          "description": "Process by which nitrogen is converted and reused in the environment.",
+          "prerequisites": [],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Understand"
+          ],
+          "id": "ch2-c8"
+        },
+        {
+          "name": "Viruses",
+          "keywords": [
+            "microscopic",
+            "diseases"
+          ],
+          "description": "Small infectious agents that can cause diseases in humans.",
+          "prerequisites": [],
+          "difficulty": "Hard",
+          "expectedSkills": [
+            "Analyze"
+          ],
+          "id": "ch2-c9"
+        }
+      ]
+    },
+    {
+      "id": "ch3",
+      "name": "Crop Production & Management",
+      "order": 3,
+      "color": "amber",
+      "concepts": [
+        {
+          "name": "Crop",
+          "keywords": [
+            "crop",
+            "agriculture"
+          ],
+          "description": "Plants of the same kind cultivated at one place on a large scale.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c1"
+        },
+        {
+          "name": "Kharif Crops",
+          "keywords": [
+            "kharif crops",
+            "rainy season"
+          ],
+          "description": "Crops sown in the rainy season.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c2"
+        },
+        {
+          "name": "Rabi Crops",
+          "keywords": [
+            "rabi crops",
+            "winter season"
+          ],
+          "description": "Crops grown in the winter season (October to March).",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c3"
+        },
+        {
+          "name": "Tilling or Ploughing",
+          "keywords": [
+            "tilling",
+            "ploughing"
+          ],
+          "description": "Process of loosening and turning the soil.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c4"
+        },
+        {
+          "name": "Sowing",
+          "keywords": [
+            "sowing",
+            "seeds"
+          ],
+          "description": "Important part of crop production.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c5"
+        },
+        {
+          "name": "Manuring",
+          "keywords": [
+            "manure",
+            "fertilizers"
+          ],
+          "description": "Process of adding nutrients to the soil for healthy plant growth.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c6"
+        },
+        {
+          "name": "Fertilizers",
+          "keywords": [
+            "fertilizers",
+            "nutrients"
+          ],
+          "description": "Substances added to the soil to promote healthy plant growth.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c7"
+        },
+        {
+          "name": "Irrigation",
+          "keywords": [
+            "irrigation",
+            "water supply"
+          ],
+          "description": "Supply of water to crops at regular intervals.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c8"
+        },
+        {
+          "name": "Sprinkler System",
+          "keywords": [
+            "sprinkler system",
+            "modern irrigation"
+          ],
+          "description": "Method of irrigation that uses a pump to distribute water evenly.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c9"
+        },
+        {
+          "name": "Drip System",
+          "keywords": [
+            "drip system",
+            "modern irrigation"
+          ],
+          "description": "Method of irrigation that delivers water directly to the roots of plants.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c10"
+        },
+        {
+          "name": "Weeding",
+          "keywords": [
+            "weeds",
+            "weed control"
+          ],
+          "description": "Removal of unwanted plants from a field.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c11"
+        },
+        {
+          "name": "Threshing",
+          "keywords": [
+            "threshing",
+            "harvesting"
+          ],
+          "description": "Process of separating grains from chaff.",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch3-c12"
+        }
+      ]
+    },
+    {
+      "id": "ch4",
+      "name": "Reproduction in Animals",
+      "order": 4,
+      "color": "rose",
+      "concepts": [
+        {
+          "name": "internal fertilisation",
+          "keywords": [
+            "fertilisation",
+            "ovum",
+            "sperm",
+            "zygote"
+          ],
+          "description": "the meeting of an egg cell from the mother and a sperm cell from the father",
+          "prerequisites": [
+            "reproduction in plants",
+            "male reproductive organs",
+            "female reproductive organs"
+          ],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Recall",
+            "Explain"
+          ],
+          "id": "ch4-c1"
+        },
+        {
+          "name": "external fertilisation",
+          "keywords": [
+            "fertilisation",
+            "eggs",
+            "sperm",
+            "water"
+          ],
+          "description": "the fusion of a male and a female gamete takes place outside the body of the female",
+          "prerequisites": [
+            "reproduction in plants",
+            "male reproductive organs",
+            "female reproductive organs"
+          ],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Recall",
+            "Explain"
+          ],
+          "id": "ch4-c2"
+        },
+        {
+          "name": "sexual reproduction",
+          "keywords": [
+            "gametes",
+            "zygote",
+            "male and female reproductive parts"
+          ],
+          "description": "the fusion of male and female gametes to form a zygote",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch4-c3"
+        },
+        {
+          "name": "asexual reproduction",
+          "keywords": [
+            "asexual reproduction",
+            "no gametes involved"
+          ],
+          "description": "reproduction without the fusion of male and female gametes",
+          "prerequisites": [],
+          "difficulty": "Easy",
+          "expectedSkills": [
+            "Recall"
+          ],
+          "id": "ch4-c4"
+        },
+        {
+          "name": "ovulation",
+          "keywords": [
+            "ovary",
+            "egg release"
+          ],
+          "description": "the release of an egg from the ovary",
+          "prerequisites": [
+            "reproduction in plants",
+            "female reproductive organs"
+          ],
+          "difficulty": "Medium",
+          "expectedSkills": [
+            "Explain"
+          ],
+          "id": "ch4-c5"
+        },
+        {
+          "name": "test tube baby",
+          "keywords": [
+            "IVF",
+            "in vitro fertilisation"
+          ],
+          "description": "a baby born through IVF",
+          "prerequisites": [
+            "internal fertilisation",
+            "ovulation"
+          ],
+          "difficulty": "Hard",
+          "expectedSkills": [
+            "Explain"
+          ],
+          "id": "ch4-c6"
+        }
+      ]
+    }
+  ]
+}

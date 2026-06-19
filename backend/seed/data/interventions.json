@@ -1,0 +1,58 @@
+[
+  {
+    "id": "act-1",
+    "concept": "IVF",
+    "chapter": "Reproduction in Animals",
+    "priority": "high",
+    "studentsAffected": 39,
+    "action": "Re-teach Fertilization before revisiting IVF. Use a short video and a labelled diagram."
+  },
+  {
+    "id": "act-2",
+    "concept": "Metamorphosis",
+    "chapter": "Reproduction in Animals",
+    "priority": "high",
+    "studentsAffected": 23,
+    "action": "Conduct a revision activity on Metamorphosis using the frog lifecycle chart."
+  },
+  {
+    "id": "act-3",
+    "concept": "Female Reproductive System",
+    "chapter": "Reproduction in Animals",
+    "priority": "high",
+    "studentsAffected": 25,
+    "action": "Use diagram-based exercises on the male and female reproductive system."
+  },
+  {
+    "id": "act-4",
+    "concept": "Internal Fertilization",
+    "chapter": "Reproduction in Animals",
+    "priority": "medium",
+    "studentsAffected": 12,
+    "action": "Run a 15-minute recap of Internal Fertilization with worked examples and a quick exit quiz."
+  },
+  {
+    "id": "act-5",
+    "concept": "Agricultural Implements",
+    "chapter": "Crop Production & Management",
+    "priority": "medium",
+    "studentsAffected": 22,
+    "action": "Hands-on demo of ploughs, hoes, combine — clarify which tool is used at which stage of farming."
+  },
+  {
+    "id": "act-6",
+    "concept": "Asexual Reproduction",
+    "chapter": "Reproduction in Animals",
+    "priority": "medium",
+    "studentsAffected": 18,
+    "action": "Show short videos of Hydra budding and Amoeba binary fission. Compare with sexual reproduction."
+  },
+  {
+    "id": "act-7",
+    "concept": "Weed Control",
+    "chapter": "Crop Production & Management",
+    "priority": "low",
+    "studentsAffected": 13,
+    "action": "Quick name-drop activity: list local weedicides and discuss safe usage."
+  }
+]
