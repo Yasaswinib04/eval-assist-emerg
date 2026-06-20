@@ -130,6 +130,12 @@ def parse_questions_text(text: str) -> List[Dict[str, Any]]:
     {id, number, section, maxMarks, text, options[], correctAnswer, expected}
     """
 
+    # Try heuristic parse first (for instant offline result!)
+    heuristic = _heuristic_parse_questions(text)
+    if heuristic and len(heuristic) >= 5:
+        print(f"  Heuristically parsed {len(heuristic)} questions successfully.")
+        return heuristic
+
     prompt = f"""Parse these exam questions into a JSON array. Each item should have:
 - number: int (question number, starting from 1)
 - text: string (the question text)
@@ -169,4 +175,88 @@ Return ONLY a JSON array. No markdown, no explanation."""
     except Exception as e:
         print(f"  Ollama questions parsing failed: {e}")
 
-    return []
+    return heuristic if heuristic else []
+
+
+def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
+    """Heuristically parse free-text questions into structured Question format."""
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    questions = []
+    q_num = 1
+    current_section = "A"
+
+    def is_valid_question_line(line):
+        lower = line.lower()
+        if "section" in lower and ("answer" in lower or "multiple" in lower or "questions" in lower or "booklet" in lower):
+            return False
+        if "self assessment" in lower or "udise" in lower:
+            return False
+        if len(line) < 15:
+            return False
+        return True
+
+    for line in lines:
+        lower_line = line.lower()
+        if "section b" in lower_line:
+            current_section = "B"
+            continue
+        elif "section c" in lower_line:
+            current_section = "C"
+            continue
+        elif "section d" in lower_line:
+            current_section = "D"
+            continue
+
+        if not is_valid_question_line(line):
+            continue
+
+        # Pattern for "16. A)" or "1." or "16)"
+        num_match = re.match(r'^(?:Q|q)?(\d{1,2})\s*[\.?)\s-]*\s*([A-Ba-b])?[\.?)\s-]*\s*(.+)$', line)
+
+        q_text = line
+        custom_num = None
+        if num_match:
+            custom_num = int(num_match.group(1))
+            suffix = num_match.group(2) or ""
+            q_text = num_match.group(3).strip()
+            if suffix:
+                q_text = f"{suffix}) {q_text}"
+
+        options = []
+        if current_section == "A" or "A)" in q_text:
+            opts_match = re.findall(r'([A-D])\s*\)\s*([^A-D\n]+)', q_text)
+            if len(opts_match) >= 2:
+                options = [f"{o[0]}) {o[1].strip()}" for o in opts_match]
+                q_text = re.split(r'\b[A-D]\s*\)', q_text)[0].strip()
+
+        actual_num = custom_num if custom_num else q_num
+
+        if actual_num <= 10:
+            sect = "A"
+            marks = 1
+        elif actual_num <= 13:
+            sect = "B"
+            marks = 2
+        elif actual_num <= 15:
+            sect = "C"
+            marks = 4
+        else:
+            sect = "D"
+            marks = 8
+
+        questions.append({
+            "id": f"q{actual_num}",
+            "_id": f"q{actual_num}",
+            "number": actual_num,
+            "section": sect,
+            "maxMarks": marks,
+            "text": q_text,
+            "options": options,
+            "correctAnswer": None,
+            "expected": None,
+            "assessmentId": "__parsed__"
+        })
+
+        q_num = actual_num + 1
+
+    return questions

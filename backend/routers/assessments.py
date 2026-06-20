@@ -293,6 +293,10 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
         # If parsed answer key exists, apply it to grading
         if parsed_key:
             await _apply_answer_key_grading(db, assessment_id, parsed_key, evaluations)
+        else:
+            # Re-read evaluations in case they changed during answer key grading
+            evaluations = await db.evaluations.find({"assessmentId": assessment_id}).to_list(100)
+
         await asyncio.sleep(2.0)
 
         # [Step 5/6] Learning gap analysis
@@ -300,6 +304,12 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
             {"_id": assessment_id},
             {"$set": {"processingStatus": "step_gap"}}
         )
+
+        # Fetch final evaluations from DB to get accurate marks
+        final_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(100)
+        total_eval_marks = sum(float(ev.get("aiMark", 0.0) or 0.0) for ev in final_evals)
+        total_marks_limit = assessment.get("totalMarks", 40) or 40
+        avg_score_percent = round((total_eval_marks / total_marks_limit) * 100, 1)
 
         # Create student record for this assessment
         student_name = "Karan"
@@ -315,7 +325,7 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
             "_id": assessment_id,
             "name": student_name,
             "roll": "08-01",
-            "total": 40,
+            "total": total_eval_marks,  # Save actual sum of marks here!
             "status": "review",
             "imageUrls": assessment.get("sheetImages", []),
             "assessmentId": assessment_id,
@@ -347,14 +357,16 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
         )
         await asyncio.sleep(2.0)
 
-        # Update assessment status as complete
+        # Update assessment status as complete with real averages
         await db.assessments.update_one(
             {"_id": assessment_id},
             {
                 "$set": {
                     "status": "review",
                     "processingStatus": "complete",
-                    "pendingReview": len([e for e in evaluations if e.get("needsReview")]),
+                    "totalPapers": 1,
+                    "avgScore": avg_score_percent,  # Save real percentage average here!
+                    "pendingReview": len([e for e in final_evals if e.get("needsReview")]),
                 }
             }
         )
@@ -374,6 +386,7 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
 
 async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, evaluations: list):
     """Apply parsed answer key to re-grade evaluations."""
+    import re
     key_by_q = {}
     for entry in parsed_key:
         q_num = entry.get("questionNumber", 0)
@@ -388,8 +401,48 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
             continue
 
         extracted = (ev.get("studentAnswer") or "").strip()
-        expected = key_entry.get("expectedText", "")
 
+        # Strategy for MCQs (Q1-Q10)
+        if q_num <= 10:
+            correct_option = key_entry.get("correctOption")
+            if not correct_option:
+                # Fallback: extract from correctAnswer text
+                correct_ans = key_entry.get("correctAnswer", "")
+                m_correct = re.search(r"\b([A-Da-d])\b", correct_and_clean_text := correct_ans.strip()[:5])
+                correct_option = m_correct.group(1).upper() if m_correct else None
+
+            # Extract student's selection
+            m_stud = re.search(r"\b([A-Da-d])\b", extracted)
+            student_option = m_stud.group(1).upper() if m_stud else None
+
+            if correct_option and student_option == correct_option:
+                ev["aiMark"] = 1.0
+                ev["confidence"] = "high"
+                ev["confidenceScore"] = 95
+                ev["reasoning"] = f"MCQ match. Student chose correct option {student_option}."
+                ev["needsReview"] = False
+            else:
+                ev["aiMark"] = 0.0
+                ev["confidence"] = "high"
+                ev["confidenceScore"] = 95
+                ev["reasoning"] = f"MCQ mismatch. Student chose {student_option or 'None'}; correct is {correct_option}."
+                ev["needsReview"] = False
+
+            # Update in DB
+            await db.evaluations.update_one(
+                {"_id": ev["_id"]},
+                {"$set": {
+                    "aiMark": ev["aiMark"],
+                    "confidence": ev["confidence"],
+                    "confidenceScore": ev.get("confidenceScore", 95),
+                    "reasoning": ev["reasoning"],
+                    "needsReview": ev["needsReview"],
+                }},
+            )
+            continue
+
+        # Subjective (Q11-Q17)
+        expected = key_entry.get("expectedText", "")
         if not expected:
             continue
 
@@ -403,22 +456,28 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
                 ev["confidence"] = "high"
                 ev["confidenceScore"] = 85
                 ev["reasoning"] = "Answer key match (keyword overlap)."
+                ev["needsReview"] = False
             elif overlap >= 0.3:
                 ev["aiMark"] = round(float(ev.get("aiMark", 1) or 1), 1)
                 ev["confidence"] = "medium"
                 ev["confidenceScore"] = 60
                 ev["reasoning"] = "Partial answer key match."
+                ev["needsReview"] = True
             else:
+                ev["aiMark"] = 0.0
+                ev["confidence"] = "low"
+                ev["confidenceScore"] = 30
+                ev["reasoning"] = "Incorrect or no matching keywords."
                 ev["needsReview"] = True
 
         # Update in DB
         await db.evaluations.update_one(
             {"_id": ev["_id"]},
             {"$set": {
-                "aiMark": ev.get("aiMark"),
-                "confidence": ev.get("confidence"),
-                "confidenceScore": ev.get("confidenceScore"),
-                "reasoning": ev.get("reasoning"),
+                "aiMark": ev["aiMark"],
+                "confidence": ev["confidence"],
+                "confidenceScore": ev.get("confidenceScore", 50),
+                "reasoning": ev["reasoning"],
                 "needsReview": ev.get("needsReview", True),
             }},
         )
