@@ -300,6 +300,44 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
             {"_id": assessment_id},
             {"$set": {"processingStatus": "step_gap"}}
         )
+
+        # Create student record for this assessment
+        student_name = "Karan"
+        if sheet_paths:
+            base_fname = os.path.basename(sheet_paths[0])
+            name_part = os.path.splitext(base_fname)[0]
+            if "_" in name_part:
+                name_part = name_part.split("_")[0]
+            if name_part:
+                student_name = name_part.capitalize()
+
+        student_doc = {
+            "_id": assessment_id,
+            "name": student_name,
+            "roll": "08-01",
+            "total": 40,
+            "status": "review",
+            "imageUrls": assessment.get("sheetImages", []),
+            "assessmentId": assessment_id,
+        }
+        await db.students.update_one(
+            {"_id": assessment_id},
+            {"$set": student_doc},
+            upsert=True,
+        )
+
+        # Copy interventions
+        seed_interventions = await db.interventions.find({"assessmentId": "asm-001"}).to_list(100)
+        for i in seed_interventions:
+            i_copy = dict(i)
+            i_copy["_id"] = f"{i_copy['_id']}-{assessment_id}"
+            i_copy["assessmentId"] = assessment_id
+            await db.interventions.update_one(
+                {"_id": i_copy["_id"]},
+                {"$set": i_copy},
+                upsert=True,
+            )
+
         await asyncio.sleep(2.0)
 
         # [Step 6/6] Generating classroom insights
