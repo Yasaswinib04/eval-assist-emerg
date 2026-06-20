@@ -93,6 +93,7 @@ frontend/node_modules/.cache/default-development/5.pack
 # Generated outputs
 backend/tools/ocr/output/
 backend/tools/ocr/__pycache__/
+media/uploads/
 
 # Downloaded ML models
 backend/tools/ocr/_models/.cache/

@@ -39,6 +39,39 @@ export const apiClient = {
         }
         return await res.json();
     },
+
+    async createAssessment(formData) {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/assessments`, {
+            method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            console.warn('Create assessment failed:', data);
+            return null;
+        }
+        return data;
+    },
+
+    async processAssessment(id) {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/assessments/${id}/process`, {
+            method: 'POST',
+            headers: token ? {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            } : {},
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            console.warn('Process assessment failed:', data);
+            return null;
+        }
+        return data;
+    },
+
     async getAssessments() {
         const data = await fetchWithFallback('/assessments');
         if (data) return data;
@@ -51,6 +84,12 @@ export const apiClient = {
         if (data) return data;
         const mock = await import('./mockData.mjs');
         return mock.getAssessment(id);
+    },
+
+    async getAssessmentStatus(id) {
+        const data = await fetchWithFallback(`/assessments/${id}/status`);
+        if (data) return data;
+        return { status: "review", processingStatus: "complete" };
     },
 
     async getQuestions(id) {

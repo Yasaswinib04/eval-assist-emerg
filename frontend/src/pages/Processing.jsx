@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/data/apiClient";
 import { ScanLine, Sparkles, BarChart3, Check, Loader2, ArrowRight, FileSearch, Network, AlertCircle } from "lucide-react";
 
 const STEPS = [
-  { key: "step_ocr", icon: ScanLine, duration: 1700 },
-  { key: "step_qp", icon: FileSearch, duration: 1500 },
-  { key: "step_concept", icon: Network, duration: 1400 },
-  { key: "step_eval", icon: Sparkles, duration: 2200 },
-  { key: "step_gap", icon: AlertCircle, duration: 1500 },
-  { key: "step_insights", icon: BarChart3, duration: 1300 },
+  { key: "step_ocr", icon: ScanLine, backend_status: "step_ocr" },
+  { key: "step_qp", icon: FileSearch, backend_status: "step_qp" },
+  { key: "step_concept", icon: Network, backend_status: "step_concept" },
+  { key: "step_eval", icon: Sparkles, backend_status: "step_eval" },
+  { key: "step_gap", icon: AlertCircle, backend_status: "step_gap" },
+  { key: "step_insights", icon: BarChart3, backend_status: "step_insights" },
 ];
 
 const Processing = () => {
@@ -20,29 +22,65 @@ const Processing = () => {
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Poll backend status every 1.5 seconds using React Query
+  const { data: statusData } = useQuery({
+    queryKey: ["assessment-status", id],
+    queryFn: () => apiClient.getAssessmentStatus(id),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === "review" || data?.status === "complete" || data?.status === "error") {
+        return false;
+      }
+      return 1500;
+    },
+  });
 
   useEffect(() => {
-    if (current >= STEPS.length) {
+    if (!statusData) return;
+
+    const b_status = statusData.processingStatus || "pending";
+    const status = statusData.status || "draft";
+
+    if (status === "error") {
+      setErrorMsg(b_status || "Processing failed");
+      return;
+    }
+
+    if (status === "review" || b_status === "complete") {
+      setCurrent(STEPS.length);
+      setProgress(100);
       setDone(true);
       return;
     }
-    let pct = 0;
-    const step = STEPS[current];
-    const interval = setInterval(() => {
-      pct += 3;
-      setProgress(Math.min(pct, 100));
-      if (pct >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setCurrent((c) => c + 1);
-          setProgress(0);
-        }, 200);
-      }
-    }, step.duration / 35);
-    return () => clearInterval(interval);
-  }, [current]);
 
-  const totalProgress = ((current + progress / 100) / STEPS.length) * 100;
+    // Map backend status to step index
+    const index = STEPS.findIndex((s) => s.backend_status === b_status);
+    if (index !== -1) {
+      if (index > current) {
+        // Catch up completed steps
+        setCurrent(index);
+        setProgress(0);
+      }
+    }
+  }, [statusData, current]);
+
+  // Smoothly animate the progress bar inside the active step (purely visual flare)
+  useEffect(() => {
+    if (done || errorMsg) return;
+    const interval = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 95) return p; // Hold near 100% until backend moves to next step
+        return p + 2;
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [current, done, errorMsg]);
+
+  const totalProgress = done
+    ? 100
+    : ((current + progress / 100) / STEPS.length) * 100;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20" data-testid="processing-page">
@@ -53,6 +91,17 @@ const Processing = () => {
       </div>
 
       <div className="bg-white border border-stone-200 rounded-2xl p-6 md:p-8 shadow-sm">
+        {/* Error state */}
+        {errorMsg && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
+            <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18} />
+            <div>
+              <div className="font-semibold text-red-900 text-sm">Processing Error</div>
+              <div className="text-xs text-red-700 mt-0.5">{errorMsg}</div>
+            </div>
+          </div>
+        )}
+
         {/* overall progress */}
         <div className="mb-7">
           <div className="flex items-center justify-between text-sm mb-2">
@@ -77,16 +126,16 @@ const Processing = () => {
                 data-testid={`step-${s.key}`}
                 className={`flex items-center gap-4 p-4 rounded-xl border ${
                   status === "active"
-                    ? "border-blue-200 bg-blue-50/60"
+                    ? "border-blue-200 bg-blue-50/60 animate-pulse"
                     : status === "done"
                     ? "border-emerald-100 bg-emerald-50/40"
-                    : "border-stone-200 bg-white"
+                    : "border-stone-200 bg-white opacity-60"
                 }`}
               >
                 <div
                   className={`h-11 w-11 rounded-lg flex items-center justify-center shrink-0 ${
                     status === "done"
-                      ? "bg-emerald-600 text-white"
+                      ? "bg-emerald-600 text-white animate-fade-in"
                       : status === "active"
                       ? "bg-blue-800 text-white"
                       : "bg-stone-100 text-stone-400"
@@ -109,18 +158,18 @@ const Processing = () => {
         </div>
 
         {done && (
-          <div className="mt-7 pt-6 border-t border-stone-200 text-center">
-            <div className="mx-auto h-12 w-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3">
+          <div className="mt-7 pt-6 border-t border-stone-200 text-center animate-fade-in-up">
+            <div className="mx-auto h-12 w-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 animate-check-pop">
               <Check size={24} />
             </div>
             <h3 className="font-display text-xl font-semibold text-stone-900">All papers evaluated!</h3>
-            <p className="text-stone-600 mt-1">11 papers need your review. The rest look confident.</p>
+            <p className="text-stone-600 mt-1">Evaluations are ready for your review and overrides.</p>
             <button
-              onClick={() => navigate(`/review/${id}`)}
+              onClick={() => navigate(`/analysis/${id}`)}
               data-testid="btn-open-review"
-              className="mt-5 inline-flex items-center gap-2 h-12 px-6 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900"
+              className="mt-5 inline-flex items-center gap-2 h-12 px-6 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
             >
-              {t("seePapers")} <ArrowRight size={18} />
+              Go to Analysis <ArrowRight size={18} />
             </button>
           </div>
         )}

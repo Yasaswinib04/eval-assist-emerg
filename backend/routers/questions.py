@@ -5,8 +5,14 @@ from backend.models.question import Question
 
 router = APIRouter()
 
-@router.get("/{id}/questions", response_model=List[Question])
+@router.get("/{id}/questions")
 async def get_questions(id: str, db=Depends(get_db)):
+    # First check if the assessment has parsed questions
+    assessment = await db.assessments.find_one({"_id": id})
+    if assessment and assessment.get("parsedQuestions"):
+        return assessment["parsedQuestions"]
+
+    # Fall back to questions collection
     questions = await db.questions.find({"assessmentId": id}).to_list(100)
     return questions
 
