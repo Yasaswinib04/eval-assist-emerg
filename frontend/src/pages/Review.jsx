@@ -529,6 +529,12 @@ const ReviewPage = () => {
           <div className="mt-1 text-sm text-stone-500">{assessment.class} · {assessment.subject} · {STUDENTS.length} papers · {allQuestions.length} questions each</div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate(`/upload?assessmentId=${id}`)}
+            className="h-10 px-4 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 text-sm font-semibold inline-flex items-center gap-1.5"
+          >
+            + Add Response
+          </button>
           <button onClick={approveAllHighConf} data-testid="btn-approve-all-high" className="h-10 px-4 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold inline-flex items-center gap-1.5 shadow-sm">
             <Wand2 size={14} /> Approve all confident
           </button>

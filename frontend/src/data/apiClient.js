@@ -72,6 +72,21 @@ export const apiClient = {
         return data;
     },
 
+    async appendStudentResponses(id, formData) {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/assessments/${id}/append-sheets`, {
+            method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            console.warn('Append student responses failed:', data);
+            return null;
+        }
+        return data;
+    },
+
     async getAssessments() {
         const data = await fetchWithFallback('/assessments');
         if (data) return data;

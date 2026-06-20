@@ -141,11 +141,11 @@ const Dashboard = () => {
 
         <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
           <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-stone-50 border-b border-stone-200 text-xs font-semibold tracking-[0.06em] uppercase text-stone-500">
-            <div className="col-span-5">Assessment</div>
+            <div className="col-span-4">Assessment</div>
             <div className="col-span-2">Papers</div>
             <div className="col-span-2">Avg Score</div>
             <div className="col-span-2">Status</div>
-            <div className="col-span-1 text-right">Action</div>
+            <div className="col-span-2 text-right">Action</div>
           </div>
 
           {ASSESSMENTS.map((a) => (
@@ -154,7 +154,7 @@ const Dashboard = () => {
               data-testid={`assessment-row-${a.id}`}
               className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 border-b border-stone-100 last:border-0 hover:bg-stone-50/60 transition-colors"
             >
-              <div className="md:col-span-5">
+              <div className="md:col-span-4">
                 <div className="font-medium text-stone-900">{a.name}</div>
                 <div className="text-sm text-stone-500 mt-0.5">{a.type} · {a.createdAt}</div>
               </div>
@@ -172,38 +172,45 @@ const Dashboard = () => {
               <div className="md:col-span-2">
                 <StatusPill status={a.status} t={t} />
               </div>
-              <div className="md:col-span-1 md:text-right">
+              <div className="md:col-span-2 flex items-center md:justify-end gap-1.5">
+                <button
+                  onClick={() => navigate(`/upload?assessmentId=${a.id}`)}
+                  title="Scan & Add New Student Response"
+                  className="inline-flex items-center justify-center gap-1 px-2.5 h-9 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-100 text-xs font-semibold"
+                >
+                  + Add Response
+                </button>
                 {a.status === "review" ? (
                   <button
                     onClick={() => navigate(`/review/${a.id}`)}
                     data-testid={`btn-review-${a.id}`}
-                    className="inline-flex items-center gap-1 px-3 h-9 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200 text-sm font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200 text-xs font-semibold"
                   >
-                    {t("review")} <ChevronRight size={14} />
+                    {t("review")} <ChevronRight size={12} />
                   </button>
                 ) : a.status === "complete" || a.status === "done" ? (
                   <button
                     onClick={() => navigate(`/insights/${a.id}`)}
                     data-testid={`btn-insights-${a.id}`}
-                    className="inline-flex items-center gap-1 px-3 h-9 rounded-lg bg-stone-100 text-stone-800 hover:bg-stone-200 text-sm font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-stone-100 text-stone-800 hover:bg-stone-200 border border-stone-200 text-xs font-semibold"
                   >
-                    {t("viewInsights")} <ChevronRight size={14} />
+                    Insights <ChevronRight size={12} />
                   </button>
                 ) : a.status === "draft" ? (
                   <button
                     onClick={() => navigate(`/analysis/${a.id}`)}
                     data-testid={`btn-draft-${a.id}`}
-                    className="inline-flex items-center gap-1 px-3 h-9 rounded-lg bg-stone-100 text-stone-800 hover:bg-stone-200 text-sm font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-stone-100 text-stone-800 hover:bg-stone-200 border border-stone-200 text-xs font-semibold"
                   >
-                    Continue <ChevronRight size={14} />
+                    Continue <ChevronRight size={12} />
                   </button>
                 ) : (
                   <button
                     onClick={() => navigate(`/processing/${a.id}`)}
                     data-testid={`btn-processing-${a.id}`}
-                    className="inline-flex items-center gap-1 px-3 h-9 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 text-sm font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 text-xs font-semibold"
                   >
-                    Open <ChevronRight size={14} />
+                    Open <ChevronRight size={12} />
                   </button>
                 )}
               </div>

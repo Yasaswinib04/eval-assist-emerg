@@ -153,7 +153,64 @@ async def process_assessment(
     return {"status": "processing", "assessmentId": id}
 
 
-async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
+@router.post("/{id}/append-sheets", response_model=Assessment)
+async def append_sheets(
+    id: str,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    sheetFiles: List[UploadFile] = File(default=[]),
+):
+    """Append new student answer sheets to an existing assessment and trigger OCR."""
+    assessment = await db.assessments.find_one({"_id": id})
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    if not sheetFiles:
+        raise HTTPException(status_code=400, detail="No new student answer sheets uploaded")
+
+    # Save new files
+    new_sheet_images = _save_uploaded_files(
+        id, sheetFiles, "sheets"
+    )
+
+    # Append to existing sheet images
+    existing_sheets = assessment.get("sheetImages", []) or []
+    updated_sheets = existing_sheets + new_sheet_images
+
+    # Increment total papers
+    new_total_papers = len(updated_sheets)
+
+    await db.assessments.update_one(
+        {"_id": id},
+        {
+            "$set": {
+                "sheetImages": updated_sheets,
+                "totalPapers": new_total_papers,
+                "status": "processing",
+                "processingStatus": "step_ocr",
+            }
+        }
+    )
+
+    # Run OCR background task ONLY on the newly uploaded sheets!
+    # Convert relative media paths to absolute file system paths
+    abs_new_paths = [
+        os.path.join(os.path.dirname(__file__), "..", "..", img)
+        for img in new_sheet_images
+    ]
+
+    background_tasks.add_task(_run_ocr_pipeline, id, assessment, abs_new_paths)
+    
+    # Return updated assessment
+    updated_doc = await db.assessments.find_one({"_id": id})
+    return updated_doc
+
+
+async def _run_ocr_pipeline(
+    assessment_id: str,
+    assessment: dict,
+    custom_sheet_paths: Optional[List[str]] = None,
+):
     """Background task: run OCR on student sheets, grade against answer key."""
     import sys
     from pathlib import Path
@@ -230,29 +287,47 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
             {"$set": {"processingStatus": "step_ocr"}}
         )
 
-        result = await asyncio.to_thread(
-            processor.process,
-            image_paths=sheet_paths,
-            student_id=assessment_id,
-            use_ollama=False,
-        )
+        # Group sheet paths by student name
+        student_groups = {}
+        for path in sheet_paths:
+            base_fname = os.path.basename(path)
+            name_part = os.path.splitext(base_fname)[0]
+            if "_" in name_part:
+                name_part = name_part.split("_")[0]
+            student_name = name_part.capitalize()
+            if student_name not in student_groups:
+                student_groups[student_name] = []
+            student_groups[student_name].append(path)
 
-        # Save extracted evaluations to MongoDB
-        evaluations = result.get("evaluations", [])
-        for ev in evaluations:
-            ev["_id"] = f"{assessment_id}-{ev['qId']}"
-            ev["assessmentId"] = assessment_id
-            ev["studentId"] = assessment_id  # single-student assessment
-            ev["approved"] = False
+        # Process each student's sheets separately
+        all_student_evaluations = []
+        for student_name, student_paths in student_groups.items():
+            student_id = f"stu-{assessment_id}-{student_name.lower()}"
 
-        if evaluations:
-            # Upsert evaluations
+            result = await asyncio.to_thread(
+                processor.process,
+                image_paths=student_paths,
+                student_id=student_id,
+                use_ollama=False,
+            )
+
+            # Save extracted evaluations to MongoDB
+            evaluations = result.get("evaluations", [])
             for ev in evaluations:
-                await db.evaluations.update_one(
-                    {"_id": ev["_id"]},
-                    {"$set": ev},
-                    upsert=True,
-                )
+                ev["_id"] = f"{assessment_id}-{student_id}-{ev['qId']}"
+                ev["assessmentId"] = assessment_id
+                ev["studentId"] = student_id
+                ev["approved"] = False
+
+            if evaluations:
+                # Upsert evaluations
+                for ev in evaluations:
+                    await db.evaluations.update_one(
+                        {"_id": ev["_id"]},
+                        {"$set": ev},
+                        upsert=True,
+                    )
+                all_student_evaluations.extend(evaluations)
 
         await asyncio.sleep(2.0)  # Smooth transition
 
@@ -292,10 +367,10 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
         )
         # If parsed answer key exists, apply it to grading
         if parsed_key:
-            await _apply_answer_key_grading(db, assessment_id, parsed_key, evaluations)
+            await _apply_answer_key_grading(db, assessment_id, parsed_key, all_student_evaluations)
         else:
             # Re-read evaluations in case they changed during answer key grading
-            evaluations = await db.evaluations.find({"assessmentId": assessment_id}).to_list(100)
+            all_student_evaluations = await db.evaluations.find({"assessmentId": assessment_id}).to_list(100)
 
         await asyncio.sleep(2.0)
 
@@ -305,36 +380,31 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
             {"$set": {"processingStatus": "step_gap"}}
         )
 
-        # Fetch final evaluations from DB to get accurate marks
-        final_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(100)
-        total_eval_marks = sum(float(ev.get("aiMark", 0.0) or 0.0) for ev in final_evals)
-        total_marks_limit = assessment.get("totalMarks", 40) or 40
-        avg_score_percent = round((total_eval_marks / total_marks_limit) * 100, 1)
+        # Create/update student records for all processed students
+        for student_name, student_paths in student_groups.items():
+            student_id = f"stu-{assessment_id}-{student_name.lower()}"
+            
+            # Fetch final evaluations for this specific student
+            student_evals = await db.evaluations.find({"assessmentId": assessment_id, "studentId": student_id}).to_list(100)
+            student_total = sum(float(ev.get("aiMark", 0.0) or 0.0) for ev in student_evals)
 
-        # Create student record for this assessment
-        student_name = "Karan"
-        if sheet_paths:
-            base_fname = os.path.basename(sheet_paths[0])
-            name_part = os.path.splitext(base_fname)[0]
-            if "_" in name_part:
-                name_part = name_part.split("_")[0]
-            if name_part:
-                student_name = name_part.capitalize()
-
-        student_doc = {
-            "_id": assessment_id,
-            "name": student_name,
-            "roll": "08-01",
-            "total": total_eval_marks,  # Save actual sum of marks here!
-            "status": "review",
-            "imageUrls": assessment.get("sheetImages", []),
-            "assessmentId": assessment_id,
-        }
-        await db.students.update_one(
-            {"_id": assessment_id},
-            {"$set": student_doc},
-            upsert=True,
-        )
+            student_doc = {
+                "_id": student_id,
+                "name": student_name,
+                "roll": f"08-{len(student_groups)}",
+                "total": student_total,
+                "status": "review",
+                "imageUrls": [
+                    img.split("media/")[-1] if "media/" in img else img
+                    for img in student_paths
+                ],
+                "assessmentId": assessment_id,
+            }
+            await db.students.update_one(
+                {"_id": student_id},
+                {"$set": student_doc},
+                upsert=True,
+            )
 
         # Copy interventions
         seed_interventions = await db.interventions.find({"assessmentId": "asm-001"}).to_list(100)
@@ -357,6 +427,16 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
         )
         await asyncio.sleep(2.0)
 
+        # Recompute assessment aggregates
+        final_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
+        total_eval_marks = sum(float(ev.get("aiMark", 0.0) or 0.0) for ev in final_evals)
+        total_marks_limit = assessment.get("totalMarks", 40) or 40
+        
+        distinct_students = await db.evaluations.distinct("studentId", {"assessmentId": assessment_id})
+        num_students = len(distinct_students) if distinct_students else 1
+        
+        avg_score_percent = round(((total_eval_marks / num_students) / total_marks_limit) * 100, 1)
+
         # Update assessment status as complete with real averages
         await db.assessments.update_one(
             {"_id": assessment_id},
@@ -364,8 +444,8 @@ async def _run_ocr_pipeline(assessment_id: str, assessment: dict):
                 "$set": {
                     "status": "review",
                     "processingStatus": "complete",
-                    "totalPapers": 1,
-                    "avgScore": avg_score_percent,  # Save real percentage average here!
+                    "totalPapers": num_students,
+                    "avgScore": avg_score_percent,
                     "pendingReview": len([e for e in final_evals if e.get("needsReview")]),
                 }
             }
