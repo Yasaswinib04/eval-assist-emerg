@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2 } from "lucide-react";
+import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
 const TabUpload = ({ files, onAdd, onRemove, testId }) => {
@@ -82,6 +82,10 @@ const Upload = () => {
   const [aMode, setAMode] = useState("text");
   const [aImages, setAImages] = useState([]);
   const [aText, setAText] = useState("");
+
+  // Curriculum section (optional)
+  const [cMode, setCMode] = useState("none");
+  const [cText, setCText] = useState("");
 
   // Student sheets section
   const [sheetFiles, setSheetFiles] = useState([]);
@@ -204,6 +208,11 @@ Section D: Answer the following questions in your answer booklet. An internal ch
         }
         for (const img of aImages) {
           if (img.file) formData.append("answerKeyFiles", img.file);
+        }
+
+        // Curriculum (optional)
+        if (cText.trim()) {
+          formData.append("curriculumText", cText);
         }
 
         // Student sheets
@@ -332,6 +341,41 @@ Section D: Answer the following questions in your answer booklet. An internal ch
             />
           ) : (
             <TabUpload files={aImages} onAdd={addImages(setAImages)} onRemove={removeImage(setAImages)} testId="zone-answer-key" />
+          )}
+        </div>
+      )}
+
+      {/* Section: Curriculum / Topics (Optional) */}
+      {!assessmentId && (
+        <div className="mt-4 bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-10 w-10 rounded-lg bg-violet-50 text-violet-800 flex items-center justify-center shrink-0"><BookOpen size={18} /></div>
+            <div>
+              <div className="font-medium text-stone-900">Curriculum / Topics (Optional)</div>
+              <div className="text-xs text-stone-500">Help AI map concepts better — paste chapter summaries, topics, or subtopics</div>
+            </div>
+          </div>
+          <div className="flex gap-1 mb-4 bg-stone-100 rounded-lg p-1 w-fit">
+            <button onClick={() => setCMode("none")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${cMode === "none" ? "bg-white shadow-sm text-stone-900" : "text-stone-500 hover:text-stone-700"}`}>
+              Auto-detect
+            </button>
+            <button onClick={() => setCMode("text")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${cMode === "text" ? "bg-white shadow-sm text-stone-900" : "text-stone-500 hover:text-stone-700"}`}>
+              <Type size={15} /> Paste text
+            </button>
+          </div>
+          {cMode === "text" && (
+            <textarea
+              value={cText}
+              onChange={(e) => setCText(e.target.value)}
+              placeholder="Paste chapter summaries, topics, or subtopics...&#10;&#10;Chapter 1: Cell Structure & Functions&#10;- Cell wall, cell membrane, cytoplasm, nucleus&#10;- Unicellular and multicellular organisms&#10;&#10;Chapter 2: Microorganisms&#10;- Bacteria, viruses, fungi, protozoa&#10;- Communicable diseases & prevention&#10;&#10;Chapter 3: Crop Production&#10;- Agricultural practices, irrigation, weeding&#10;&#10;Chapter 4: Reproduction in Animals&#10;- Sexual vs asexual reproduction&#10;- Fertilization, IVF, metamorphosis"
+              className="w-full h-40 px-4 py-3 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
+            />
+          )}
+          {cMode === "none" && (
+            <div className="text-sm text-stone-500 p-3 bg-stone-50 rounded-lg border border-stone-200">
+              Concepts will be auto-detected from your questions using AI similarity matching. 
+              Paste text above for more accurate chapter and topic mapping.
+            </div>
           )}
         </div>
       )}

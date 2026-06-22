@@ -29,6 +29,7 @@ class Assessment(AssessmentBase):
     processingStatus: Optional[str] = "pending"
     parsedQuestions: Optional[List[dict]] = None
     parsedAnswerKey: Optional[List[dict]] = None
+    parsedCurriculum: Optional[List[dict]] = None
 
     class Config:
         populate_by_name = True

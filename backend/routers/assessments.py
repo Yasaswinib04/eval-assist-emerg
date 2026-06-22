@@ -56,6 +56,7 @@ async def create_assessment(
     totalMarks: int = Form(...),
     questionsText: Optional[str] = Form(None),
     answerKeyText: Optional[str] = Form(None),
+    curriculumText: Optional[str] = Form(None),
     questionFiles: List[UploadFile] = File(default=[]),
     answerKeyFiles: List[UploadFile] = File(default=[]),
     sheetFiles: List[UploadFile] = File(default=[]),
@@ -89,6 +90,7 @@ async def create_assessment(
         "createdAt": created_at,
         "questionsText": questionsText,
         "answerKeyText": answerKeyText,
+        "curriculumText": curriculumText,
         "questionsImages": question_images,
         "answerKeyImages": answer_key_images,
         "sheetImages": sheet_images,
@@ -126,6 +128,20 @@ async def create_assessment(
                 doc["parsedQuestions"] = parsed_qs
         except Exception as e:
             print(f"  Questions parsing skipped (Ollama may not be running): {e}")
+
+    # If curriculum text was provided, parse it now
+    if curriculumText and curriculumText.strip():
+        try:
+            from backend.services.answer_key_parser import parse_curriculum_text
+            parsed_curr = parse_curriculum_text(curriculumText)
+            if parsed_curr:
+                await db.assessments.update_one(
+                    {"_id": assessment_id},
+                    {"$set": {"parsedCurriculum": parsed_curr}}
+                )
+                doc["parsedCurriculum"] = parsed_curr
+        except Exception as e:
+            print(f"  Curriculum parsing skipped: {e}")
 
     return doc
 

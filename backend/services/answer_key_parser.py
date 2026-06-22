@@ -260,3 +260,121 @@ def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
         q_num = actual_num + 1
 
     return questions
+
+
+def parse_curriculum_text(text: str) -> List[Dict[str, Any]]:
+    """Parse teacher-provided curriculum/chapter summary text.
+
+    Accepts formats like:
+    - "Chapter 1: Cell Structure - cell membrane, cytoplasm, nucleus"
+    - "Topic: Fertilization (External vs Internal)"
+    - Bullet lists of concepts under chapter headers
+    - "ch1: Cell Structure -> cell wall, cell membrane, nucleus, cytoplasm"
+
+    Returns list matching curriculum chapters format:
+    [{id, name, concepts: [{name, keywords, description}]}]
+    """
+
+    # Try heuristic first
+    heuristic = _heuristic_parse_curriculum(text)
+    if heuristic and len(heuristic) >= 1:
+        return heuristic
+
+    # Fallback to Ollama
+    return _ollama_parse_curriculum(text)
+
+
+def _heuristic_parse_curriculum(text: str) -> List[Dict[str, Any]]:
+    """Heuristically parse curriculum text into chapters/concepts."""
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    chapters = []
+    current_chapter = None
+    ch_counter = 0
+
+    # Color palette for chapters
+    colors = ["blue", "emerald", "amber", "rose", "violet", "orange", "teal"]
+
+    for line in lines:
+        # Detect chapter headers: "Chapter 1: Cell Structure", "Ch1: ...", "1. Cell..."
+        ch_match = re.match(
+            r'^(?:Chapter|Ch|Lesson)\s*(\d+)[:\-.\s)]+\s*(.+)$', line, re.IGNORECASE
+        )
+        if not ch_match:
+            ch_match = re.match(r'^(\d+)\.\s*(.+?)(?:\s*[-–—]\s*.+)?$', line)
+
+        if ch_match:
+            ch_counter += 1
+            ch_name = ch_match.group(2).strip()
+            current_chapter = {
+                "id": f"ch{ch_counter}",
+                "name": ch_name[:80],
+                "order": ch_counter,
+                "color": colors[(ch_counter - 1) % len(colors)],
+                "concepts": [],
+            }
+            chapters.append(current_chapter)
+            continue
+
+        # Detect topic/concept lines: "- Cell Structure", "* Fertilization", "Topic: ..."
+        concept_match = re.match(r'^[-*•]\s*(.+)$', line)
+        if not concept_match:
+            concept_match = re.match(r'^(?:Topic|Concept|Sub-topic)[:\s]+(.+)$', line, re.IGNORECASE)
+
+        if concept_match and current_chapter is not None:
+            concept_text = concept_match.group(1).strip()
+            # Split by comma for keywords
+            parts = [p.strip() for p in concept_text.split(",")]
+            name = parts[0][:60] if parts else concept_text[:60]
+            keywords = parts[1:4] if len(parts) > 1 else []
+
+            current_chapter["concepts"].append({
+                "name": name,
+                "keywords": keywords,
+                "description": concept_text[:200],
+                "prerequisites": [],
+                "difficulty": "Medium",
+                "expectedSkills": ["Recall"],
+            })
+            continue
+
+        # If line has substantial text and we already have a chapter, treat as description
+        if current_chapter is not None and len(line) > 20 and current_chapter["concepts"]:
+            current_chapter["concepts"][-1]["description"] += " " + line
+
+    return chapters
+
+
+def _ollama_parse_curriculum(text: str) -> List[Dict[str, Any]]:
+    """Use Ollama to parse curriculum text into structured JSON."""
+    prompt = f"""Parse this curriculum / chapter summary into a JSON array of chapters.
+
+Each chapter has:
+- id: "ch1", "ch2", etc.
+- name: chapter title
+- order: number
+- color: one of ["blue", "emerald", "amber", "rose", "violet", "orange", "teal"]
+- concepts: array of {{name, keywords: [string], description, prerequisites: [], difficulty: "Easy"/"Medium"/"Hard", expectedSkills: ["Recall"]}}
+
+CURRICULUM TEXT:
+{text[:8000]}
+
+Return ONLY a JSON array. No markdown, no explanation."""
+
+    try:
+        import httpx
+        resp = httpx.post(
+            "http://localhost:11434/api/generate",
+            json={"model": "llama3.2:3b", "prompt": prompt, "stream": False, "temperature": 0.0},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        response_text = resp.json().get("response", "").strip()
+        json_start = response_text.find("[")
+        json_end = response_text.rfind("]")
+        if json_start >= 0 and json_end > json_start:
+            parsed = json.loads(response_text[json_start:json_end + 1])
+            if isinstance(parsed, list) and len(parsed) >= 1:
+                return parsed
+    except Exception as e:
+        print(f"  Ollama curriculum parsing failed: {e}")
+    return []
