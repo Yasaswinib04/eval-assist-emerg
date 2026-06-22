@@ -8,12 +8,6 @@ from backend.routers import auth, assessments, questions, students, evaluations,
 # Create the main app without a prefix
 app = FastAPI()
 
-# Serve media files (sample answer sheets, etc.)
-from fastapi.staticfiles import StaticFiles
-media_dir = os.path.join(os.path.dirname(__file__), "..", "media")
-if os.path.exists(media_dir):
-    app.mount("/media", StaticFiles(directory=media_dir), name="media")
-
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +29,17 @@ api_router.include_router(interventions.router, prefix="/assessments", tags=["in
 
 app.include_router(api_router)
 
+# Serve media files (sample answer sheets, etc.)
+from fastapi.staticfiles import StaticFiles
+media_dir = os.path.join(os.path.dirname(__file__), "..", "media")
+if os.path.exists(media_dir):
+    app.mount("/media", StaticFiles(directory=media_dir), name="media")
+
+# Serve frontend production build (SPA)
+frontend_build = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
+if os.path.exists(frontend_build):
+    app.mount("/", StaticFiles(directory=frontend_build, html=True), name="frontend")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -44,4 +49,4 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.server:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.server:app", host="0.0.0.0", port=8000, reload=False)
