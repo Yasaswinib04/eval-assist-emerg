@@ -240,11 +240,9 @@ async def _run_ocr_pipeline(
             sys.path.insert(0, p)
 
     try:
-        from motor.motor_asyncio import AsyncIOMotorClient
-        from backend.core.config import settings
+        from backend.core.database import get_db as _get_db
 
-        client = AsyncIOMotorClient(settings.MONGO_URL)
-        db = client[settings.DB_NAME]
+        db = _get_db()
 
         from tools.ocr.answer_sheet_ocr import AnswerSheetProcessor
 
@@ -472,9 +470,7 @@ async def _run_ocr_pipeline(
     except Exception as e:
         print(f"OCR pipeline error for {assessment_id}: {e}")
         try:
-            client = AsyncIOMotorClient(settings.MONGO_URL)
-            db = client[settings.DB_NAME]
-            await db.assessments.update_one(
+            await _get_db().assessments.update_one(
                 {"_id": assessment_id},
                 {"$set": {"status": "error", "processingStatus": str(e)[:200]}}
             )
