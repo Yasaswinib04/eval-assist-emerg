@@ -25,10 +25,17 @@ const Landing = () => {
           window.google.accounts.id.initialize({
             client_id: cfg.clientId,
             callback: async (response) => {
+              console.log("[Google] credential received, length:", response.credential?.length || 0);
               try {
-                await googleLogin(response.credential, "");
+                const data = await googleLogin(response.credential, "");
+                console.log("[Google] login success, user:", data?.user?.email, "token:", !!data?.access_token);
+                console.log("[Google] localStorage check before nav:", {
+                  token: !!localStorage.getItem("evalassist-token"),
+                  user: !!localStorage.getItem("evalassist-user"),
+                });
                 window.location.href = "/loading";
               } catch (err) {
+                console.error("[Google] login failed:", err.message, err);
                 setGoogleLoading(false);
                 setError(err.message || "Google sign-in failed");
               }

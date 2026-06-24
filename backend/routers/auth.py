@@ -61,12 +61,14 @@ async def google_login(request: Request, db=Depends(get_db)):
     body = await request.json()
     credential = body.get("credential")
     display_name = body.get("displayName", "")
+    print(f"[Google] Request received, credential length: {len(credential or '')}, display_name: {display_name}")
 
     if not credential:
         raise HTTPException(status_code=400, detail="Missing Google credential")
 
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google OAuth not configured (GOOGLE_CLIENT_ID missing)")
+    print(f"[Google] Client ID configured: {settings.GOOGLE_CLIENT_ID[:20]}...")
 
     try:
         from google.oauth2 import id_token
@@ -77,7 +79,9 @@ async def google_login(request: Request, db=Depends(get_db)):
             google_requests.Request(),
             settings.GOOGLE_CLIENT_ID,
         )
+        print(f"[Google] Token verified. email={idinfo.get('email')}, name={idinfo.get('name')}")
     except Exception as e:
+        print(f"[Google] Token verification FAILED: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
 
     google_email = idinfo.get("email")
@@ -87,11 +91,13 @@ async def google_login(request: Request, db=Depends(get_db)):
     google_name = idinfo.get("name", "")
 
     existing = await db.users.find_one({"email": google_email})
+    print(f"[Google] User lookup: {google_email} -> {'found' if existing else 'not found'}")
     if existing:
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": existing["email"]}, expires_delta=access_token_expires
         )
+        print(f"[Google] Returning existing user, token created: {access_token[:20]}...")
         return {
             "access_token": access_token,
             "token_type": "bearer",
@@ -104,21 +110,27 @@ async def google_login(request: Request, db=Depends(get_db)):
         }
 
     user_name = display_name or google_name or "Teacher"
-    hashed = bcrypt.hashpw("google-oauth-no-password".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    user_doc = {
-        "_id": f"google-{google_email.replace('@', '-at-')}",
-        "name": user_name,
-        "email": google_email,
-        "school": "",
-        "subjects": ["Biology"],
-        "password_hash": hashed,
-    }
-    await db.users.insert_one(user_doc)
+    try:
+        hashed = bcrypt.hashpw("google-oauth-no-password".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        user_doc = {
+            "_id": f"google-{google_email.replace('@', '-at-')}",
+            "name": user_name,
+            "email": google_email,
+            "school": "",
+            "subjects": ["Biology"],
+            "password_hash": hashed,
+        }
+        await db.users.insert_one(user_doc)
+        print(f"[Google] New user created: {google_email}")
+    except Exception as e:
+        print(f"[Google] User creation FAILED: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": google_email}, expires_delta=access_token_expires
     )
+    print(f"[Google] New user token created: {access_token[:20]}...")
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -135,6 +147,20 @@ async def google_login(request: Request, db=Depends(get_db)):
 async def get_google_config():
     return {"clientId": settings.GOOGLE_CLIENT_ID}
 
+@router.get("/google-debug")
+async def google_debug():
+    """Debug endpoint to verify Google OAuth setup."""
+    has_client_id = bool(settings.GOOGLE_CLIENT_ID)
+    try:
+        from google.oauth2 import id_token
+        has_google_auth = True
+    except ImportError:
+        has_google_auth = False
+    return {
+        "hasClientId": has_client_id,
+        "clientIdPreview": settings.GOOGLE_CLIENT_ID[:30] + "..." if has_client_id else "",
+        "googleAuthInstalled": has_google_auth,
+    }
 
 @router.get("/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
