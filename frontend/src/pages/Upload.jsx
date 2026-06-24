@@ -29,7 +29,7 @@ const TabUpload = ({ files, onAdd, onRemove, testId }) => {
               <img src={f.preview} alt="" className="w-full h-full object-cover" />
               <button
                 onClick={() => onRemove(f.id || i)}
-                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity min-h-[36px] min-w-[36px] flex items-center justify-center"
               >
                 <X size={14} />
               </button>

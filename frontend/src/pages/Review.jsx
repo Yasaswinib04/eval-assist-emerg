@@ -634,7 +634,7 @@ const ReviewPage = () => {
       {/* Heatmap table */}
       <div className="bg-white border border-stone-200 rounded-xl overflow-hidden" data-testid="heatmap-table">
         <div className="flex items-center gap-3 px-4 py-2 border-b border-stone-200 bg-stone-50 sticky top-0 z-10">
-          <div className="w-48 lg:w-56 text-[10px] font-bold tracking-wider uppercase text-stone-500 shrink-0">Student</div>
+          <div className="w-28 xs:w-36 sm:w-48 lg:w-56 text-[10px] font-bold tracking-wider uppercase text-stone-500 shrink-0">Student</div>
           <div className="flex-1 min-w-0 overflow-x-auto scrollbar-thin">
             <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${allQuestions.length}, minmax(${density === "compact" ? "28px" : "40px"}, 1fr))` }}>
               {allQuestions.map((q) => (
@@ -652,7 +652,7 @@ const ReviewPage = () => {
               ))}
             </div>
           </div>
-          <div className="w-44 shrink-0 text-right text-[10px] font-bold tracking-wider uppercase text-stone-500">Total · Grade</div>
+          <div className="w-24 xs:w-32 sm:w-44 shrink-0 text-right text-[10px] font-bold tracking-wider uppercase text-stone-500">Total · Grade</div>
         </div>
 
         {/* Rows */}
@@ -677,7 +677,7 @@ const ReviewPage = () => {
                   <button
                     onClick={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
                     data-testid={`expand-${s.id}`}
-                    className="w-48 lg:w-56 flex items-center gap-2 shrink-0 text-left group"
+                    className="w-28 xs:w-36 sm:w-48 lg:w-56 flex items-center gap-2 shrink-0 text-left group"
                   >
                     <ChevronRight size={14} className={`text-stone-400 transition-transform shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
                     {(ctx?.isBorderline || ctx?.isFailing) && (
@@ -709,7 +709,7 @@ const ReviewPage = () => {
                     </div>
                   </div>
 
-                  <div className="w-44 shrink-0 text-right">
+                  <div className="w-24 xs:w-32 sm:w-44 shrink-0 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <div className="font-display text-base font-semibold text-stone-900 tabular-nums">{totals.total.toFixed(1)}<span className="text-stone-400 text-xs font-normal">/{totals.totalMax}</span></div>
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
