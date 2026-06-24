@@ -33,7 +33,9 @@ const Landing = () => {
                   token: !!localStorage.getItem("evalassist-token"),
                   user: !!localStorage.getItem("evalassist-user"),
                 });
-                window.location.href = "/loading";
+                setTimeout(() => {
+                  window.location.replace("/loading");
+                }, 300);
               } catch (err) {
                 console.error("[Google] login failed:", err.message, err);
                 setGoogleLoading(false);

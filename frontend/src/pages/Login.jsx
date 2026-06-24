@@ -31,7 +31,9 @@ const Login = () => {
           callback: async (response) => {
             try {
               await googleLogin(response.credential, "");
-              window.location.href = "/dashboard";
+              setTimeout(() => {
+                window.location.replace("/dashboard");
+              }, 300);
             } catch (err) {
               setError(err.message || "Google sign-in failed. Use email below.");
               setShowEmail(true);
