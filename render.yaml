@@ -15,3 +15,5 @@ services:
         value: evalassist
       - key: JWT_SECRET
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false

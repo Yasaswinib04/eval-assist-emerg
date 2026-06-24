@@ -40,6 +40,25 @@ export const apiClient = {
         return await res.json();
     },
 
+    async googleLogin(credential, displayName) {
+        const res = await fetch(`${API_BASE}/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential, displayName }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: 'Google login failed' }));
+            throw new Error(err.detail || 'Google login failed');
+        }
+        return await res.json();
+    },
+
+    async getGoogleConfig() {
+        const res = await fetch(`${API_BASE}/auth/google-config`);
+        if (!res.ok) return { clientId: '' };
+        return await res.json();
+    },
+
     async createAssessment(formData) {
         const token = getToken();
         const res = await fetch(`${API_BASE}/assessments`, {
