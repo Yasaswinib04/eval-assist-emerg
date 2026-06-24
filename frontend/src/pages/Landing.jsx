@@ -11,6 +11,7 @@ const Landing = () => {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleConfigured, setGoogleConfigured] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user) return;
@@ -26,9 +27,10 @@ const Landing = () => {
             callback: async (response) => {
               try {
                 await googleLogin(response.credential, "");
-                navigate("/loading");
-              } catch {
+                window.location.href = "/loading";
+              } catch (err) {
                 setGoogleLoading(false);
+                setError(err.message || "Google sign-in failed");
               }
             },
           });
@@ -111,6 +113,7 @@ const Landing = () => {
                     )}
                   </button>
                   <p className="mt-3 text-sm text-stone-500">We only use your email to identify you. No spam, no setup.</p>
+                  {error && <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>}
                 </>
               ) : (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 max-w-md">

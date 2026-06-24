@@ -26,19 +26,19 @@ const Login = () => {
       }
       const check = setInterval(() => {
         if (window.google?.accounts?.id) {
-          window.google.accounts.id.initialize({
-            client_id: cfg.clientId,
-            callback: async (response) => {
-              try {
-                await googleLogin(response.credential, "");
-                navigate("/dashboard");
-              } catch (err) {
-                setError("Google sign-in failed. Try email below.");
-                setShowEmail(true);
-                setGoogleLoading(false);
-              }
-            },
-          });
+        window.google.accounts.id.initialize({
+          client_id: cfg.clientId,
+          callback: async (response) => {
+            try {
+              await googleLogin(response.credential, "");
+              window.location.href = "/dashboard";
+            } catch (err) {
+              setError(err.message || "Google sign-in failed. Use email below.");
+              setShowEmail(true);
+              setGoogleLoading(false);
+            }
+          },
+        });
           setGoogleReady(true);
           clearInterval(check);
         }
