@@ -9,7 +9,7 @@
 /coverage
 
 # production
-/build
+# /build  # removed for prod — frontend build is committed for Render
 
 # misc
 .DS_Store

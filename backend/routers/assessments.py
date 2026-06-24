@@ -5,6 +5,8 @@ from backend.models.assessment import Assessment, AssessmentCreate, AssessmentPr
 from datetime import datetime, timezone
 import uuid
 import os
+import json
+import bcrypt
 import shutil
 import asyncio
 
@@ -238,11 +240,9 @@ async def _run_ocr_pipeline(
             sys.path.insert(0, p)
 
     try:
-        from motor.motor_asyncio import AsyncIOMotorClient
-        from backend.core.config import settings
+        from backend.core.database import get_db as _get_db
 
-        client = AsyncIOMotorClient(settings.MONGO_URL)
-        db = client[settings.DB_NAME]
+        db = _get_db()
 
         from tools.ocr.answer_sheet_ocr import AnswerSheetProcessor
 
@@ -470,9 +470,7 @@ async def _run_ocr_pipeline(
     except Exception as e:
         print(f"OCR pipeline error for {assessment_id}: {e}")
         try:
-            client = AsyncIOMotorClient(settings.MONGO_URL)
-            db = client[settings.DB_NAME]
-            await db.assessments.update_one(
+            await _get_db().assessments.update_one(
                 {"_id": assessment_id},
                 {"$set": {"status": "error", "processingStatus": str(e)[:200]}}
             )
@@ -577,6 +575,73 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
                 "needsReview": ev.get("needsReview", True),
             }},
         )
+
+
+@router.get("/seed")
+async def seed_database(db=Depends(get_db)):
+    """Seed the database with demo data. Call this once after deployment."""
+    seed_dir = os.path.join(os.path.dirname(__file__), "..", "seed")
+
+    await db.curricula.delete_many({})
+    await db.assessments.delete_many({})
+    await db.questions.delete_many({})
+    await db.students.delete_many({})
+    await db.evaluations.delete_many({})
+    await db.interventions.delete_many({})
+    await db.users.delete_many({})
+
+    hashed = bcrypt.hashpw("demo1234".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    await db.users.insert_one({
+        "_id": "teacher-1",
+        "name": "Lakshmi Devi",
+        "email": "teacher@school.gov.in",
+        "school": "Z.P. High School, Hyderabad",
+        "subjects": ["Biology", "Physics"],
+        "password_hash": hashed,
+    })
+
+    curr_path = os.path.join(seed_dir, "curriculum", "ap-class8-bio.json")
+    if os.path.exists(curr_path):
+        with open(curr_path) as f:
+            await db.curricula.insert_one(json.load(f))
+
+    data_dir = os.path.join(seed_dir, "data")
+    for filename, collection_name in [
+        ("assessments.json", "assessments"),
+        ("questions.json", "questions"),
+        ("students.json", "students"),
+        ("evaluations.json", "evaluations"),
+        ("interventions.json", "interventions"),
+    ]:
+        filepath = os.path.join(data_dir, filename)
+        if not os.path.exists(filepath):
+            continue
+        with open(filepath) as f:
+            docs = json.load(f)
+        if isinstance(docs, dict):
+            items = []
+            for student_id, student_evals in docs.items():
+                for e in student_evals:
+                    e["_id"] = f"{student_id}-{e['qId']}"
+                    e["assessmentId"] = "asm-001"
+                    e["studentId"] = student_id
+                    e["approved"] = False
+                    items.append(e)
+            if items:
+                await db[collection_name].insert_many(items)
+        elif isinstance(docs, list):
+            for d in docs:
+                if "id" in d:
+                    d["_id"] = d.pop("id")
+                if collection_name != "assessments":
+                    d["assessmentId"] = "asm-001"
+            if docs:
+                await db[collection_name].insert_many(docs)
+
+    return {
+        "status": "ok",
+        "message": "Database seeded successfully. Login: teacher@school.gov.in / demo1234",
+    }
 
 
 @router.patch("/{id}", response_model=Assessment)

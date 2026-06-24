@@ -90,62 +90,8 @@ const Upload = () => {
   // Student sheets section
   const [sheetFiles, setSheetFiles] = useState([]);
 
-  const seedSample = async () => {
-    setName("SA1 — Biological Science");
-    setQMode("text");
-    setQText(`Identify the odd one with respect to their fertilization A) Frog B) Butterfly C) Hen D) Humans
-Identify the correct statement about IVF A) The baby in this method develops in test tube B) In IVF method fertilization takes place inside the body of female C) This method is done in females whose oviducts are blocked D) IVF is an asexual reproduction method.
-In a village so many people are suffering with Hepatitis A. Which of the following method would you suggest to prevent this disease A) Using mosquito nets B) Drink boiled and cooled drinking water C) Spraying insecticides D) Keep the patient in complete isolation
-What is the reason for growing the wheat crop in Rabi season A) Plenty of water is available B) High temperature during this season promotes fast growth C) High humidity and cloudy weather is suitable for growth D) It requires cool environment and dry weather
-Metamorphosis is seen in this organism 1) Frog 2) Butterfly 3) Hen 4) Dog A) 1 only B) 1 and 2 only C) 1, 2 and 3 only D) 4 only
-Identify the organism given in the picture. A) Paramoecium B) Chlamydomonas C) Amoeba D) Spirogyra
-Assertion (A): Combine is a modern tool used for ploughing Reason (R): Ploughing makes the soil loose and porous to air, water and helps in microbial growth A) Both A, R are true, R is correct explanation of A B) Both A, R are true, R is not correct explanation of A C) A is true, R is false D) A is false, R is true
-Ramu's village is severly a effected by drought. Which method do you suggest him to grow crops in the scarcity of water? A) Drip irrigation B) Moat and chain pump C) Lever system D) Dhekli
-Find the incorrect statement among the following A) Hydra reproduces through budding B) Amoeba reproduce through Binary fission C) Cloning is an example for sexual mode of reproduction D) Butterfly is an oviparous organism
-Rahul placed an egg bought from the market along with the eggs laid by his pet hen for incubation. Later, he found that no chick hatched from the market egg. What could be the most likely reason? A) A hen can incubate only its own eggs. B) Eggs sold in markets are not fertilised. C) Eggs sold in the market are treated with chemicals to kill the life in them. D) The market eggs are generally too small to support the growth of a chick.
-Section B: Answer the following questions in your answer booklet. 3x2=6
-What do we call the unwanted plants growing along with crops? How can we control them?
-Raju is taking excessive amounts of Antibiotics. Is it correct? What precautions must be taken while taking antibiotics.
-Write any two differences between egg and sperm.
-Section C: Answer the following questions in your answer booklet. 2x4=8
-List four food preservation methods used at your home and provide examples of foods that are preserved using each method.
-Draw a neat labelled diagram of Female reproductive system
-Section D: Answer the following questions in your answer booklet. An internal choice is provided for each question. 2x8=16
-16. A) i) Which organism causes polio ? ii) Give an example for bacterial diseases ? iii) How can we prevent Malaria disease ? iv) What is the mode of transmission of Chicken pox?
-17. A) What is asexual reproduction? Explain any two methods of asexual reproduction in animals.`);
-
-    setAMode("text");
-    setAText(`1. B
-2. C
-3. B
-4. D
-5. B
-6. C
-7. D
-8. A
-9. C
-10. B
-11. Weeds are unwanted plants. Controlled by weeding, weedicides.
-12. No excess antibiotics cause resistance. Doctor advice, full course, not for viral.
-13. Egg larger non-motile. Sperm small with tail.
-14. Salting, sugar, oil vinegar, heating cooling with examples.
-15. Diagram manual review.
-16. i) Virus ii) TB iii) Mosquito nets iv) Air contact
-17. Single parent reproduction. Budding Hydra, Binary fission Amoeba.`);
-
-    try {
-      const res = await fetch("http://localhost:8000/media/samples/answer_sheets/Karan.jpeg");
-      const blob = await res.blob();
-      const file = new File([blob], "Karan.jpeg", { type: "image/jpeg" });
-      setSheetFiles([{
-        id: `img-sample-karan`,
-        name: "Karan.jpeg",
-        file: file,
-        preview: URL.createObjectURL(file),
-      }]);
-    } catch (err) {
-      console.warn("Failed to load sample sheet image:", err);
-    }
+  const seedSample = () => {
+    navigate("/review/asm-001");
   };
 
   const addImages = (setter) => (incoming) => {
@@ -237,6 +183,20 @@ Section D: Answer the following questions in your answer booklet. An internal ch
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12" data-testid="upload-page">
+      {/* Demo Mode Banner */}
+      <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 text-lg">🔬</div>
+          <div>
+            <div className="font-medium text-amber-900">Demo Mode</div>
+            <div className="text-sm text-amber-700 mt-1">
+              This is a demo showcase with pre-loaded sample data. OCR processing is disabled. 
+              Click <strong>"Try with sample papers"</strong> to explore the analysis, or navigate from the sidebar.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
           <div className="text-sm font-semibold tracking-[0.08em] uppercase text-blue-800">{assessmentId ? "Student Responses" : t("upload")}</div>
