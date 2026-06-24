@@ -54,6 +54,8 @@ export const AppProvider = ({ children }) => {
   const login = async (email, password) => {
     const { apiClient } = await import("@/data/apiClient");
     const data = await apiClient.login(email, password);
+    localStorage.setItem("evalassist-token", data.access_token);
+    localStorage.setItem("evalassist-user", JSON.stringify(data.user));
     setToken(data.access_token);
     setUser(data.user);
     const subjects = data.user?.subjects;
@@ -70,6 +72,8 @@ export const AppProvider = ({ children }) => {
     const { apiClient } = await import("@/data/apiClient");
     const data = await apiClient.login(email, password);
     const userWithName = { ...data.user, name: displayName };
+    localStorage.setItem("evalassist-token", data.access_token);
+    localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
     const subjects = data.user?.subjects;
@@ -86,6 +90,8 @@ export const AppProvider = ({ children }) => {
     const { apiClient } = await import("@/data/apiClient");
     const data = await apiClient.googleLogin(credential, displayName);
     const userWithName = displayName ? { ...data.user, name: displayName } : data.user;
+    localStorage.setItem("evalassist-token", data.access_token);
+    localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
     const subjects = data.user?.subjects;
