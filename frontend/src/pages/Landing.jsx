@@ -6,10 +6,21 @@ import { BookCheck, Zap, Shield, TrendingUp, ArrowRight, Loader2 } from "lucide-
 import { apiClient } from "@/data/apiClient";
 
 const Landing = () => {
-  const { t, user, googleLogin } = useApp();
+  const { t, user, googleLogin, loginWithName } = useApp();
   const navigate = useNavigate();
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleDemo = async () => {
+    setDemoLoading(true);
+    try {
+      await loginWithName("teacher@school.gov.in", "demo1234", "Teacher");
+      navigate("/loading", { state: { name: "Teacher" } });
+    } catch {
+      setDemoLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user) return;
@@ -98,10 +109,11 @@ const Landing = () => {
                 )}
               </button>
               <button
-                onClick={() => navigate("/welcome")}
-                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border-2 border-blue-800 text-blue-800 font-medium hover:bg-blue-50 transition-colors text-base"
+                onClick={handleDemo}
+                disabled={demoLoading}
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border-2 border-blue-800 text-blue-800 font-medium hover:bg-blue-50 transition-colors text-base disabled:opacity-50"
               >
-                Try demo without sign-in <ArrowRight size={18} />
+                {demoLoading ? <><Loader2 size={14} className="animate-spin" /> Loading...</> : <>Try demo without sign-in <ArrowRight size={18} /></>}
               </button>
             </div>
 

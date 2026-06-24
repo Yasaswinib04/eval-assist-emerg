@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { Layout } from "@/components/Layout";
 import Landing from "@/pages/Landing";
-import Welcome from "@/pages/Welcome";
 import Login from "@/pages/Login";
 import Loading from "@/pages/Loading";
 import Dashboard from "@/pages/Dashboard";
@@ -35,7 +34,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/welcome" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Public><Login /></Public>} />
             <Route path="/loading" element={<Protected><Loading /></Protected>} />
             <Route element={<Protected><Layout /></Protected>}>
