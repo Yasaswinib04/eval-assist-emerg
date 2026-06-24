@@ -66,6 +66,22 @@ export const AppProvider = ({ children }) => {
     return data;
   };
 
+  const loginWithName = async (email, password, displayName) => {
+    const { apiClient } = await import("@/data/apiClient");
+    const data = await apiClient.login(email, password);
+    const userWithName = { ...data.user, name: displayName };
+    setToken(data.access_token);
+    setUser(userWithName);
+    const subjects = data.user?.subjects;
+    if (subjects?.length) {
+      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
+      if (!localStorage.getItem("evalassist-active-subject")) {
+        setActiveSubject(subjects[0]);
+      }
+    }
+    return data;
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -74,7 +90,7 @@ export const AppProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ lang, setLang, t, user, login, logout, activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS }}>
+    <AppContext.Provider value={{ lang, setLang, t, user, setUser, login, loginWithName, logout, activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS }}>
       {children}
     </AppContext.Provider>
   );

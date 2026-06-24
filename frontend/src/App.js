@@ -2,7 +2,10 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { Layout } from "@/components/Layout";
+import Landing from "@/pages/Landing";
+import Welcome from "@/pages/Welcome";
 import Login from "@/pages/Login";
+import Loading from "@/pages/Loading";
 import Dashboard from "@/pages/Dashboard";
 import Upload from "@/pages/Upload";
 import Processing from "@/pages/Processing";
@@ -31,9 +34,11 @@ function App() {
       <AppProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Public><Login /></Public>} />
+            <Route path="/loading" element={<Protected><Loading /></Protected>} />
             <Route element={<Protected><Layout /></Protected>}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/analysis/:id" element={<Analysis />} />
@@ -43,7 +48,7 @@ function App() {
               <Route path="/interventions/:id" element={<Interventions />} />
               <Route path="/student/:id/:studentId" element={<StudentProfile />} />
             </Route>
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
         <Toaster richColors position="top-right" />

@@ -1,8 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
 import { Upload as UploadIcon, FileCheck2, Clock, TrendingUp, ChevronRight, ArrowUpRight, Users, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const StatusPill = ({ status, t }) => {
   const map = {
@@ -46,6 +48,17 @@ const KpiCard = ({ label, value, sub, icon: Icon, accent, testId }) => (
 const Dashboard = () => {
   const { t, user, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.fromLoader) {
+      const displayName = location.state.name || user?.name || "Teacher";
+      toast(`You're ${displayName} (demo). Click any assessment to explore.`, {
+        description: "All data is pre-loaded and ready.",
+        duration: 7000,
+      });
+    }
+  }, []);
 
   const { data: ALL_ASSESSMENTS = [], isLoading } = useQuery({
     queryKey: ['assessments'],

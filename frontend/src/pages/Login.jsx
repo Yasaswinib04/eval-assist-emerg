@@ -127,7 +127,13 @@ const Login = () => {
                 {loading ? "Signing in..." : t("signIn")}
               </button>
 
-              <p className="text-xs text-center text-stone-500 mt-3">{t("demoNote")}</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+                <p className="text-xs text-amber-800 font-medium mb-1">Demo Credentials</p>
+                <p className="text-[11px] text-amber-700">
+                  Email: <span className="font-mono font-semibold">teacher@school.gov.in</span><br />
+                  Password: <span className="font-mono font-semibold">demo1234</span>
+                </p>
+              </div>
             </form>
           </div>
         </div>
