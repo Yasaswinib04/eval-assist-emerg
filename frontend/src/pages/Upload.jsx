@@ -388,7 +388,7 @@ const Upload = () => {
       {/* Sample Papers Animation Overlay */}
       {showSampleAnimation && (
         <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl mx-4">
             <div className="text-center mb-6">
               <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center mx-auto mb-3">
                 <UploadCloud size={24} />
@@ -399,16 +399,34 @@ const Upload = () => {
 
             <div className="space-y-4">
               {[
-                { label: "Question Paper", icon: FileText, done: animStep >= 1 },
-                { label: "Answer Key", icon: BookOpen, done: animStep >= 2 },
-                { label: "8 Student Answer Sheets", icon: ImageIcon, done: animStep >= 3, thumbs: ["Karan", "Rahul", "Aryan", "Janu"] },
+                {
+                  label: "Question Paper (17 Qs, 40 marks)",
+                  icon: FileText,
+                  done: animStep >= 1,
+                  preview: "Q1. Identify the odd one with respect to fertilization...\nQ2. Identify the correct statement about IVF...\nQ3. Best way to prevent Hepatitis A?...",
+                  count: "MCQs + Subjective · Sections A–D",
+                },
+                {
+                  label: "Answer Key",
+                  icon: BookOpen,
+                  done: animStep >= 2,
+                  preview: "1. Humans (D) · 2. IVF for blocked oviducts (C)\n3. Boiled water (B) · 4. Cool & dry (D)\n5. Frog & Butterfly (B) · 6. Amoeba (C)",
+                  count: "17 correct answers · Teacher-provided",
+                },
+                {
+                  label: "8 Student Answer Sheets",
+                  icon: ImageIcon,
+                  done: animStep >= 3,
+                  thumbs: ["Karan", "Rahul", "Aryan", "Janu", "Tara", "Dev", "Priya", "Sanya"],
+                  count: "Handwritten · Scanned JPEG · Class 8-B",
+                },
               ].map((item, i) => (
-                <div key={i} className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${
+                <div key={i} className={`flex items-start gap-4 p-4 rounded-xl transition-all duration-300 ${
                   item.done ? "bg-emerald-50 border border-emerald-200" :
                   animStep === i + 1 ? "bg-blue-50 border border-blue-200" :
                   "bg-stone-50 border border-stone-200 opacity-50"
                 }`}>
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                     item.done ? "bg-emerald-100 text-emerald-700" :
                     animStep === i + 1 ? "bg-blue-100 text-blue-800" :
                     "bg-stone-200 text-stone-400"
@@ -417,24 +435,28 @@ const Upload = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-stone-900">{item.label}</div>
-                    {item.done && <div className="text-[11px] text-emerald-700">Loaded</div>}
                     {animStep === i + 1 && <div className="text-[11px] text-blue-700 animate-pulse">Loading...</div>}
+                    {item.done && item.preview && (
+                      <div className="mt-2 p-3 bg-white rounded-lg border border-stone-200 text-[11px] text-stone-600 leading-relaxed font-mono whitespace-pre-line line-clamp-4">
+                        {item.preview}
+                      </div>
+                    )}
+                    {item.done && item.count && !item.preview && (
+                      <div className="text-[11px] text-emerald-700 mt-1">{item.count}</div>
+                    )}
+                    {item.done && item.thumbs && (
+                      <div className="flex gap-1 mt-2 -space-x-1 flex-wrap">
+                        {item.thumbs.map((name) => (
+                          <img
+                            key={name}
+                            src={`/media/samples/answer_sheets/${name}.jpeg`}
+                            alt={name}
+                            className="h-14 w-14 rounded-lg border border-stone-200 object-cover shadow-sm"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {item.done && item.img && (
-                    <img src={item.img} alt="" className="h-16 w-24 rounded-lg border border-stone-200 object-cover shadow-sm" />
-                  )}
-                  {i === 2 && item.done && item.thumbs && (
-                    <div className="flex gap-1 -space-x-2">
-                      {item.thumbs.map((name) => (
-                        <img
-                          key={name}
-                          src={`/media/samples/answer_sheets/${name}.jpeg`}
-                          alt={name}
-                          className="h-14 w-14 rounded-lg border border-stone-200 object-cover shadow-sm"
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
