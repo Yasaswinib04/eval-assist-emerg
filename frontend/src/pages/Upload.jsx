@@ -418,11 +418,14 @@ const Upload = () => {
                     {animStep === i + 1 && <div className="text-[11px] text-blue-700 animate-pulse">Loading...</div>}
                   </div>
                   {i === 2 && item.done && (
-                    <div className="flex gap-1.5 -space-x-2">
+                    <div className="flex gap-1 -space-x-2">
                       {["Karan", "Rahul", "Aryan", "Janu"].map((name) => (
-                        <div key={name} className="h-8 w-8 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-[9px] font-bold text-amber-800 overflow-hidden shadow-sm">
-                          {name[0]}
-                        </div>
+                        <img
+                          key={name}
+                          src={`/media/samples/answer_sheets/${name}.jpeg`}
+                          alt={name}
+                          className="h-8 w-8 rounded-lg border border-stone-200 object-cover shadow-sm"
+                        />
                       ))}
                     </div>
                   )}
