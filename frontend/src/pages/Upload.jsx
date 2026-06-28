@@ -96,8 +96,7 @@ const Upload = () => {
   const seedSample = () => {
     setShowSampleAnimation(true);
     setAnimStep(0);
-    new Image().src = "/media/curriculum/ap-class8-bio/img_p1_1.jpeg";
-    new Image().src = "/media/curriculum/ap-class8-bio/img_p3_1.jpeg";
+    new Image().src = "/media/samples/answer_sheets/Karan.jpeg";
     ["Karan", "Rahul", "Aryan", "Janu"].forEach((n) => {
       new Image().src = `/media/samples/answer_sheets/${n}.jpeg`;
     });
@@ -400,8 +399,8 @@ const Upload = () => {
 
             <div className="space-y-4">
               {[
-                { label: "Question Paper", icon: FileText, done: animStep >= 1, img: "/media/curriculum/ap-class8-bio/img_p1_1.jpeg" },
-                { label: "Answer Key", icon: BookOpen, done: animStep >= 2, img: "/media/curriculum/ap-class8-bio/img_p3_1.jpeg" },
+                { label: "Question Paper", icon: FileText, done: animStep >= 1 },
+                { label: "Answer Key", icon: BookOpen, done: animStep >= 2 },
                 { label: "8 Student Answer Sheets", icon: ImageIcon, done: animStep >= 3, thumbs: ["Karan", "Rahul", "Aryan", "Janu"] },
               ].map((item, i) => (
                 <div key={i} className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${
