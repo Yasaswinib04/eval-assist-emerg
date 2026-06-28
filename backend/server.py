@@ -1,11 +1,12 @@
 import sys
 import os
+import logging
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
-import os
-import logging
 from backend.core.config import settings
 from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions
 
@@ -34,15 +35,34 @@ api_router.include_router(interventions.router, prefix="/assessments", tags=["in
 app.include_router(api_router)
 
 # Serve media files (sample answer sheets, etc.)
-from fastapi.staticfiles import StaticFiles
 media_dir = os.path.join(os.path.dirname(__file__), "..", "media")
 if os.path.exists(media_dir):
     app.mount("/media", StaticFiles(directory=media_dir), name="media")
 
-# Serve frontend production build (SPA)
+# Serve frontend static assets (JS, CSS, etc.)
 frontend_build = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
 if os.path.exists(frontend_build):
-    app.mount("/", StaticFiles(directory=frontend_build, html=True), name="frontend")
+    app.mount("/static", StaticFiles(directory=os.path.join(frontend_build, "static")), name="static")
+
+# SPA catch-all — serve index.html for all non-API, non-static, non-media routes
+index_html = os.path.join(frontend_build, "index.html") if os.path.exists(frontend_build) else None
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    if full_path.startswith("media/"):
+        raise HTTPException(status_code=404)
+    if full_path.startswith("static/"):
+        raise HTTPException(status_code=404)
+    # Try serving exact file from build dir
+    file_path = os.path.join(frontend_build, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    # SPA fallback
+    if index_html and os.path.exists(index_html):
+        return FileResponse(index_html)
+    raise HTTPException(status_code=404)
 
 # Configure logging
 logging.basicConfig(
