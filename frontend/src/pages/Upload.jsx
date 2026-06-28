@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen } from "lucide-react";
+import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen, CheckCircle } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
 const TabUpload = ({ files, onAdd, onRemove, testId }) => {
@@ -90,9 +90,23 @@ const Upload = () => {
   // Student sheets section
   const [sheetFiles, setSheetFiles] = useState([]);
 
+  const [showSampleAnimation, setShowSampleAnimation] = useState(false);
+  const [animStep, setAnimStep] = useState(0);
+
   const seedSample = () => {
-    navigate("/dashboard");
+    setShowSampleAnimation(true);
+    setAnimStep(0);
   };
+
+  useEffect(() => {
+    if (!showSampleAnimation) return;
+    const steps = [1, 2, 3];
+    const timers = steps.map((s, i) =>
+      setTimeout(() => setAnimStep(s), (i + 1) * 700)
+    );
+    const nav = setTimeout(() => navigate("/dashboard"), 2500);
+    return () => { timers.forEach(clearTimeout); clearTimeout(nav); };
+  }, [showSampleAnimation]);
 
   const addImages = (setter) => (incoming) => {
     const list = Array.from(incoming).map((f, i) => ({
@@ -367,6 +381,62 @@ const Upload = () => {
           )}
         </button>
       </div>
+
+      {/* Sample Papers Animation Overlay */}
+      {showSampleAnimation && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4">
+            <div className="text-center mb-6">
+              <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center mx-auto mb-3">
+                <UploadCloud size={24} />
+              </div>
+              <h2 className="font-display text-xl font-semibold text-stone-900">Loading Sample Papers</h2>
+              <p className="text-sm text-stone-500 mt-1">Preparing SA1 — Biological Science for you to explore</p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { label: "Question Paper", icon: FileText, done: animStep >= 1, image: null },
+                { label: "Answer Key", icon: BookOpen, done: animStep >= 2, image: null },
+                { label: "8 Student Answer Sheets", icon: ImageIcon, done: animStep >= 3, image: null },
+              ].map((item, i) => (
+                <div key={i} className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${
+                  item.done ? "bg-emerald-50 border border-emerald-200" :
+                  animStep === i + 1 ? "bg-blue-50 border border-blue-200" :
+                  "bg-stone-50 border border-stone-200 opacity-50"
+                }`}>
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    item.done ? "bg-emerald-100 text-emerald-700" :
+                    animStep === i + 1 ? "bg-blue-100 text-blue-800" :
+                    "bg-stone-200 text-stone-400"
+                  }`}>
+                    {item.done ? <CheckCircle size={18} /> : <item.icon size={18} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-stone-900">{item.label}</div>
+                    {item.done && <div className="text-[11px] text-emerald-700">Loaded</div>}
+                    {animStep === i + 1 && <div className="text-[11px] text-blue-700 animate-pulse">Loading...</div>}
+                  </div>
+                  {i === 2 && item.done && (
+                    <div className="flex gap-1.5 -space-x-2">
+                      {["Karan", "Rahul", "Aryan", "Janu"].map((name) => (
+                        <div key={name} className="h-8 w-8 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-[9px] font-bold text-amber-800 overflow-hidden shadow-sm">
+                          {name[0]}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 bg-stone-100 rounded-full h-1.5 overflow-hidden">
+              <div className="h-full bg-blue-800 transition-all duration-500 rounded-full"
+                style={{ width: `${(animStep / 3) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
