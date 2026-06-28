@@ -20,7 +20,10 @@ const Landing = () => {
         setGoogleConfigured(false);
         return;
       }
+      let attempts = 0;
+      const maxAttempts = 40;
       const check = setInterval(() => {
+        attempts++;
         if (window.google?.accounts?.id) {
           window.google.accounts.id.initialize({
             client_id: cfg.clientId,
@@ -29,10 +32,6 @@ const Landing = () => {
               try {
                 const data = await googleLogin(response.credential, "");
                 console.log("[Google] login success, user:", data?.user?.email, "token:", !!data?.access_token);
-                console.log("[Google] localStorage check before nav:", {
-                  token: !!localStorage.getItem("evalassist-token"),
-                  user: !!localStorage.getItem("evalassist-user"),
-                });
                 setTimeout(() => {
                   window.location.replace("/loading");
                 }, 300);
@@ -45,6 +44,10 @@ const Landing = () => {
           });
           setGoogleReady(true);
           clearInterval(check);
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(check);
+          setGoogleConfigured(false);
         }
       }, 200);
       return () => clearInterval(check);

@@ -24,7 +24,10 @@ const Login = () => {
         setShowEmail(true);
         return;
       }
+      let attempts = 0;
+      const maxAttempts = 40;
       const check = setInterval(() => {
+        attempts++;
         if (window.google?.accounts?.id) {
         window.google.accounts.id.initialize({
           client_id: cfg.clientId,
@@ -43,6 +46,11 @@ const Login = () => {
         });
           setGoogleReady(true);
           clearInterval(check);
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(check);
+          setError("Google sign-in timed out. Use email below.");
+          setShowEmail(true);
         }
       }, 200);
       return () => clearInterval(check);
