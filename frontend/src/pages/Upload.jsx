@@ -91,7 +91,7 @@ const Upload = () => {
   const [sheetFiles, setSheetFiles] = useState([]);
 
   const seedSample = () => {
-    navigate("/review/asm-001");
+    navigate("/dashboard");
   };
 
   const addImages = (setter) => (incoming) => {
