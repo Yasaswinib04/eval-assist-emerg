@@ -154,28 +154,13 @@ async def google_debug():
     }
 
 @router.get("/health")
-async def health_check(db=Depends(get_db)):
-    """Health check with MongoDB connectivity test."""
-    import time
-    try:
-        start = time.time()
-        await db.command("ping")
-        elapsed = round((time.time() - start) * 1000)
-        user_count = await db.users.count_documents({})
-        return {
-            "status": "ok",
-            "mongoLatencyMs": elapsed,
-            "userCount": user_count,
-            "dbName": settings.DB_NAME,
-            "mongoUrl": settings.MONGO_URL[:40] + "...",
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "dbName": settings.DB_NAME,
-            "mongoUrl": settings.MONGO_URL[:40] + "...",
-        }
+async def health_check():
+    """Health check — always ok for demo mode (MongoDB bypassed)."""
+    return {
+        "status": "ok",
+        "mode": "demo",
+        "mongoUrl": settings.MONGO_URL[:40] + "...",
+    }
 
 @router.get("/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
