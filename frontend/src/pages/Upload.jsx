@@ -96,16 +96,20 @@ const Upload = () => {
   const seedSample = () => {
     setShowSampleAnimation(true);
     setAnimStep(0);
+    new Image().src = "/media/curriculum/ap-class8-bio/img_p1_1.jpeg";
+    new Image().src = "/media/curriculum/ap-class8-bio/img_p3_1.jpeg";
+    ["Karan", "Rahul", "Aryan", "Janu"].forEach((n) => {
+      new Image().src = `/media/samples/answer_sheets/${n}.jpeg`;
+    });
   };
 
   useEffect(() => {
     if (!showSampleAnimation) return;
-    const steps = [1, 2, 3];
-    const timers = steps.map((s, i) =>
-      setTimeout(() => setAnimStep(s), (i + 1) * 700)
-    );
-    const nav = setTimeout(() => navigate("/dashboard"), 2500);
-    return () => { timers.forEach(clearTimeout); clearTimeout(nav); };
+    const t1 = setTimeout(() => setAnimStep(1), 1000);
+    const t2 = setTimeout(() => setAnimStep(2), 2000);
+    const t3 = setTimeout(() => setAnimStep(3), 3000);
+    const nav = setTimeout(() => navigate("/dashboard"), 4500);
+    return () => { [t1,t2,t3,nav].forEach(clearTimeout); };
   }, [showSampleAnimation]);
 
   const addImages = (setter) => (incoming) => {
