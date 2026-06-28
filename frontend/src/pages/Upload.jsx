@@ -396,9 +396,9 @@ const Upload = () => {
 
             <div className="space-y-4">
               {[
-                { label: "Question Paper", icon: FileText, done: animStep >= 1, image: null },
-                { label: "Answer Key", icon: BookOpen, done: animStep >= 2, image: null },
-                { label: "8 Student Answer Sheets", icon: ImageIcon, done: animStep >= 3, image: null },
+                { label: "Question Paper", icon: FileText, done: animStep >= 1, img: "/media/curriculum/ap-class8-bio/img_p1_1.jpeg" },
+                { label: "Answer Key", icon: BookOpen, done: animStep >= 2, img: "/media/curriculum/ap-class8-bio/img_p3_1.jpeg" },
+                { label: "8 Student Answer Sheets", icon: ImageIcon, done: animStep >= 3, thumbs: ["Karan", "Rahul", "Aryan", "Janu"] },
               ].map((item, i) => (
                 <div key={i} className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${
                   item.done ? "bg-emerald-50 border border-emerald-200" :
@@ -417,14 +417,17 @@ const Upload = () => {
                     {item.done && <div className="text-[11px] text-emerald-700">Loaded</div>}
                     {animStep === i + 1 && <div className="text-[11px] text-blue-700 animate-pulse">Loading...</div>}
                   </div>
-                  {i === 2 && item.done && (
+                  {item.done && item.img && (
+                    <img src={item.img} alt="" className="h-10 w-14 rounded-lg border border-stone-200 object-cover shadow-sm" />
+                  )}
+                  {i === 2 && item.done && item.thumbs && (
                     <div className="flex gap-1 -space-x-2">
-                      {["Karan", "Rahul", "Aryan", "Janu"].map((name) => (
+                      {item.thumbs.map((name) => (
                         <img
                           key={name}
                           src={`/media/samples/answer_sheets/${name}.jpeg`}
                           alt={name}
-                          className="h-8 w-8 rounded-lg border border-stone-200 object-cover shadow-sm"
+                          className="h-10 w-10 rounded-lg border border-stone-200 object-cover shadow-sm"
                         />
                       ))}
                     </div>
