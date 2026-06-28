@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';
 
 function getToken() {
     return localStorage.getItem('evalassist-token');
@@ -37,6 +37,25 @@ export const apiClient = {
             const err = await res.json().catch(() => ({ detail: 'Login failed' }));
             throw new Error(err.detail || 'Login failed');
         }
+        return await res.json();
+    },
+
+    async googleLogin(credential, displayName) {
+        const res = await fetch(`${API_BASE}/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential, displayName }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: 'Google login failed' }));
+            throw new Error(err.detail || 'Google login failed');
+        }
+        return await res.json();
+    },
+
+    async getGoogleConfig() {
+        const res = await fetch(`${API_BASE}/auth/google-config`);
+        if (!res.ok) return { clientId: '' };
         return await res.json();
     },
 
