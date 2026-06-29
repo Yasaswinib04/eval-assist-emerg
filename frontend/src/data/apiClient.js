@@ -1,7 +1,19 @@
 const API_BASE = '/api';
+const FETCH_TIMEOUT = 3000;
 
 function getToken() {
     return localStorage.getItem('evalassist-token');
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        return res;
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 async function fetchWithFallback(url, options = {}) {
@@ -14,10 +26,7 @@ async function fetchWithFallback(url, options = {}) {
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-        const res = await fetch(`${API_BASE}${url}`, {
-            ...options,
-            headers
-        });
+        const res = await fetchWithTimeout(`${API_BASE}${url}`, { ...options, headers });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return await res.json();
     } catch (error) {

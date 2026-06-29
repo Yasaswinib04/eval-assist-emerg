@@ -6,7 +6,7 @@ _client = None
 def get_client():
     global _client
     if _client is None:
-        _client = AsyncIOMotorClient(settings.MONGO_URL, serverSelectionTimeoutMS=5000)
+        _client = AsyncIOMotorClient(settings.MONGO_URL, serverSelectionTimeoutMS=2000)
     return _client
 
 def get_db():
