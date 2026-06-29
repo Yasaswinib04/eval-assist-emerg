@@ -107,6 +107,7 @@ Return ONLY a JSON array with exactly 17 elements, one per question. No extra te
         }
 
         print(f"[Qwen] Processing {os.path.basename(image_path)} for student {student_id}...")
+        print(f"[Qwen] API key: {self.api_key[:20]}... (length: {len(self.api_key)})")
         resp = requests.post(self.endpoint, headers=headers, json=payload, timeout=120)
         resp.raise_for_status()
 
