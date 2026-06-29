@@ -165,11 +165,11 @@ const Processing = () => {
             <h3 className="font-display text-xl font-semibold text-stone-900">All papers evaluated!</h3>
             <p className="text-stone-600 mt-1">Evaluations are ready for your review and overrides.</p>
             <button
-              onClick={() => navigate(`/analysis/${id}`)}
+              onClick={() => navigate(`/review/${id}`)}
               data-testid="btn-open-review"
               className="mt-5 inline-flex items-center gap-2 h-12 px-6 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
             >
-              Go to Analysis <ArrowRight size={18} />
+              Proceed to Review & Grade <ArrowRight size={18} />
             </button>
           </div>
         )}
