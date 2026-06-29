@@ -1238,5 +1238,2069 @@
       "studentAnswer": "[unreadable]",
       "reasoning": "Student left Q17 blank. No answer provided. Expected: Asexual reproduction definition, budding (Hydra), binary fission (Amoeba)."
     }
+  ],
+  "stu-01-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Student identified correctly."
+    }
+  ],
+  "stu-02-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 3.0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Student identified correctly."
+    }
+  ],
+  "stu-03-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 1,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 6,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Wrong answer selected."
+    }
+  ],
+  "stu-04-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-05-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 6,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 3.0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Good attempt, needs more explanation."
+    }
+  ],
+  "stu-06-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-07-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-08-asm-002": [
+    {
+      "qId": "q2-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-1",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-2",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-2",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q2-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-3",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-4",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-5",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-6",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-7",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-8",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 6,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q2-9",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q2-10",
+      "reasoning": "No relevant answer provided."
+    }
+  ],
+  "stu-01-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 3,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 4,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-02-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 3,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    }
+  ],
+  "stu-03-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 3,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 1.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 4.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-04-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Student identified correctly."
+    }
+  ],
+  "stu-05-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 3,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 3,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 4.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "No relevant answer provided."
+    }
+  ],
+  "stu-06-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 1,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Well written."
+    }
+  ],
+  "stu-07-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 2.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 4.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Wrong answer selected."
+    }
+  ],
+  "stu-08-asm-003": [
+    {
+      "qId": "q3-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-1",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q3-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-2",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-3",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-4",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-5",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 2.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q3-7",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 2.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-8",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 2.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-9",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 2.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q3-10",
+      "reasoning": "Partially correct \u2014 missing details."
+    }
+  ],
+  "stu-01-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    }
+  ],
+  "stu-02-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "Good attempt, needs more explanation."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 3,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 4.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-03-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 2.0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Student identified correctly."
+    }
+  ],
+  "stu-04-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 2.0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Student identified correctly."
+    }
+  ],
+  "stu-05-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-06-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 1,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 4,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Well written."
+    }
+  ],
+  "stu-07-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Correct concept but incomplete."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "Incorrect. Student misunderstood the concept."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 0.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "Correct answer."
+    }
+  ],
+  "stu-08-asm-004": [
+    {
+      "qId": "q4-1",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-1",
+      "reasoning": "Well written."
+    },
+    {
+      "qId": "q4-2",
+      "aiMark": 1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-2",
+      "reasoning": "Student identified correctly."
+    },
+    {
+      "qId": "q4-3",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-3",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-4",
+      "aiMark": 0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-4",
+      "reasoning": "No relevant answer provided."
+    },
+    {
+      "qId": "q4-5",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-5",
+      "reasoning": "Wrong answer selected."
+    },
+    {
+      "qId": "q4-6",
+      "aiMark": 0,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Answer for q4-6",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q4-7",
+      "aiMark": 2.0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-7",
+      "reasoning": "Partially correct \u2014 missing details."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Answer for q4-8",
+      "reasoning": "No relevant answer provided."
+    }
   ]
 }

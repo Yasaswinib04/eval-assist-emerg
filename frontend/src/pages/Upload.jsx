@@ -119,7 +119,10 @@ const Upload = () => {
       file: f,
       preview: URL.createObjectURL(f),
     }));
-    setter((prev) => [...prev, ...list]);
+    setter((prev) => {
+      const combined = [...prev, ...list];
+      return combined.slice(0, 15);
+    });
   };
 
   const removeImage = (setter) => (id) => {
@@ -206,10 +209,9 @@ const Upload = () => {
         <div className="flex items-start gap-3">
           <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 text-lg">🔬</div>
           <div>
-            <div className="font-medium text-amber-900">Demo Mode</div>
+            <div className="font-medium text-amber-900">Beta Mode</div>
             <div className="text-sm text-amber-700 mt-1">
-              This is a demo showcase with pre-loaded sample data. OCR processing is disabled. 
-              Click <strong>"Try with sample papers"</strong> to explore the analysis, or navigate from the sidebar.
+              Powered by Qwen3 VL AI. <strong>Maximum 15 pages per upload.</strong> OCR evaluates handwritten answer sheets against your answer key.
             </div>
           </div>
         </div>
@@ -364,7 +366,7 @@ const Upload = () => {
           <div className="h-10 w-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center shrink-0"><ImageIcon size={18} /></div>
           <div>
             <div className="font-medium text-stone-900">{assessmentId ? "New Student Answer Sheet(s)" : "Student Answer Sheets"}</div>
-            <div className="text-xs text-stone-500">{assessmentId ? "Scan and add new student sheets (JPEG/PNG only)" : "Required · Scan student handwritten answer sheets (JPEG/PNG)"}</div>
+            <div className="text-xs text-stone-500">{assessmentId ? "Scan and add new student sheets (JPEG/PNG, max 15)" : "Required · Upload up to 15 handwritten answer sheets (JPEG/PNG)"}</div>
           </div>
         </div>
         <TabUpload files={sheetFiles} onAdd={addImages(setSheetFiles)} onRemove={removeImage(setSheetFiles)} testId="zone-sheets" />
