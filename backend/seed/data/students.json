@@ -3,92 +3,88 @@
     "id": "stu-01",
     "name": "Karan",
     "roll": "08-01",
-    "total": 22,
+    "total": 25.0,
     "status": "review",
     "imageUrls": [
       "/media/samples/answer_sheets/Karan.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-02",
     "name": "Rahul",
     "roll": "08-02",
-    "total": 26,
+    "total": 8.0,
     "status": "review",
     "imageUrls": [
       "/media/samples/answer_sheets/Rahul.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-03",
     "name": "Aryan",
     "roll": "08-03",
-    "total": 30,
+    "total": 27.0,
     "status": "review",
     "imageUrls": [
       "/media/samples/answer_sheets/Aryan.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-04",
     "name": "Janu",
     "roll": "08-04",
-    "total": 20,
+    "total": 16.0,
     "status": "review",
     "imageUrls": [
       "/media/samples/answer_sheets/Janu.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-05",
     "name": "Tara",
     "roll": "08-05",
-    "total": 32,
+    "total": 7.0,
     "status": "review",
     "imageUrls": [
-      "/media/samples/answer_sheets/TARA_01.jpeg",
-      "/media/samples/answer_sheets/TARA_02.jpeg"
+      "/media/samples/answer_sheets/TARA_01.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-06",
     "name": "Dev",
     "roll": "08-06",
-    "total": 28,
+    "total": 14.0,
     "status": "review",
     "imageUrls": [
-      "/media/samples/answer_sheets/Dev_01.jpeg",
-      "/media/samples/answer_sheets/Dev_02.jpeg"
+      "/media/samples/answer_sheets/Dev_01.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-07",
     "name": "Sanya",
     "roll": "08-07",
-    "total": 24,
+    "total": 13.0,
     "status": "review",
     "imageUrls": [
-      "/media/samples/answer_sheets/Sanya_01.jpeg",
-      "/media/samples/answer_sheets/Sanya_02.jpeg"
+      "/media/samples/answer_sheets/Sanya_01.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   },
   {
     "id": "stu-08",
     "name": "Priya",
     "roll": "08-08",
-    "total": 27,
+    "total": 2.0,
     "status": "review",
     "imageUrls": [
-      "/media/samples/answer_sheets/Priya_01.jpeg",
-      "/media/samples/answer_sheets/Priya_02.jpeg"
+      "/media/samples/answer_sheets/Priya_01.jpeg"
     ],
-    "assessmentId": "sa1"
+    "assessmentId": "asm-001"
   }
 ]
