@@ -14,7 +14,7 @@ export const Sidebar = () => {
 
   const workspace = [
     { to: "/dashboard", label: t("dashboard"), icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: `/analysis/${aid}`, label: t("assessments"), icon: FileText, testId: "nav-assessments" },
+    { to: `/analysis/${aid}`, label: "Blueprint & Setup", icon: FileText, testId: "nav-assessments" },
     { to: `/review/${aid}`, label: t("reviewOverride"), icon: ClipboardCheck, testId: "nav-review" },
     { to: `/insights/${aid}`, label: t("insights"), icon: BarChart3, testId: "nav-insights" },
     { to: `/interventions/${aid}`, label: t("interventions"), icon: Target, testId: "nav-interventions" },
@@ -144,7 +144,7 @@ export const MobileNav = () => {
 
   const workspace = [
     { to: "/dashboard", label: t("dashboard"), icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: "/analysis/asm-001", label: t("assessments"), icon: FileText, testId: "nav-assessments" },
+    { to: "/analysis/asm-001", label: "Blueprint & Setup", icon: FileText, testId: "nav-assessments" },
     { to: "/review/asm-001", label: t("reviewOverride"), icon: ClipboardCheck, testId: "nav-review" },
     { to: "/insights/asm-001", label: t("insights"), icon: BarChart3, testId: "nav-insights" },
     { to: "/interventions/asm-001", label: t("interventions"), icon: Target, testId: "nav-interventions" },

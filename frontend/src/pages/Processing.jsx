@@ -6,12 +6,12 @@ import { apiClient } from "@/data/apiClient";
 import { ScanLine, Sparkles, BarChart3, Check, Loader2, ArrowRight, FileSearch, Network, AlertCircle } from "lucide-react";
 
 const STEPS = [
-  { key: "step_ocr", icon: ScanLine, backend_status: "step_ocr" },
-  { key: "step_qp", icon: FileSearch, backend_status: "step_qp" },
-  { key: "step_concept", icon: Network, backend_status: "step_concept" },
-  { key: "step_eval", icon: Sparkles, backend_status: "step_eval" },
-  { key: "step_gap", icon: AlertCircle, backend_status: "step_gap" },
-  { key: "step_insights", icon: BarChart3, backend_status: "step_insights" },
+  { key: "step_ocr", label: "Running OCR on handwritten sheets", icon: ScanLine, backend_status: "step_ocr" },
+  { key: "step_qp", label: "Aligning multi-page answer sequences", icon: FileSearch, backend_status: "step_qp" },
+  { key: "step_concept", label: "Matching questions to concepts & chapters", icon: Network, backend_status: "step_concept" },
+  { key: "step_eval", label: "AI evaluating answers against answer key", icon: Sparkles, backend_status: "step_eval" },
+  { key: "step_gap", label: "Identifying learning gaps & patterns", icon: AlertCircle, backend_status: "step_gap" },
+  { key: "step_insights", label: "Generating classroom insights dashboard", icon: BarChart3, backend_status: "step_insights" },
 ];
 
 const Processing = () => {
@@ -144,7 +144,7 @@ const Processing = () => {
                   {status === "done" ? <Check size={20} /> : status === "active" ? <Loader2 size={20} className="animate-spin" /> : <Icon size={20} />}
                 </div>
                 <div className="flex-1">
-                  <div className={`font-medium ${status === "pending" ? "text-stone-500" : "text-stone-900"}`}>{t(s.key)}</div>
+                   <div className={`font-medium ${status === "pending" ? "text-stone-500" : "text-stone-900"}`}>{s.label}</div>
                   {status === "active" && (
                     <div className="mt-1.5 h-1.5 bg-blue-100 rounded-full overflow-hidden">
                       <div className="h-full bg-blue-800 transition-[width] duration-200" style={{ width: `${progress}%` }} />

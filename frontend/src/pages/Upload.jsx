@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen, CheckCircle } from "lucide-react";
+import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen, CheckCircle, Network } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
 const TabUpload = ({ files, onAdd, onRemove, testId }) => {
@@ -107,8 +107,9 @@ const Upload = () => {
     const t1 = setTimeout(() => setAnimStep(1), 1000);
     const t2 = setTimeout(() => setAnimStep(2), 2000);
     const t3 = setTimeout(() => setAnimStep(3), 3000);
-    const nav = setTimeout(() => navigate("/dashboard"), 4500);
-    return () => { [t1,t2,t3,nav].forEach(clearTimeout); };
+    const t4 = setTimeout(() => setAnimStep(4), 4000);
+    const nav = setTimeout(() => navigate("/analysis/asm-001"), 5500);
+    return () => { [t1,t2,t3,t4,nav].forEach(clearTimeout); };
   }, [showSampleAnimation]);
 
   const addImages = (setter) => (incoming) => {
@@ -420,6 +421,13 @@ const Upload = () => {
                   thumbs: ["Karan", "Rahul", "Aryan", "Janu", "Tara", "Dev", "Priya", "Sanya"],
                   count: "Handwritten · Scanned JPEG · Class 8-B",
                 },
+                {
+                  label: "Blueprint & Rubric Matching",
+                  icon: Network,
+                  done: animStep >= 4,
+                  preview: "AI mapped 17 questions across 4 chapters\nCell Structure, Microorganisms, Crop Production, Reproduction\n35 concepts matched · Skill levels assigned",
+                  count: "4 chapters · 17 concepts · 35 knowledge points",
+                },
               ].map((item, i) => (
                 <div key={i} className={`flex items-start gap-4 p-4 rounded-xl transition-all duration-300 ${
                   item.done ? "bg-emerald-50 border border-emerald-200" :
@@ -463,7 +471,7 @@ const Upload = () => {
 
             <div className="mt-6 bg-stone-100 rounded-full h-1.5 overflow-hidden">
               <div className="h-full bg-blue-800 transition-all duration-500 rounded-full"
-                style={{ width: `${(animStep / 3) * 100}%` }} />
+                style={{ width: `${(animStep / 4) * 100}%` }} />
             </div>
           </div>
         </div>

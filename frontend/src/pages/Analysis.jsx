@@ -88,7 +88,7 @@ const Analysis = () => {
           <p className="mt-1.5 text-stone-600 text-lg max-w-2xl">{t("analysisSub")}</p>
         </div>
         <button onClick={() => navigate(`/processing/${id}`)} data-testid="btn-run-evaluation" className="inline-flex items-center gap-2 h-12 px-6 rounded-lg bg-blue-800 hover:bg-blue-900 text-white font-medium shadow-sm">
-          {t("runEvaluation")} <ArrowRight size={18} />
+          Proceed to Student Evaluation <ArrowRight size={18} />
         </button>
       </div>
 
@@ -271,7 +271,7 @@ const Analysis = () => {
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
         <button onClick={() => navigate("/upload")} data-testid="btn-back-upload-2" className="h-12 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium">{t("cancel")}</button>
         <button onClick={() => navigate(`/processing/${id}`)} data-testid="btn-run-evaluation-2" className="inline-flex items-center gap-2 h-12 px-6 rounded-lg bg-blue-800 hover:bg-blue-900 text-white font-medium shadow-sm">
-          {t("runEvaluation")} <ArrowRight size={18} />
+          Proceed to Student Evaluation <ArrowRight size={18} />
         </button>
       </div>
     </div>
