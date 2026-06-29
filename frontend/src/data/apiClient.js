@@ -70,49 +70,73 @@ export const apiClient = {
 
     async createAssessment(formData) {
         const token = getToken();
-        const res = await fetch(`${API_BASE}/assessments`, {
-            method: 'POST',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-            body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            console.warn('Create assessment failed:', data);
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 15000);
+        try {
+            const res = await fetch(`${API_BASE}/assessments`, {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                body: formData,
+                signal: controller.signal,
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                console.warn('Create assessment failed:', data);
+                return null;
+            }
+            return data;
+        } catch (err) {
+            console.warn('Create assessment network error:', err.message);
             return null;
         }
-        return data;
     },
 
     async processAssessment(id) {
         const token = getToken();
-        const res = await fetch(`${API_BASE}/assessments/${id}/process`, {
-            method: 'POST',
-            headers: token ? {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            } : {},
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            console.warn('Process assessment failed:', data);
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 10000);
+        try {
+            const res = await fetch(`${API_BASE}/assessments/${id}/process`, {
+                method: 'POST',
+                headers: token ? {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                } : {},
+                signal: controller.signal,
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                console.warn('Process assessment failed:', data);
+                return null;
+            }
+            return data;
+        } catch (err) {
+            console.warn('Process assessment network error:', err.message);
             return null;
         }
-        return data;
     },
 
     async appendStudentResponses(id, formData) {
         const token = getToken();
-        const res = await fetch(`${API_BASE}/assessments/${id}/append-sheets`, {
-            method: 'POST',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-            body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            console.warn('Append student responses failed:', data);
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 15000);
+        try {
+            const res = await fetch(`${API_BASE}/assessments/${id}/append-sheets`, {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                body: formData,
+                signal: controller.signal,
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                console.warn('Append student responses failed:', data);
+                return null;
+            }
+            return data;
+        } catch (err) {
+            console.warn('Append student responses error:', err.message);
             return null;
         }
-        return data;
     },
 
     async getAssessments() {
