@@ -311,6 +311,74 @@ async def _run_ocr_pipeline(
 
         db = _get_db()
 
+        # ── Qwen/OpenRouter OCR (if configured) ──
+        openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+        if openrouter_key:
+            from backend.tools.ocr.qwen_ocr import QwenVisionOCR, build_question_paper_text, build_answer_key_json
+            answer_key_path = os.path.join(os.path.dirname(__file__), "..", "seed", "data", "answer_key.json")
+            answer_key = build_answer_key_json(answer_key_path)
+            qpaper = build_question_paper_text()
+
+            # Resolve sheet paths (same logic as local pipeline)
+            sheet_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads", assessment_id, "sheets")
+            if custom_sheet_paths:
+                sheet_paths = custom_sheet_paths
+            elif os.path.exists(sheet_dir):
+                sheet_paths = [os.path.join(sheet_dir, f) for f in os.listdir(sheet_dir) if f.lower().endswith((".jpg",".jpeg",".png"))]
+            else:
+                sheet_paths = [os.path.join(os.path.dirname(__file__), "..", "..", img) for img in assessment.get("sheetImages", [])]
+
+            if not sheet_paths:
+                sheet_paths = [os.path.join(os.path.dirname(__file__), "..", "..", "media", "samples", "answer_sheets", f"{name}.jpeg")
+                              for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
+                sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
+
+            print(f"[Qwen] Processing {len(sheet_paths)} sheets via OpenRouter...")
+            qwen = QwenVisionOCR(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct"), qpaper, answer_key)
+
+            # Update status
+            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr"}})
+
+            for path in sheet_paths:
+                base_fname = os.path.basename(path)
+                name_part = os.path.splitext(base_fname)[0].split("_")[0].capitalize()
+                student_id = f"stu-{assessment_id}-{name_part.lower()}"
+
+                result = await asyncio.to_thread(qwen.process, path, student_id)
+                if "error" in result:
+                    print(f"[Qwen] Error processing {name_part}: {result['error']}")
+                    continue
+
+                evaluations = result.get("evaluations", [])
+                for ev in evaluations:
+                    await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
+
+                student_doc = {
+                    "_id": student_id,
+                    "name": name_part,
+                    "roll": f"08-{sheet_paths.index(path)+1:02d}",
+                    "total": result.get("total", 0),
+                    "status": "review",
+                    "imageUrls": [os.path.join("media", "uploads", assessment_id, "sheets", os.path.basename(path))],
+                    "assessmentId": assessment_id,
+                }
+                await db.students.update_one({"_id": student_id}, {"$set": student_doc}, upsert=True)
+
+            # Update assessment as complete
+            distinct_students = await db.evaluations.distinct("studentId", {"assessmentId": assessment_id})
+            final_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
+            num_students = len(distinct_students) if distinct_students else 1
+            pending = len([e for e in final_evals if e.get("needsReview")])
+
+            await db.assessments.update_one({"_id": assessment_id}, {"$set": {
+                "status": "review", "processingStatus": "complete",
+                "totalPapers": num_students, "pendingReview": pending,
+                "avgScore": round(sum(float(e.get("aiMark",0) or 0) for e in final_evals) / max(num_students, 1), 1),
+            }})
+            print(f"[Qwen] Pipeline complete for {assessment_id}: {num_students} students, {len(final_evals)} evals")
+            return
+
+        # ── Local OCR pipeline (fallback) ──
         from tools.ocr.answer_sheet_ocr import AnswerSheetProcessor
 
         # Build the list of answer sheet image paths

@@ -9,5 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 1 week
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "11277436835-dsr9qtojsm5iiujl3pqnmtvb4prngelh.apps.googleusercontent.com")
     CORS_ORIGINS: list = ["*"]
+    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
+    QWEN_MODEL: str = os.getenv("QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct")
 
 settings = Settings()

@@ -17,3 +17,7 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: QWEN_MODEL
+        value: qwen/qwen3-vl-235b-a22b-instruct
