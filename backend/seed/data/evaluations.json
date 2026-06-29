@@ -1242,636 +1242,636 @@
   "stu-01-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Yeast",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-2",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Well written."
+      "studentAnswer": "C) Polio",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Carbon dioxide",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-4",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
+      "studentAnswer": "A) Nitrogen fixation",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-5",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-5",
+      "studentAnswer": "C) Chicken pox",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-6",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-6",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "B) Building immunity",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-7",
+      "studentAnswer": "B) Milk",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-8",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "Partially correct \u2014 missing details."
-    },
-    {
-      "qId": "q2-9",
-      "aiMark": 5.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-9",
+      "studentAnswer": "C) Cell",
       "reasoning": "Correct answer."
     },
     {
+      "qId": "q2-9",
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
+    },
+    {
       "qId": "q2-10",
-      "aiMark": 5.5,
+      "aiMark": 5.2,
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-02-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "D) Protozoa",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Tuberculosis",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q2-4",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
+      "studentAnswer": "B) Carbon dioxide",
       "reasoning": "Correct answer."
     },
     {
-      "qId": "q2-5",
-      "aiMark": 0,
+      "qId": "q2-4",
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "B) Photosynthesis",
+      "reasoning": "Incorrect. Student chose B but correct is A."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Asthma",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q2-6",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-6",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Cleaning blood",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Milk",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-8",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "C) Cell",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-9",
-      "aiMark": 3.0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-9",
-      "reasoning": "Good attempt, needs more explanation."
-    },
-    {
-      "qId": "q2-10",
-      "aiMark": 5.5,
+      "aiMark": 5.2,
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
+      "qId": "q2-10",
+      "aiMark": 4.4,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-03-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "B) Yeast",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "C) Polio",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Carbon dioxide",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-4",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
-      "reasoning": "Well written."
+      "studentAnswer": "A) Nitrogen fixation",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-5",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Student identified correctly."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Chicken pox",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-6",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-6",
+      "studentAnswer": "B) Building immunity",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "No relevant answer provided."
-    },
-    {
-      "qId": "q2-8",
-      "aiMark": 1,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q2-9",
-      "aiMark": 6,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-9",
+      "studentAnswer": "B) Milk",
       "reasoning": "Correct answer."
     },
     {
+      "qId": "q2-8",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Cell",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 5.4,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
       "qId": "q2-10",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 5.1,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-04-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "Well written."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Virus",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Correct answer."
+      "studentAnswer": "B) Cholera",
+      "reasoning": "Incorrect. Student chose B but correct is C."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Carbon dioxide",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-4",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "A) Nitrogen fixation",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-5",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Well written."
+      "studentAnswer": "A) Diabetes",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q2-6",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-6",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "B) Building immunity",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Milk",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-8",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "Correct answer."
+      "studentAnswer": "D) Organism",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q2-9",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-9",
-      "reasoning": "No relevant answer provided."
+      "aiMark": 3.3,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q2-10",
-      "aiMark": 5.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Correct answer."
+      "aiMark": 4.4,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-05-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "B) Yeast",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-2",
+      "studentAnswer": "C) Polio",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "No relevant answer provided."
-    },
-    {
-      "qId": "q2-4",
-      "aiMark": 0.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q2-5",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q2-6",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-6",
-      "reasoning": "No relevant answer provided."
-    },
-    {
-      "qId": "q2-7",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "Good attempt, needs more explanation."
-    },
-    {
-      "qId": "q2-8",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "No relevant answer provided."
-    },
-    {
-      "qId": "q2-9",
-      "aiMark": 6,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-9",
+      "studentAnswer": "B) Carbon dioxide",
       "reasoning": "Correct answer."
     },
     {
+      "qId": "q2-4",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Nitrogen fixation",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-5",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Chicken pox",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-6",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Building immunity",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-7",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Milk",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q2-8",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Organism",
+      "reasoning": "Incorrect. Student chose D but correct is C."
+    },
+    {
+      "qId": "q2-9",
+      "aiMark": 5.5,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
       "qId": "q2-10",
-      "aiMark": 3.0,
+      "aiMark": 2.4,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Good attempt, needs more explanation."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-06-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "Correct answer."
+      "studentAnswer": "D) Protozoa",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Tuberculosis",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Hydrogen",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q2-4",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Photosynthesis",
+      "reasoning": "Incorrect. Student chose B but correct is A."
     },
     {
       "qId": "q2-5",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Well written."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Asthma",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q2-6",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-6",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Building immunity",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Milk",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-8",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "Well written."
+      "studentAnswer": "A) Tissue",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q2-9",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-9",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 2.5,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q2-10",
-      "aiMark": 5.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Correct answer."
+      "aiMark": 2.9,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-07-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Yeast",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "C) Polio",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-3",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Carbon dioxide",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-4",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
-      "reasoning": "Well written."
+      "studentAnswer": "A) Nitrogen fixation",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-5",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "C) Chicken pox",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-6",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-6",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Building immunity",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Milk",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q2-8",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-8",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Tissue",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q2-9",
-      "aiMark": 5,
+      "aiMark": 4.6,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q2-9",
-      "reasoning": "Well written."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q2-10",
@@ -1879,1409 +1879,1409 @@
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "Correct answer."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-08-asm-002": [
     {
       "qId": "q2-1",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-1",
-      "reasoning": "Correct answer."
+      "studentAnswer": "A) Bacteria",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q2-2",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-2",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "D) Typhoid",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q2-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-3",
+      "studentAnswer": "B) Carbon dioxide",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-4",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-4",
-      "reasoning": "Well written."
+      "studentAnswer": "C) Respiration",
+      "reasoning": "Incorrect. Student chose C but correct is A."
     },
     {
       "qId": "q2-5",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-5",
-      "reasoning": "Correct answer."
+      "studentAnswer": "D) Asthma",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q2-6",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q2-6",
-      "reasoning": "No relevant answer provided."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Cleaning blood",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q2-7",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-7",
-      "reasoning": "Correct answer."
+      "studentAnswer": "C) Fruits",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q2-8",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q2-8",
+      "studentAnswer": "C) Cell",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q2-9",
-      "aiMark": 6,
-      "confidence": "medium",
-      "confidenceScore": 65,
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
       "needsReview": true,
-      "studentAnswer": "Answer for q2-9",
-      "reasoning": "Correct answer."
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     },
     {
       "qId": "q2-10",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q2-10",
-      "reasoning": "No relevant answer provided."
+      "aiMark": 2.6,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-01-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "Well written."
+      "studentAnswer": "B) Mitochondria",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-2",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-2",
+      "studentAnswer": "B) Cytoplasm",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q3-3",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "C) Chloroplasts",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-4",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "No relevant answer provided."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Prokaryotic",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-5",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-5",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Mitosis",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-6",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-6",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Nucleus",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-7",
-      "aiMark": 0,
+      "aiMark": 2.4,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-8",
-      "aiMark": 3,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "Well written."
+      "aiMark": 2.4,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-9",
-      "aiMark": 4,
+      "aiMark": 3.5,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-10",
-      "aiMark": 5,
+      "aiMark": 3.5,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Correct answer."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-02-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Nucleus",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q3-2",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "D) Cell sap",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q3-3",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Leucoplasts",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q3-4",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Well written."
+      "studentAnswer": "D) Animal",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q3-5",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-5",
-      "reasoning": "Well written."
+      "studentAnswer": "A) Meiosis",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q3-6",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-6",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "D) Vacuole",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q3-7",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     },
     {
       "qId": "q3-8",
-      "aiMark": 3,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "Well written."
+      "aiMark": 1.7,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q3-9",
-      "aiMark": 4,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Student identified correctly."
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     },
     {
       "qId": "q3-10",
-      "aiMark": 0,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 1.9,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-03-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "Wrong answer selected."
-    },
-    {
-      "qId": "q3-2",
-      "aiMark": 0.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q3-3",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-3",
+      "studentAnswer": "B) Mitochondria",
       "reasoning": "Correct answer."
     },
     {
-      "qId": "q3-4",
-      "aiMark": 0,
+      "qId": "q3-2",
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "B) Cytoplasm",
+      "reasoning": "Correct answer."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Leucoplasts",
+      "reasoning": "Incorrect. Student chose A but correct is C."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Prokaryotic",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-5",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-5",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "B) Mitosis",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-6",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-6",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Nucleus",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q3-7",
-      "aiMark": 3,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q3-8",
-      "aiMark": 1.5,
+      "aiMark": 2.5,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "Good attempt, needs more explanation."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 2.8,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-9",
-      "aiMark": 5,
+      "aiMark": 4.9,
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Correct answer."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-10",
-      "aiMark": 4.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Correct answer."
+      "aiMark": 1.6,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-04-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "Well written."
+      "studentAnswer": "B) Mitochondria",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-2",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Correct answer."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Nucleoplasm",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q3-3",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Amyloplasts",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q3-4",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Animal",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q3-5",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-5",
-      "reasoning": "No relevant answer provided."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Budding",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q3-6",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-6",
-      "reasoning": "Correct answer."
+      "studentAnswer": "B) Cell membrane",
+      "reasoning": "Incorrect. Student chose B but correct is C."
     },
     {
       "qId": "q3-7",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Incorrect. Student misunderstood the concept."
-    },
-    {
-      "qId": "q3-8",
-      "aiMark": 0,
+      "aiMark": 1.6,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 2.7,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-9",
-      "aiMark": 4,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Student identified correctly."
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     },
     {
       "qId": "q3-10",
-      "aiMark": 4,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Student identified correctly."
+      "aiMark": 3.6,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-05-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Mitochondria",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Cytoplasm",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Well written."
+      "studentAnswer": "C) Chloroplasts",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-4",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Well written."
+      "studentAnswer": "B) Prokaryotic",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q3-5",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-5",
+      "studentAnswer": "B) Mitosis",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q3-6",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-6",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-7",
-      "aiMark": 3,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-8",
-      "aiMark": 3,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-8",
+      "studentAnswer": "C) Nucleus",
       "reasoning": "Correct answer."
     },
     {
-      "qId": "q3-9",
-      "aiMark": 4.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-10",
-      "aiMark": 0,
+      "qId": "q3-7",
+      "aiMark": 0.0,
       "confidence": "low",
       "confidenceScore": 35,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 2.7,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 4.6,
+      "confidence": "high",
+      "confidenceScore": 95,
+      "needsReview": false,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 3.8,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-06-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q3-2",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-3",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Incorrect. Student misunderstood the concept."
-    },
-    {
-      "qId": "q3-4",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-5",
-      "aiMark": 1,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-5",
+      "studentAnswer": "B) Mitochondria",
       "reasoning": "Correct answer."
     },
     {
-      "qId": "q3-6",
-      "aiMark": 0.5,
+      "qId": "q3-2",
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-6",
-      "reasoning": "Well written."
+      "studentAnswer": "C) Nucleoplasm",
+      "reasoning": "Incorrect. Student chose C but correct is B."
+    },
+    {
+      "qId": "q3-3",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Amyloplasts",
+      "reasoning": "Incorrect. Student chose D but correct is C."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Plant",
+      "reasoning": "Incorrect. Student chose C but correct is B."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Fission",
+      "reasoning": "Incorrect. Student chose C but correct is B."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Cytoplasm",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q3-7",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
+      "aiMark": 1.1,
+      "confidence": "medium",
+      "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q3-8",
-      "aiMark": 0,
+      "aiMark": 1.2,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q3-9",
-      "aiMark": 0,
+      "aiMark": 2.6,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q3-10",
-      "aiMark": 5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Well written."
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     }
   ],
   "stu-07-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "A) Nucleus",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q3-2",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Well written."
+      "studentAnswer": "C) Nucleoplasm",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q3-3",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "D) Amyloplasts",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q3-4",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "D) Animal",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q3-5",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-5",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Fission",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q3-6",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-6",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "D) Vacuole",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q3-7",
-      "aiMark": 2.5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q3-8",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "Wrong answer selected."
-    },
-    {
-      "qId": "q3-9",
-      "aiMark": 4.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q3-10",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "low",
       "confidenceScore": 35,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
+    },
+    {
+      "qId": "q3-8",
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
+    },
+    {
+      "qId": "q3-9",
+      "aiMark": 2.4,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
+    },
+    {
+      "qId": "q3-10",
+      "aiMark": 2.9,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-08-asm-003": [
     {
       "qId": "q3-1",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-1",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "C) Ribosome",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q3-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-2",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q3-3",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-3",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-4",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-4",
-      "reasoning": "Incorrect. Student misunderstood the concept."
-    },
-    {
-      "qId": "q3-5",
-      "aiMark": 0.5,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-5",
-      "reasoning": "Well written."
-    },
-    {
-      "qId": "q3-6",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q3-6",
+      "studentAnswer": "B) Cytoplasm",
       "reasoning": "Correct answer."
     },
     {
-      "qId": "q3-7",
-      "aiMark": 2.5,
+      "qId": "q3-3",
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q3-7",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Chromoplasts",
+      "reasoning": "Incorrect. Student chose B but correct is C."
+    },
+    {
+      "qId": "q3-4",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Plant",
+      "reasoning": "Incorrect. Student chose C but correct is B."
+    },
+    {
+      "qId": "q3-5",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Fission",
+      "reasoning": "Incorrect. Student chose C but correct is B."
+    },
+    {
+      "qId": "q3-6",
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Vacuole",
+      "reasoning": "Incorrect. Student chose D but correct is C."
+    },
+    {
+      "qId": "q3-7",
+      "aiMark": 2.2,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q3-8",
-      "aiMark": 2.5,
+      "aiMark": 1.1,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-8",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q3-9",
-      "aiMark": 2.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-9",
-      "reasoning": "Correct concept but incomplete."
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     },
     {
       "qId": "q3-10",
-      "aiMark": 2.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
       "needsReview": true,
-      "studentAnswer": "Answer for q3-10",
-      "reasoning": "Partially correct \u2014 missing details."
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     }
   ],
   "stu-01-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Well written."
+      "studentAnswer": "D) Spring",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Tilling",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-3",
+      "studentAnswer": "C) Sprinkler",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q4-4",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Medicinal plants",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) It has more nutrients",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-6",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Harvester",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-7",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Incorrect. Student misunderstood the concept."
-    },
-    {
-      "qId": "q4-8",
-      "aiMark": 0,
+      "aiMark": 3.9,
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 2.8,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-02-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Winter",
+      "reasoning": "Incorrect. Student chose A but correct is C."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Tilling",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "Good attempt, needs more explanation."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Sprinkler",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-4",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Useful plants",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "C) It has more nutrients",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-6",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Combine",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-7",
-      "aiMark": 3,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q4-8",
-      "aiMark": 4.5,
+      "aiMark": 2.2,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Correct answer."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 1.7,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ],
   "stu-03-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Rainy season",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "B) Tilling",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "Well written."
+      "studentAnswer": "C) Sprinkler",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-4",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Unwanted plants",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "Well written."
+      "studentAnswer": "B) It improves soil texture",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-6",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-6",
+      "studentAnswer": "B) Combine",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q4-7",
-      "aiMark": 2.0,
+      "aiMark": 3.1,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Correct concept but incomplete."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     },
     {
       "qId": "q4-8",
-      "aiMark": 4,
+      "aiMark": 4.7,
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-04-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-1",
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Rainy season",
       "reasoning": "Correct answer."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "A) Sowing",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Rahat",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q4-4",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Correct answer."
+      "studentAnswer": "C) Medicinal plants",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) It has more nutrients",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-6",
-      "reasoning": "Student identified correctly."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Harvester",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-7",
-      "aiMark": 2.0,
+      "aiMark": 2.3,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Partially correct \u2014 missing details."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q4-8",
-      "aiMark": 5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Student identified correctly."
+      "aiMark": 4.0,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
     }
   ],
   "stu-05-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Student identified correctly."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Rainy season",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Wrong answer selected."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "A) Sowing",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0.5,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Dhekli",
+      "reasoning": "Incorrect. Student chose B but correct is C."
     },
     {
       "qId": "q4-4",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "A) Useful plants",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "A) It is cheaper",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-6",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "A) Tractor",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-7",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
+      "aiMark": 1.4,
+      "confidence": "medium",
+      "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q4-8",
-      "aiMark": 5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Correct answer."
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     }
   ],
   "stu-06-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 1,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "C) Rainy season",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Tilling",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "C) Sprinkler",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-4",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "studentAnswer": "B) Unwanted plants",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "Student identified correctly."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) It has more nutrients",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 1,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-6",
-      "reasoning": "Student identified correctly."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Combine",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-7",
-      "aiMark": 4,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Student identified correctly."
-    },
-    {
-      "qId": "q4-8",
-      "aiMark": 4,
+      "aiMark": 3.5,
       "confidence": "high",
       "confidenceScore": 95,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Well written."
+      "studentAnswer": "Student provided a detailed answer covering key points.",
+      "reasoning": "Good answer with relevant details."
+    },
+    {
+      "qId": "q4-8",
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     }
   ],
   "stu-07-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "B) Summer",
+      "reasoning": "Incorrect. Student chose B but correct is C."
     },
     {
       "qId": "q4-2",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Correct concept but incomplete."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Harvesting",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "Incorrect. Student misunderstood the concept."
+      "aiMark": 1.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Sprinkler",
+      "reasoning": "Correct answer."
     },
     {
       "qId": "q4-4",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "Student identified correctly."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Medicinal plants",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "Correct answer."
+      "studentAnswer": "D) It is easier to apply",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 0.5,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-6",
-      "reasoning": "Partially correct \u2014 missing details."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "D) Thresher",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q4-7",
-      "aiMark": 4,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Correct answer."
+      "aiMark": 2.1,
+      "confidence": "medium",
+      "confidenceScore": 65,
+      "needsReview": true,
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q4-8",
-      "aiMark": 5,
-      "confidence": "high",
-      "confidenceScore": 95,
-      "needsReview": false,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "Correct answer."
+      "aiMark": 0.0,
+      "confidence": "low",
+      "confidenceScore": 35,
+      "needsReview": true,
+      "studentAnswer": "Student wrote an off-topic or unclear answer.",
+      "reasoning": "Incorrect or off-topic response."
     }
   ],
   "stu-08-asm-004": [
     {
       "qId": "q4-1",
-      "aiMark": 0,
-      "confidence": "medium",
-      "confidenceScore": 65,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-1",
-      "reasoning": "Well written."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "B) Summer",
+      "reasoning": "Incorrect. Student chose B but correct is C."
     },
     {
       "qId": "q4-2",
-      "aiMark": 1,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-2",
-      "reasoning": "Student identified correctly."
+      "studentAnswer": "D) Harvesting",
+      "reasoning": "Incorrect. Student chose D but correct is B."
     },
     {
       "qId": "q4-3",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-3",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "D) Rahat",
+      "reasoning": "Incorrect. Student chose D but correct is C."
     },
     {
       "qId": "q4-4",
-      "aiMark": 0,
-      "confidence": "low",
-      "confidenceScore": 35,
-      "needsReview": true,
-      "studentAnswer": "Answer for q4-4",
-      "reasoning": "No relevant answer provided."
+      "aiMark": 0.0,
+      "confidence": "high",
+      "confidenceScore": 98,
+      "needsReview": false,
+      "studentAnswer": "C) Medicinal plants",
+      "reasoning": "Incorrect. Student chose C but correct is B."
     },
     {
       "qId": "q4-5",
-      "aiMark": 0,
+      "aiMark": 0.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-5",
-      "reasoning": "Wrong answer selected."
+      "studentAnswer": "A) It is cheaper",
+      "reasoning": "Incorrect. Student chose A but correct is B."
     },
     {
       "qId": "q4-6",
-      "aiMark": 0,
+      "aiMark": 1.0,
       "confidence": "high",
-      "confidenceScore": 95,
+      "confidenceScore": 98,
       "needsReview": false,
-      "studentAnswer": "Answer for q4-6",
+      "studentAnswer": "B) Combine",
       "reasoning": "Correct answer."
     },
     {
@@ -3290,17 +3290,17 @@
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q4-7",
-      "reasoning": "Partially correct \u2014 missing details."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     },
     {
       "qId": "q4-8",
-      "aiMark": 0,
+      "aiMark": 2.0,
       "confidence": "medium",
       "confidenceScore": 65,
       "needsReview": true,
-      "studentAnswer": "Answer for q4-8",
-      "reasoning": "No relevant answer provided."
+      "studentAnswer": "Student wrote a partial answer with some relevant points.",
+      "reasoning": "Partially correct \u2014 missing some expected details."
     }
   ]
 }
