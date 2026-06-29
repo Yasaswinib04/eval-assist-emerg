@@ -311,9 +311,9 @@ async def _run_ocr_pipeline(
 
         db = _get_db()
 
-            # ── Qwen/OpenRouter OCR (if configured) ──
-            openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
-            if openrouter_key:
+        # ── Qwen/OpenRouter OCR (if configured) ──
+        openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+        if openrouter_key:
                 from backend.tools.ocr.qwen_ocr import QwenVisionOCR, build_question_paper_text, build_answer_key_json
                 answer_key_path = os.path.join(os.path.dirname(__file__), "..", "seed", "data", "answer_key.json")
                 answer_key = build_answer_key_json(answer_key_path)
