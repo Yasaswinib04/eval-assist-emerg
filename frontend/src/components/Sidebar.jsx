@@ -23,7 +23,7 @@ export const Sidebar = () => {
   ];
 
   const assessmentLinks = [
-    { to: `/analysis/${aid}`, label: "Blueprint & Setup", icon: FileText, testId: "nav-analysis" },
+    { to: `/analysis/${aid}`, label: "Analysis", icon: FileText, testId: "nav-analysis" },
     { to: `/review/${aid}`, label: "Review & Override", icon: ClipboardCheck, testId: "nav-review" },
     { to: `/insights/${aid}`, label: "Exam Insights", icon: BarChart3, testId: "nav-insights" },
     { to: `/interventions/${aid}`, label: "Interventions", icon: Target, testId: "nav-interventions" },
@@ -190,7 +190,7 @@ export const MobileNav = () => {
   ];
 
   const assessmentLinks = [
-    { to: `/analysis/${aid}`, label: "Blueprint & Setup", icon: FileText, testId: "nav-analysis" },
+    { to: `/analysis/${aid}`, label: "Analysis", icon: FileText, testId: "nav-analysis" },
     { to: `/review/${aid}`, label: "Review & Override", icon: ClipboardCheck, testId: "nav-review" },
     { to: `/insights/${aid}`, label: "Exam Insights", icon: BarChart3, testId: "nav-insights" },
     { to: `/interventions/${aid}`, label: "Interventions", icon: Target, testId: "nav-interventions" },
