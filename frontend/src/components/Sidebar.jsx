@@ -1,8 +1,12 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, Settings, ChevronLeft, Menu, X } from "lucide-react";
+import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, Settings, ChevronLeft, Menu, X, Users, Layers } from "lucide-react";
 import { useState, useEffect } from "react";
+
+const isAssessmentPage = (pathname) => {
+  return /^\/(analysis|processing|review|insights|interventions|student)\//.test(pathname);
+};
 
 export const Sidebar = () => {
   const { t, user, logout, activeSubject, activeClass } = useApp();
@@ -11,13 +15,18 @@ export const Sidebar = () => {
   const { id: routeAssessmentId } = useParams();
   const aid = routeAssessmentId || "asm-001";
   const [collapsed, setCollapsed] = useState(false);
+  const onAssessment = isAssessmentPage(location.pathname);
 
-  const workspace = [
-    { to: "/dashboard", label: t("dashboard"), icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: `/analysis/${aid}`, label: "Blueprint & Setup", icon: FileText, testId: "nav-assessments" },
-    { to: `/review/${aid}`, label: t("reviewOverride"), icon: ClipboardCheck, testId: "nav-review" },
-    { to: `/insights/${aid}`, label: t("insights"), icon: BarChart3, testId: "nav-insights" },
-    { to: `/interventions/${aid}`, label: t("interventions"), icon: Target, testId: "nav-interventions" },
+  const globalLinks = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
+    { to: `/student/${aid}/stu-01`, label: "Student Performance", icon: Users, testId: "nav-students" },
+  ];
+
+  const assessmentLinks = [
+    { to: `/analysis/${aid}`, label: "Blueprint & Setup", icon: FileText, testId: "nav-analysis" },
+    { to: `/review/${aid}`, label: "Review & Override", icon: ClipboardCheck, testId: "nav-review" },
+    { to: `/insights/${aid}`, label: "Exam Insights", icon: BarChart3, testId: "nav-insights" },
+    { to: `/interventions/${aid}`, label: "Interventions", icon: Target, testId: "nav-interventions" },
   ];
 
   const handleLogout = () => {
@@ -60,13 +69,13 @@ export const Sidebar = () => {
         </button>
       </div>
 
-      {/* Sections */}
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
         {!collapsed && (
-          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mb-2">{t("workspace")}</div>
+          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mb-2">Global</div>
         )}
         <div className="space-y-0.5">
-          {workspace.map((item) => {
+          {globalLinks.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.to);
             return (
@@ -86,9 +95,39 @@ export const Sidebar = () => {
           })}
         </div>
 
+        {onAssessment && (
+          <>
+            {!collapsed && (
+              <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">
+                SA1 — Biological Science
+              </div>
+            )}
+            <div className="space-y-0.5">
+              {assessmentLinks.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.to);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    data-testid={item.testId}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      active ? "bg-blue-50 text-blue-800" : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
+                    } ${collapsed ? "justify-center" : ""}`}
+                    title={collapsed ? item.label : ""}
+                  >
+                    <Icon size={17} className="shrink-0" />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         {!collapsed && (
           <>
-            <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">{t("account")}</div>
+            <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">Account</div>
             <button
               onClick={() => {}}
               data-testid="nav-settings"
@@ -136,18 +175,25 @@ export const MobileNav = () => {
   const { t, user, logout, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: routeAssessmentId } = useParams();
+  const aid = routeAssessmentId || "asm-001";
   const [open, setOpen] = useState(false);
+  const onAssessment = isAssessmentPage(location.pathname);
 
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
 
-  const workspace = [
-    { to: "/dashboard", label: t("dashboard"), icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: "/analysis/asm-001", label: "Blueprint & Setup", icon: FileText, testId: "nav-assessments" },
-    { to: "/review/asm-001", label: t("reviewOverride"), icon: ClipboardCheck, testId: "nav-review" },
-    { to: "/insights/asm-001", label: t("insights"), icon: BarChart3, testId: "nav-insights" },
-    { to: "/interventions/asm-001", label: t("interventions"), icon: Target, testId: "nav-interventions" },
+  const globalLinks = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
+    { to: `/student/${aid}/stu-01`, label: "Student Performance", icon: Users, testId: "nav-students" },
+  ];
+
+  const assessmentLinks = [
+    { to: `/analysis/${aid}`, label: "Blueprint & Setup", icon: FileText, testId: "nav-analysis" },
+    { to: `/review/${aid}`, label: "Review & Override", icon: ClipboardCheck, testId: "nav-review" },
+    { to: `/insights/${aid}`, label: "Exam Insights", icon: BarChart3, testId: "nav-insights" },
+    { to: `/interventions/${aid}`, label: "Interventions", icon: Target, testId: "nav-interventions" },
   ];
 
   const isActive = (to) => {
@@ -214,9 +260,9 @@ export const MobileNav = () => {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4" style={{ height: "calc(100% - 56px)" }}>
-          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mb-2">{t("workspace")}</div>
+          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mb-2">Global</div>
           <div className="space-y-0.5">
-            {workspace.map((item) => {
+            {globalLinks.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.to);
               return (
@@ -235,7 +281,34 @@ export const MobileNav = () => {
             })}
           </div>
 
-          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">{t("account")}</div>
+          {onAssessment && (
+            <>
+              <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">
+                SA1 — Biological Science
+              </div>
+              <div className="space-y-0.5">
+                {assessmentLinks.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      data-testid={item.testId}
+                      className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                        active ? "bg-blue-50 text-blue-800" : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
+                      }`}
+                    >
+                      <Icon size={18} className="shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">Account</div>
           <button
             onClick={() => {}}
             className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100"
