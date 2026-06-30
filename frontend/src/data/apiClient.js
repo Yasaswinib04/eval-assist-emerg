@@ -73,7 +73,7 @@ export const apiClient = {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 60000);
         try {
-            const res = await fetch(`${API_BASE}/assessments`, {
+            const res = await fetch(`${API_BASE}/assessments/`, {
                 method: 'POST',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {},
                 body: formData,
