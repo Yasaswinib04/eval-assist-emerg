@@ -79,15 +79,17 @@ export const apiClient = {
                 body: formData,
                 signal: controller.signal,
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
             if (!res.ok) {
+                const msg = (data && data.detail) || `Server error (${res.status})`;
                 console.warn('Create assessment failed:', data);
-                return null;
+                throw new Error(msg);
             }
             return data;
         } catch (err) {
-            console.warn('Create assessment network error:', err.message);
-            return null;
+            const msg = err.name === 'AbortError' ? 'Upload timed out — try fewer files or a faster connection.' : err.message;
+            console.warn('Create assessment network error:', msg);
+            throw new Error(msg);
         }
     },
 
