@@ -204,7 +204,12 @@ Return ONLY a JSON object:
                     "HTTP-Referer": "https://eval-assist-emerg.onrender.com", "X-Title": "EvalAssist"}
         resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
         resp.raise_for_status()
-        content = resp.json()["choices"][0]["message"]["content"]
+        data = resp.json()
+        if "error" in data:
+            raise Exception(f"OpenRouter error: {data['error']}")
+        if "choices" not in data:
+            raise Exception(f"Unexpected OpenRouter response: {json.dumps(data)[:200]}")
+        content = data["choices"][0]["message"]["content"]
         try:
             j = json.loads(content[content.find("{"):content.rfind("}")+1])
             results["questions"].extend(j.get("questions", []))
