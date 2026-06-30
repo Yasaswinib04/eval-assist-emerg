@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    MONGO_URL: str = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+    MONGO_URL: str = os.getenv("MONGO_URL", "mongodb+srv://tauser:ta098765@cluster0.pchhav5.mongodb.net/?appName=Cluster0")
     DB_NAME: str = os.getenv("DB_NAME", "evalassist")
     JWT_SECRET: str = os.getenv("JWT_SECRET", "supersecretkey_change_in_prod")
     JWT_ALGORITHM: str = "HS256"
