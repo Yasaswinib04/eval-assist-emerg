@@ -20,4 +20,4 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: QWEN_MODEL
-        value: qwen/qwen2.5-vl-72b-instruct
+        value: qwen/qwen3-vl-235b-a22b-instruct
