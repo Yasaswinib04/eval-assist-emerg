@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
-import { ScanLine, Sparkles, BarChart3, Check, Loader2, ArrowRight, FileSearch, Network, AlertCircle, Clock } from "lucide-react";
+import { ScanLine, Sparkles, BarChart3, Check, Loader2, ArrowRight, FileSearch, Network, AlertCircle, Clock, RefreshCw } from "lucide-react";
 
 const STEPS = [
   { key: "step_ocr", label: "Running OCR on handwritten sheets", icon: ScanLine, backend_status: "step_ocr" },
@@ -119,11 +119,21 @@ const Processing = () => {
 
       <div className="bg-white border border-stone-200 rounded-2xl p-6 md:p-8 shadow-sm">
         {errorMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
-            <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18} />
-            <div>
-              <div className="font-semibold text-red-900 text-sm">Processing Error</div>
-              <div className="text-xs text-red-700 mt-0.5">{errorMsg}</div>
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18} />
+              <div className="flex-1">
+                <div className="font-semibold text-red-900 text-sm">Processing Error</div>
+                <div className="text-xs text-red-700 mt-0.5 max-h-20 overflow-auto">{errorMsg}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-red-200">
+              <button onClick={() => window.location.reload()} className="h-9 px-3 rounded-lg bg-white border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50 inline-flex items-center gap-1">
+                <RefreshCw size={12} /> Retry
+              </button>
+              <button onClick={() => navigate(`/review/${id}`)} className="h-9 px-3 rounded-lg bg-blue-800 text-white text-xs font-medium hover:bg-blue-900 inline-flex items-center gap-1">
+                Skip to Review <ArrowRight size={12} />
+              </button>
             </div>
           </div>
         )}
