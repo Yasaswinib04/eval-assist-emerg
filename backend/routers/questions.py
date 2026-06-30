@@ -25,7 +25,11 @@ async def get_questions(id: str, db=Depends(get_db)):
 
     # 3. User has images but not yet analyzed — return indicator
     if assessment and assessment.get("questionsImages"):
-        return [{"id": "pending", "number": 0, "text": "OCR_ANALYSIS_PENDING", "chapter": "", "concept": "", "maxMarks": 0, "section": "info", "imagesUploaded": len(assessment["questionsImages"])}]
+        ps = assessment.get("processingStatus", "")
+        if ps in ("qpaper_error", "qpaper_skipped", "qpaper_done"):
+            pass  # Already attempted, fall through to seed data
+        else:
+            return [{"id": "pending", "number": 0, "text": "OCR_ANALYSIS_PENDING", "chapter": "", "concept": "", "maxMarks": 0, "section": "info", "imagesUploaded": len(assessment["questionsImages"])}]
 
     # 4. Questions collection for this assessment
     questions = await db.questions.find({"assessmentId": id}).to_list(100)

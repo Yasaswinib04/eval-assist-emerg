@@ -67,11 +67,12 @@ const Analysis = () => {
     if (QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING" && !analyzing) {
       setAnalyzing(true);
       fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" })
-        .then(() => {
+        .then((r) => r.json())
+        .then((data) => {
           setTimeout(async () => {
             setAnalyzing(false);
             await refetchQuestions();
-          }, 5000);
+          }, data.status === "skipped" ? 500 : 5000);
         })
         .catch(() => setAnalyzing(false));
     }

@@ -239,6 +239,7 @@ async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
     if not openrouter_key:
+        await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_skipped"}})
         return {"status": "skipped", "message": "OPENROUTER_API_KEY not configured"}
 
     image_paths = []
