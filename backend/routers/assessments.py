@@ -215,6 +215,76 @@ async def create_assessment(
         raise HTTPException(status_code=500, detail=detail)
 
 
+@router.post("/{id}/analyze-qpaper")
+async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db=Depends(get_db)):
+    """Analyze uploaded question paper images using Qwen OCR — extracts questions, concepts, chapters."""
+    assessment = await db.assessments.find_one({"_id": id})
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    qimages = assessment.get("questionsImages") or []
+    if not qimages:
+        return {"status": "skipped", "message": "No question paper images uploaded"}
+
+    qtext = assessment.get("questionsText", "")
+    if qtext and qtext.strip():
+        try:
+            from backend.services.answer_key_parser import parse_questions_text
+            parsed = parse_questions_text(qtext)
+            if parsed:
+                await db.assessments.update_one({"_id": id}, {"$set": {"parsedQuestions": parsed, "processingStatus": "qpaper_done"}})
+                return {"status": "ok", "method": "text_parser", "questions": len(parsed)}
+        except Exception as e:
+            print(f"[Qwen] Text parse failed, falling back to OCR: {e}")
+
+    openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+    if not openrouter_key:
+        return {"status": "skipped", "message": "OPENROUTER_API_KEY not configured"}
+
+    image_paths = []
+    for img in qimages:
+        abs_path = os.path.join(os.path.dirname(__file__), "..", "..", img)
+        if os.path.exists(abs_path):
+            image_paths.append(abs_path)
+
+    if not image_paths:
+        return {"status": "error", "message": "Question paper image files not found on disk"}
+
+    print(f"[Qwen] Analyzing Q paper for {id}: {len(image_paths)} images")
+    background_tasks.add_task(_run_qpaper_analysis, id, image_paths, openrouter_key, getattr(settings, "QWEN_MODEL", ""))
+    return {"status": "processing", "message": f"Analyzing {len(image_paths)} question paper images"}
+
+
+async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: str, model: str):
+    """Background: analyze question paper images with Qwen, save results."""
+    from backend.core.database import get_db as _get_db
+    from backend.tools.ocr.qwen_ocr import analyze_question_paper
+    db = _get_db()
+    try:
+        result = analyze_question_paper(api_key, model, image_paths)
+        questions = result.get("questions", [])
+        if questions:
+            for i, q in enumerate(questions):
+                q["id"] = f"q{i+1}"
+                q["number"] = q.get("number", i+1)
+                q["assessmentId"] = assessment_id
+                q["section"] = q.get("section", "A")
+                q["maxMarks"] = q.get("maxMarks", 1)
+                q["text"] = q.get("text", "")
+                q["chapter"] = q.get("chapter", "ch1")
+                q["concept"] = q.get("concept", "")
+                q["skill"] = q.get("skill", "Recall")
+                q["difficulty"] = q.get("difficulty", "Medium")
+                q["prerequisites"] = q.get("prerequisites", [])
+            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedQuestions": questions, "processingStatus": "qpaper_done"}})
+            print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted for {assessment_id}")
+        else:
+            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "qpaper_error"}})
+    except Exception as e:
+        print(f"[Qwen] Q paper analysis failed: {e}")
+        await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "qpaper_error"}})
+
+
 @router.post("/{id}/process")
 async def process_assessment(
     id: str,

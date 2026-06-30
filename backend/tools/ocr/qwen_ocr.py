@@ -172,3 +172,74 @@ def build_answer_key_json(answer_key_path: str = None) -> list:
         with open(answer_key_path) as f:
             return json.load(f)
     raise FileNotFoundError(f"Answer key not found at {answer_key_path}")
+
+
+def analyze_question_paper(api_key: str, model: str, image_paths: list, answer_key_path: str = None) -> dict:
+    """Send question paper images to Qwen to extract questions with chapters, concepts, difficulty."""
+    if not image_paths:
+        return {"error": "No question paper images provided"}
+
+    prompt = """You are analyzing a Class 8 Biological Science exam question paper. Extract:
+1. For each question: question number, text, section (A/B/C/D), max marks, expected concepts, skill level (Easy/Medium/Hard)
+2. Total marks per section
+3. Chapter mapping: which biology chapter each question belongs to (Cell Structure, Microorganisms, Crop Production, Reproduction)
+
+Return ONLY a JSON object:
+{"questions": [{"number": 1, "section": "A", "text": "...", "maxMarks": 1, "type": "MCQ", "concept": "Fertilization", "chapter": "ch4", "skill": "Recall", "difficulty": "Easy", "options": ["Frog","Butterfly","Hen","Humans"]}, ...], "totalMarks": 40, "sectionMarks": {"A": 10, "B": 6, "C": 8, "D": 16}}"""
+
+    results = {"questions": [], "totalMarks": 40, "images": len(image_paths)}
+    for i, path in enumerate(image_paths):
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+            ]}],
+            "max_tokens": 4096, "temperature": 0.1,
+        }
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+                    "HTTP-Referer": "https://eval-assist-emerg.onrender.com", "X-Title": "EvalAssist"}
+        resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        try:
+            j = json.loads(content[content.find("{"):content.rfind("}")+1])
+            results["questions"].extend(j.get("questions", []))
+            results["totalMarks"] = results["totalMarks"] or j.get("totalMarks", 40)
+            results["sectionMarks"] = j.get("sectionMarks", {})
+        except Exception as e:
+            print(f"[Qwen] Failed to parse Q paper page {i+1}: {e}")
+    return results
+
+
+def analyze_answer_key(api_key: str, model: str, answer_key_text: str = None, answer_key_images: list = None) -> list:
+    """Send answer key text or images to Qwen to extract structured correct answers."""
+    if answer_key_text:
+        prompt = f"""Extract the correct answers from this answer key text. For each question, provide: question number, correct option (if MCQ), correct answer text, and max marks. Return ONLY a JSON array: [{{"q": 1, "correctOption": "A", "correctAnswer": "Frog", "maxMarks": 1}}, ...]
+
+ANSWER KEY TEXT:
+{answer_key_text}"""
+        payload = {"model": model, "messages": [{"role": "user", "content": prompt}], "max_tokens": 2048, "temperature": 0.1}
+    elif answer_key_images:
+        b64_list = []
+        for path in answer_key_images:
+            with open(path, "rb") as f:
+                b64_list.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode('utf-8')}"}})
+        prompt = "Extract correct answers from this answer key image. Return JSON array: [{q: 1, correctOption: 'A', correctAnswer: 'Frog', maxMarks: 1}, ...]"
+        payload = {"model": model, "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}] + b64_list}], "max_tokens": 2048, "temperature": 0.1}
+    else:
+        return []
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+               "HTTP-Referer": "https://eval-assist-emerg.onrender.com", "X-Title": "EvalAssist"}
+    resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
+    resp.raise_for_status()
+    content = resp.json()["choices"][0]["message"]["content"]
+    try:
+        return json.loads(content[content.find("["):content.rfind("]")+1])
+    except:
+        print(f"[Qwen] Failed to parse answer key")
+        return []
