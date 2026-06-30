@@ -57,6 +57,7 @@ const Upload = () => {
   const [marks, setMarks] = useState(40);
 
   const [submitting, setSubmitting] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   // Preload metadata if adding to existing assessment
   useEffect(() => {
@@ -140,10 +141,10 @@ const Upload = () => {
   const handleSubmit = async () => {
     if (!canContinue || submitting) return;
     setSubmitting(true);
+    setUploadError("");
 
     try {
       if (assessmentId) {
-        // Incremental Append Mode
         const formData = new FormData();
         for (const img of sheetFiles) {
           if (img.file) formData.append("sheetFiles", img.file);
@@ -151,9 +152,10 @@ const Upload = () => {
         const result = await apiClient.appendStudentResponses(assessmentId, formData);
         if (result) {
           navigate(`/processing/${assessmentId}`);
+        } else {
+          setUploadError("Upload failed — please check your connection and try again.");
         }
       } else {
-        // Full Creation Mode
         const formData = new FormData();
         formData.append("name", name);
         formData.append("class", klass);
@@ -161,42 +163,27 @@ const Upload = () => {
         formData.append("type", type);
         formData.append("totalMarks", String(marks));
 
-        // Questions
-        if (qText.trim()) {
-          formData.append("questionsText", qText);
-        }
-        for (const img of qImages) {
-          if (img.file) formData.append("questionFiles", img.file);
-        }
+        if (qText.trim()) formData.append("questionsText", qText);
+        for (const img of qImages) { if (img.file) formData.append("questionFiles", img.file); }
 
-        // Answer key
-        if (aText.trim()) {
-          formData.append("answerKeyText", aText);
-        }
-        for (const img of aImages) {
-          if (img.file) formData.append("answerKeyFiles", img.file);
-        }
+        if (aText.trim()) formData.append("answerKeyText", aText);
+        for (const img of aImages) { if (img.file) formData.append("answerKeyFiles", img.file); }
 
-        // Curriculum (optional)
-        if (cText.trim()) {
-          formData.append("curriculumText", cText);
-        }
+        if (cText.trim()) formData.append("curriculumText", cText);
 
-        // Student sheets
-        for (const img of sheetFiles) {
-          if (img.file) formData.append("sheetFiles", img.file);
-        }
+        for (const img of sheetFiles) { if (img.file) formData.append("sheetFiles", img.file); }
 
         const result = await apiClient.createAssessment(formData);
         if (result) {
           const id = result._id || result.id;
-          // Trigger OCR processing in background
           apiClient.processAssessment(id).catch(() => {});
           navigate(`/processing/${id}`);
+        } else {
+          setUploadError("Upload failed — the server may be busy. Please try again or reduce the number of files.");
         }
       }
     } catch (err) {
-      console.error("Upload failed:", err);
+      setUploadError(`Upload error: ${err.message || "Something went wrong"}. Please try again.`);
     } finally {
       setSubmitting(false);
     }
@@ -373,7 +360,10 @@ const Upload = () => {
       </div>
 
       {/* Actions */}
-      <div className="mt-8 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+      {uploadError && (
+        <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{uploadError}</div>
+      )}
+      <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
         <button onClick={() => navigate(assessmentId ? `/review/${assessmentId}` : "/dashboard")} className="h-12 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium">{t("cancel")}</button>
         <button
           disabled={!canContinue || submitting}

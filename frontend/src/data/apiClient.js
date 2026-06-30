@@ -71,7 +71,7 @@ export const apiClient = {
     async createAssessment(formData) {
         const token = getToken();
         const controller = new AbortController();
-        setTimeout(() => controller.abort(), 15000);
+        setTimeout(() => controller.abort(), 60000);
         try {
             const res = await fetch(`${API_BASE}/assessments`, {
                 method: 'POST',
@@ -119,7 +119,7 @@ export const apiClient = {
     async appendStudentResponses(id, formData) {
         const token = getToken();
         const controller = new AbortController();
-        setTimeout(() => controller.abort(), 15000);
+        setTimeout(() => controller.abort(), 60000);
         try {
             const res = await fetch(`${API_BASE}/assessments/${id}/append-sheets`, {
                 method: 'POST',
