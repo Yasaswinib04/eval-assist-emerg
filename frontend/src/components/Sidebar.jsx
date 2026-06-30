@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, Settings, ChevronLeft, Menu, X, Users, Layers } from "lucide-react";
+import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, Settings, ChevronLeft, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const isAssessmentPage = (pathname) => {

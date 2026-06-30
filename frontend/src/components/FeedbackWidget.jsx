@@ -12,7 +12,7 @@ const FeedbackWidget = () => {
     setLoading(true);
     try {
       const payload = { message: message.trim(), url: window.location.href, timestamp: new Date().toISOString() };
-      await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      await fetch("/api/auth/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     } catch {}
     localStorage.setItem("evalassist-feedback", JSON.stringify([...JSON.parse(localStorage.getItem("evalassist-feedback") || "[]"), payload]));
     setSent(true);
