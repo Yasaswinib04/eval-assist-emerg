@@ -7,17 +7,32 @@ router = APIRouter()
 
 @router.get("/{id}/questions")
 async def get_questions(id: str, db=Depends(get_db)):
-    # Check if the assessment has parsed questions
+    # 1. Check parsed questions
     assessment = await db.assessments.find_one({"_id": id})
     if assessment and assessment.get("parsedQuestions"):
         return assessment["parsedQuestions"]
 
-    # Check questions collection for this assessment
+    # 2. Try parsing text if provided
+    if assessment and assessment.get("questionsText", "").strip():
+        try:
+            from backend.services.answer_key_parser import parse_questions_text
+            parsed = parse_questions_text(assessment["questionsText"])
+            if parsed:
+                await db.assessments.update_one({"_id": id}, {"$set": {"parsedQuestions": parsed}})
+                return parsed
+        except Exception:
+            pass
+
+    # 3. User has images but not yet analyzed — return indicator
+    if assessment and assessment.get("questionsImages"):
+        return [{"id": "pending", "number": 0, "text": "OCR_ANALYSIS_PENDING", "chapter": "", "concept": "", "maxMarks": 0, "section": "info", "imagesUploaded": len(assessment["questionsImages"])}]
+
+    # 4. Questions collection for this assessment
     questions = await db.questions.find({"assessmentId": id}).to_list(100)
     if questions:
         return questions
 
-    # Fallback: copy seed questions from asm-001 to this assessment
+    # 5. Fallback — copy seed from asm-001
     seed_qs = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
     if seed_qs:
         for q in seed_qs:

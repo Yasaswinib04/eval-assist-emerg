@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2 } from "lucide-react";
@@ -18,9 +18,10 @@ const difficultyChip = (d) => {
 const Analysis = () => {
   const { t } = useApp();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { id = "asm-001" } = useParams();
 
-  const { data: QUESTIONS = [], isLoading: loadingQ } = useQuery({
+  const { data: QUESTIONS = [], isLoading: loadingQ, refetch: refetchQuestions } = useQuery({
     queryKey: ['questions', id],
     queryFn: () => apiClient.getQuestions(id)
   });
@@ -53,12 +54,36 @@ const Analysis = () => {
   const [newConcept, setNewConcept] = useState("");
   const [editingQ, setEditingQ] = useState(null);
   const [questionEdits, setQuestionEdits] = useState({});
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     if (QUESTIONS.length > 0 && concepts.length === 0) {
       setConcepts([...new Set(QUESTIONS.map((q) => q.concept))]);
     }
   }, [QUESTIONS]);
+
+  // Auto-trigger Qwen analysis if question images are pending
+  useEffect(() => {
+    if (QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING" && !analyzing) {
+      setAnalyzing(true);
+      fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" })
+        .then(() => {
+          setTimeout(async () => {
+            setAnalyzing(false);
+            await refetchQuestions();
+          }, 5000);
+        })
+        .catch(() => setAnalyzing(false));
+    }
+  }, [QUESTIONS, analyzing, id]);
+
+  if (analyzing) {
+    return <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <Loader2 className="animate-spin text-blue-800" size={32} />
+      <p className="text-sm text-stone-600">Analyzing your question paper with AI...</p>
+      <p className="text-xs text-stone-400">Extracting questions, concepts, and chapter mappings</p>
+    </div>;
+  }
 
   if (loadingQ || loadingCh || loadingC) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
