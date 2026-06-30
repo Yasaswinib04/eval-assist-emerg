@@ -7,14 +7,26 @@ router = APIRouter()
 
 @router.get("/{id}/questions")
 async def get_questions(id: str, db=Depends(get_db)):
-    # First check if the assessment has parsed questions
+    # Check if the assessment has parsed questions
     assessment = await db.assessments.find_one({"_id": id})
     if assessment and assessment.get("parsedQuestions"):
         return assessment["parsedQuestions"]
 
-    # Fall back to questions collection
+    # Check questions collection for this assessment
     questions = await db.questions.find({"assessmentId": id}).to_list(100)
-    return questions
+    if questions:
+        return questions
+
+    # Fallback: copy seed questions from asm-001 to this assessment
+    seed_qs = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
+    if seed_qs:
+        for q in seed_qs:
+            q_copy = dict(q)
+            q_copy["_id"] = f"{q['_id']}-{id}"
+            q_copy["assessmentId"] = id
+            await db.questions.update_one({"_id": q_copy["_id"]}, {"$set": q_copy}, upsert=True)
+        return await db.questions.find({"assessmentId": id}).to_list(100)
+    return []
 
 @router.put("/{id}/questions/{qid}", response_model=Question)
 async def update_question(id: str, qid: str, updates: dict, db=Depends(get_db)):

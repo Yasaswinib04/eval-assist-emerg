@@ -173,7 +173,34 @@ async def create_assessment(
         await db.assessments.insert_one(doc)
         print(f"[Upload] Step 6 done: inserted")
 
-        print(f"[Upload] Step 7: optional parsing...")
+        print(f"[Upload] Step 7: auto-copying seed questions and mock evaluations for demo...")
+        try:
+            seed_qs = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
+            for q in seed_qs:
+                q_copy = dict(q)
+                q_copy["_id"] = f"{q['_id']}-{assessment_id}"
+                q_copy["assessmentId"] = assessment_id
+                await db.questions.update_one({"_id": q_copy["_id"]}, {"$set": q_copy}, upsert=True)
+
+            seed_students = await db.students.find({"assessmentId": "asm-001"}).to_list(100)
+            for s in seed_students:
+                s_copy = dict(s)
+                s_copy["_id"] = f"{s['_id']}-{assessment_id}"
+                s_copy["assessmentId"] = assessment_id
+                await db.students.update_one({"_id": s_copy["_id"]}, {"$set": s_copy}, upsert=True)
+
+            seed_evals = await db.evaluations.find({"assessmentId": "asm-001"}).to_list(1000)
+            for e in seed_evals:
+                e_copy = dict(e)
+                e_copy["_id"] = f"{e['_id']}-{assessment_id}"
+                e_copy["assessmentId"] = assessment_id
+                e_copy["studentId"] = f"{e['studentId']}-{assessment_id}"
+                await db.evaluations.update_one({"_id": e_copy["_id"]}, {"$set": e_copy}, upsert=True)
+            print(f"[Upload] Copied {len(seed_qs)} questions, {len(seed_students)} students, {len(seed_evals)} evals")
+        except Exception as e:
+            print(f"[Upload] Seed copy failed (non-critical): {e}")
+
+        print(f"[Upload] Step 8: parsing answer key, questions, curriculum...")
         if answerKeyText and answerKeyText.strip():
             try:
                 from backend.services.answer_key_parser import parse_answer_key
