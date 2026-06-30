@@ -254,7 +254,7 @@ async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db
     print(f"[Qwen] Analyzing Q paper for {id}: {len(image_paths)} images")
     try:
         from backend.tools.ocr.qwen_ocr import analyze_question_paper
-        result = analyze_question_paper(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen-vl-max"), image_paths)
+        result = analyze_question_paper(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen2.5-vl-72b-instruct"), image_paths)
         questions = result.get("questions", [])
         if questions:
             for i, q in enumerate(questions):
@@ -429,7 +429,7 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                qwen = QwenVisionOCR(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen-vl-max"), qpaper, answer_key)
+                qwen = QwenVisionOCR(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen2.5-vl-72b-instruct"), qpaper, answer_key)
 
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
 
