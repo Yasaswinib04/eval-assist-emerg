@@ -90,6 +90,8 @@ const Analysis = () => {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
   }
 
+  const isSeedData = QUESTIONS.length > 0 && id !== "asm-001" && QUESTIONS[0]?._id?.includes(id);
+
   const updateQuestion = (qId, field, value) => {
     setQuestionEdits((p) => ({ ...p, [qId]: { ...p[qId], [field]: value } }));
   };
@@ -102,6 +104,11 @@ const Analysis = () => {
         { label: t("assessments"), to: "/dashboard" },
         { label: t("analysisTitle") },
       ]} />
+      {isSeedData && (
+        <div className="mb-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700 italic">
+          Showing sample data for preview. Your question paper images have been uploaded. Enable OCR with OPENROUTER_API_KEY to extract real questions.
+        </div>
+      )}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8">
         <div>
           <button onClick={() => navigate("/upload")} data-testid="btn-back-upload" className="mb-3 inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900">
@@ -110,7 +117,7 @@ const Analysis = () => {
           <div className="flex items-center gap-2 text-sm font-semibold tracking-[0.08em] uppercase text-blue-800">
             <Sparkles size={14} /> {t("aiExtracted")}
           </div>
-          <h1 className="mt-1 font-display text-3xl md:text-4xl font-semibold text-stone-900">{t("analysisTitle")}</h1>
+          <h1 className="mt-1 font-display text-3xl md:text-4xl font-semibold text-stone-900">{t("analysisTitle")} {isSeedData && <span className="text-amber-600 text-base font-normal italic">(Sample Data)</span>}</h1>
           <p className="mt-1.5 text-stone-600 text-lg max-w-2xl">{t("analysisSub")}</p>
         </div>
         <button onClick={() => { apiClient.processAssessment(id).catch(() => {}); navigate(`/processing/${id}`); }} data-testid="btn-run-evaluation" className="inline-flex items-center gap-2 h-12 px-6 rounded-lg bg-blue-800 hover:bg-blue-900 text-white font-medium shadow-sm">
@@ -199,7 +206,7 @@ const Analysis = () => {
             const q = getQ(qRaw);
             const isEditing = editingQ === q.id;
             return (
-              <div key={q.id} data-testid={`analysis-row-${q.id}`} className="px-6 py-4 hover:bg-stone-50/60">
+              <div key={q.id} data-testid={`analysis-row-${q.id}`} className={`px-6 py-4 hover:bg-stone-50/60 ${isSeedData ? "opacity-70 italic" : ""}`}>
                 <div className="flex items-start gap-3 flex-wrap">
                   <div className="shrink-0 h-8 w-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center text-sm font-bold">Q{q.number}</div>
                   <div className="flex-1 min-w-0">
