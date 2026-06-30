@@ -26,6 +26,12 @@ const Analysis = () => {
     queryFn: () => apiClient.getQuestions(id)
   });
 
+  const { data: ASSESSMENT, isLoading: loadingA } = useQuery({
+    queryKey: ['assessment', id],
+    queryFn: () => apiClient.getAssessment(id),
+    enabled: id !== "asm-001",
+  });
+
   const { data: CHAPTERS = {}, isLoading: loadingCh } = useQuery({
     queryKey: ['chapters', id],
     queryFn: () => apiClient.getChapters(id)
@@ -68,11 +74,12 @@ const Analysis = () => {
       setAnalyzing(true);
       fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" })
         .then((r) => r.json())
-        .then((data) => {
+        .then(async (data) => {
+          const wait = data.status === "ok" ? 500 : data.status === "error" ? 500 : 5000;
           setTimeout(async () => {
             setAnalyzing(false);
             await refetchQuestions();
-          }, data.status === "skipped" ? 500 : 5000);
+          }, wait);
         })
         .catch(() => setAnalyzing(false));
     }
@@ -86,7 +93,7 @@ const Analysis = () => {
     </div>;
   }
 
-  if (loadingQ || loadingCh || loadingC) {
+  if (loadingQ || loadingCh || loadingC || loadingA) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
   }
 
@@ -107,6 +114,14 @@ const Analysis = () => {
       {isSeedData && (
         <div className="mb-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700 italic">
           Showing sample data for preview. Your question paper images have been uploaded. Enable OCR with OPENROUTER_API_KEY to extract real questions.
+          {ASSESSMENT?.questionsImages?.length > 0 && (
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <span className="text-[10px] text-amber-600 font-medium not-italic block mb-1">Your uploaded images:</span>
+              {ASSESSMENT.questionsImages.map((img, i) => (
+                <img key={i} src={`/${img}`} alt={`Uploaded Q paper page ${i+1}`} className="h-16 rounded border border-amber-300 object-cover" />
+              ))}
+            </div>
+          )}
         </div>
       )}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8">

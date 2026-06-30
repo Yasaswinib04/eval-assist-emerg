@@ -252,8 +252,33 @@ async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db
         return {"status": "error", "message": "Question paper image files not found on disk"}
 
     print(f"[Qwen] Analyzing Q paper for {id}: {len(image_paths)} images")
-    background_tasks.add_task(_run_qpaper_analysis, id, image_paths, openrouter_key, getattr(settings, "QWEN_MODEL", ""))
-    return {"status": "processing", "message": f"Analyzing {len(image_paths)} question paper images"}
+    try:
+        from backend.tools.ocr.qwen_ocr import analyze_question_paper
+        result = analyze_question_paper(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct"), image_paths)
+        questions = result.get("questions", [])
+        if questions:
+            for i, q in enumerate(questions):
+                q["id"] = f"q{i+1}"
+                q["number"] = q.get("number", i+1)
+                q["assessmentId"] = id
+                q["section"] = q.get("section", "A")
+                q["maxMarks"] = q.get("maxMarks", 1)
+                q["text"] = q.get("text", "")
+                q["chapter"] = q.get("chapter", "ch1")
+                q["concept"] = q.get("concept", "")
+                q["skill"] = q.get("skill", "Recall")
+                q["difficulty"] = q.get("difficulty", "Medium")
+                q["prerequisites"] = q.get("prerequisites", [])
+            await db.assessments.update_one({"_id": id}, {"$set": {"parsedQuestions": questions, "processingStatus": "qpaper_done"}})
+            print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted")
+            return {"status": "ok", "questions": len(questions)}
+        else:
+            await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
+            return {"status": "error", "message": "No questions extracted"}
+    except Exception as e:
+        print(f"[Qwen] Q paper analysis failed: {e}")
+        await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
+        return {"status": "error", "message": str(e)[:200]}
 
 
 async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: str, model: str):
