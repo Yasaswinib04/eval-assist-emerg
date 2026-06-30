@@ -129,7 +129,7 @@ const Landing = () => {
             </button>
           </div>
 
-          <p className="mt-3 text-sm text-stone-400">Pre-loaded with Class 8 Biology SA1 data · 8 sample students</p>
+          <p className="mt-3 text-sm text-stone-400">Pre-loaded with real Class 8 Biology data · 8 sample students</p>
         </div>
 
         {/* Metrics */}
