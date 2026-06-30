@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from typing import List, Optional
 from backend.core.database import get_db
+from backend.core.config import settings
 from backend.models.assessment import Assessment, AssessmentCreate, AssessmentProcessRequest
 from datetime import datetime, timezone
 import uuid

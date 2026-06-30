@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, Settings, ChevronLeft, Menu, X } from "lucide-react";
+import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, ChevronLeft, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const isAssessmentPage = (pathname) => {
@@ -125,18 +125,6 @@ export const Sidebar = () => {
           </>
         )}
 
-        {!collapsed && (
-          <>
-            <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">Account</div>
-            <button
-              onClick={() => {}}
-              data-testid="nav-settings"
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100"
-            >
-              <Settings size={17} /> <span>{t("settings")}</span>
-            </button>
-          </>
-        )}
       </nav>
 
       {/* Language + User */}
@@ -307,14 +295,6 @@ export const MobileNav = () => {
               </div>
             </>
           )}
-
-          <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">Account</div>
-          <button
-            onClick={() => {}}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100"
-          >
-            <Settings size={18} /> <span>{t("settings")}</span>
-          </button>
 
           <div className="mt-auto border-t border-stone-200 pt-3 px-3" style={{ marginTop: "auto" }}>
             <div className="flex justify-center mb-3"><LanguageToggle /></div>
