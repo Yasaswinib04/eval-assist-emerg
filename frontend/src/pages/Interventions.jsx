@@ -31,7 +31,7 @@ const ActionCard = ({ a, planned, onPlan, t }) => {
         <button
           onClick={() => onPlan(a.id)}
           data-testid={`btn-plan-${a.id}`}
-          className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium transition-colors ${
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-11 rounded-lg text-sm font-medium transition-colors ${
             planned
               ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
               : "bg-blue-800 text-white hover:bg-blue-900"

@@ -41,7 +41,7 @@ const FeedbackWidget = () => {
           </div>
         </div>
       )}
-      <button onClick={() => setOpen(true)} className="fixed bottom-5 right-5 z-40 h-12 w-12 rounded-full bg-blue-800 text-white shadow-lg hover:bg-blue-900 transition-colors flex items-center justify-center">
+      <button onClick={() => setOpen(true)} className="fixed bottom-5 right-5 z-40 h-12 w-12 rounded-full bg-blue-800 text-white shadow-lg hover:bg-blue-900 transition-colors flex items-center justify-center" style={{marginBottom: 'env(safe-area-inset-bottom)'}}>
         <MessageSquare size={20} />
       </button>
     </>

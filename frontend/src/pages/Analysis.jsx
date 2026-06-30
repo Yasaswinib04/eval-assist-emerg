@@ -186,7 +186,7 @@ const Analysis = () => {
                       {difficultyChip(q.difficulty)}
                     </div>
                   </div>
-                  <button onClick={() => setEditingQ(isEditing ? null : q.id)} data-testid={`btn-edit-${q.id}`} className="text-stone-500 hover:text-blue-800 h-8 w-8 rounded-lg hover:bg-blue-50 flex items-center justify-center shrink-0">
+                  <button onClick={() => setEditingQ(isEditing ? null : q.id)} data-testid={`btn-edit-${q.id}`} className="text-stone-500 hover:text-blue-800 h-11 w-11 rounded-lg hover:bg-blue-50 flex items-center justify-center shrink-0">
                     {isEditing ? <Check size={16} /> : <Pencil size={14} />}
                   </button>
                 </div>

@@ -9,7 +9,7 @@ export const Layout = () => {
       <MobileNav />
       <div className="lg:pl-[260px] transition-[padding] duration-200">
         <ContextBar />
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 text-center text-[11px] text-amber-700 font-medium">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 text-center text-xs text-amber-700 font-medium pb-[env(safe-area-inset-bottom)]">
           Demo Prototype · Pre-loaded with sample Class 8 Biology data · Not for production use
         </div>
         <main className="min-h-screen">

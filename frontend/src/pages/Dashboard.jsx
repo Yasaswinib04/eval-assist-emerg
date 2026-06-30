@@ -118,15 +118,15 @@ const Dashboard = () => {
             </div>
             <div className="md:col-span-2 flex items-center md:justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
               {a.status === "review" ? (
-                <button onClick={() => navigate(`/review/${a.id}`)} data-testid={`btn-review-${a.id}`} className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200 text-xs font-semibold">
+                <button onClick={() => navigate(`/review/${a.id}`)} data-testid={`btn-review-${a.id}`} className="inline-flex items-center gap-1 px-3 h-11 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200 text-sm font-semibold">
                   Review <ChevronRight size={12} />
                 </button>
               ) : a.status === "complete" || a.status === "done" ? (
-                <button onClick={() => navigate(`/insights/${a.id}`)} data-testid={`btn-insights-${a.id}`} className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-200 text-xs font-semibold">
+                <button onClick={() => navigate(`/insights/${a.id}`)} data-testid={`btn-insights-${a.id}`} className="inline-flex items-center gap-1 px-3 h-11 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-200 text-sm font-semibold">
                   Insights <ChevronRight size={12} />
                 </button>
               ) : (
-                <button onClick={() => navigate(`/analysis/${a.id}`)} data-testid={`btn-open-${a.id}`} className="inline-flex items-center gap-1 px-2.5 h-9 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-100 text-xs font-semibold">
+                <button onClick={() => navigate(`/analysis/${a.id}`)} data-testid={`btn-open-${a.id}`} className="inline-flex items-center gap-1 px-3 h-11 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-100 text-sm font-semibold">
                   Open <ChevronRight size={12} />
                 </button>
               )}

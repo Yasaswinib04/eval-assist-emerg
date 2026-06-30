@@ -209,7 +209,7 @@ export const MobileNav = () => {
         <div className="flex items-center justify-between h-14 px-4">
           <button
             onClick={() => setOpen(true)}
-            className="h-10 w-10 rounded-lg hover:bg-stone-100 text-stone-600 flex items-center justify-center -ml-1"
+            className="h-11 w-11 rounded-lg hover:bg-stone-100 text-stone-600 flex items-center justify-center -ml-1"
             aria-label="Open navigation menu"
           >
             <Menu size={20} />
@@ -252,7 +252,7 @@ export const MobileNav = () => {
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="h-10 w-10 rounded-lg hover:bg-stone-100 text-stone-500 flex items-center justify-center -mr-1"
+            className="h-11 w-11 rounded-lg hover:bg-stone-100 text-stone-500 flex items-center justify-center -mr-1"
             aria-label="Close navigation menu"
           >
             <X size={18} />
@@ -329,7 +329,7 @@ export const MobileNav = () => {
                 </div>
                 <button
                   onClick={() => { logout(); navigate("/login"); }}
-                  className="h-10 w-10 rounded-lg hover:bg-stone-100 text-stone-500 flex items-center justify-center"
+                  className="h-11 w-11 rounded-lg hover:bg-stone-100 text-stone-500 flex items-center justify-center"
                   data-testid="mobile-logout"
                   aria-label={t("logout")}
                 >

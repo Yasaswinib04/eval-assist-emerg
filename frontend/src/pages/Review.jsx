@@ -35,7 +35,7 @@ const chapterChip = (chId, CHAPTERS) => {
 // ════════════════════════════════════════════════════════════════════════
 
 const HeatmapCell = ({ ev, q, density, onClick, approved, dimmed, highlighted }) => {
-  const size = density === "compact" ? "h-7 w-7" : "h-10 w-10";
+  const size = density === "compact" ? "h-11 w-11 sm:h-7 sm:w-7" : "h-11 w-11 sm:h-10 sm:w-10";
   const a = cellAppearance(q, ev);
   return (
     <button
@@ -153,7 +153,7 @@ const ExpandedPaper = ({ student, evals, totals, onPillClick, onWalkAi, t, CHAPT
             <button
               onClick={() => onWalkAi(needsReviewIds)}
               data-testid={`btn-walk-ai-${student.id}`}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-800 text-white hover:bg-blue-900 text-xs font-semibold"
+              className="inline-flex items-center gap-1.5 h-11 px-3 rounded-lg bg-blue-800 text-white hover:bg-blue-900 text-xs font-semibold"
             >
               <Wand2 size={13} /> Walk through {needsReviewIds.length}
             </button>
@@ -220,7 +220,7 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
               {queueIdx + 1} / {queueLen}
             </div>
           )}
-          <button onClick={onClose} data-testid="drawer-close" className="h-8 w-8 rounded-lg hover:bg-stone-200 text-stone-600 flex items-center justify-center">
+          <button onClick={onClose} data-testid="drawer-close" className="h-11 w-11 rounded-lg hover:bg-stone-200 text-stone-600 flex items-center justify-center">
             <X size={15} />
           </button>
         </div>
@@ -315,13 +315,13 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
 
         <div className="border-t border-stone-200 bg-stone-50 px-5 py-3 space-y-2">
           <div className="flex items-center gap-2">
-            <button onClick={() => onNav(-1)} disabled={!inQueueMode || queueIdx === 0} data-testid="drawer-prev" className="h-10 w-10 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center">
-              <ChevronLeft size={16} />
+            <button onClick={() => onNav(-1)} disabled={!inQueueMode || queueIdx === 0} data-testid="drawer-prev" className="h-11 w-11 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center">
+              <ChevronLeft size={18} />
             </button>
-            <button onClick={onApprove} data-testid="drawer-approve" className="flex-1 h-10 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition">
-              <Check size={15} /> Approve {inQueueMode && queueIdx < queueLen - 1 ? "& Next" : ""}
+            <button onClick={onApprove} data-testid="drawer-approve" className="flex-1 h-11 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition">
+              <Check size={18} /> Approve
             </button>
-            <button onClick={() => onNav(1)} disabled={!inQueueMode || queueIdx === queueLen - 1} data-testid="drawer-next" className="h-10 w-10 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center">
+            <button onClick={() => onNav(1)} disabled={!inQueueMode || queueIdx === queueLen - 1} data-testid="drawer-next" className="h-11 w-11 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center">
               <ChevronRight size={16} />
             </button>
           </div>
@@ -531,11 +531,11 @@ const ReviewPage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(`/upload?assessmentId=${id}`)}
-            className="h-10 px-4 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 text-sm font-semibold inline-flex items-center gap-1.5"
+            className="h-11 px-4 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 text-sm font-semibold inline-flex items-center gap-1.5"
           >
             + Add Response
           </button>
-          <button onClick={approveAllHighConf} data-testid="btn-approve-all-high" className="h-10 px-4 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold inline-flex items-center gap-1.5 shadow-sm">
+          <button onClick={approveAllHighConf} data-testid="btn-approve-all-high" className="h-11 px-4 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold inline-flex items-center gap-1.5 shadow-sm">
             <Wand2 size={14} /> Approve all confident
           </button>
         </div>
@@ -568,7 +568,7 @@ const ReviewPage = () => {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 data-testid={`filter-${f.id}`}
-                className={`h-9 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 border transition-colors ${
+                className={`h-11 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 border transition-colors ${
                   active ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-700 border-stone-300 hover:bg-stone-50"
                 }`}
               >
@@ -586,10 +586,10 @@ const ReviewPage = () => {
         </div>
 
         <div className="inline-flex bg-stone-100 rounded-lg p-0.5" data-testid="density-toggle">
-          <button onClick={() => setDensity("compact")} data-testid="density-compact" className={`h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1 ${density === "compact" ? "bg-white text-stone-900 shadow-sm" : "text-stone-600"}`}>
+          <button onClick={() => setDensity("compact")} data-testid="density-compact" className={`h-10 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1 ${density === "compact" ? "bg-white text-stone-900 shadow-sm" : "text-stone-600"}`}>
             <Minimize2 size={12} /> Compact
           </button>
-          <button onClick={() => setDensity("detail")} data-testid="density-detail" className={`h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1 ${density === "detail" ? "bg-white text-stone-900 shadow-sm" : "text-stone-600"}`}>
+          <button onClick={() => setDensity("detail")} data-testid="density-detail" className={`h-10 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1 ${density === "detail" ? "bg-white text-stone-900 shadow-sm" : "text-stone-600"}`}>
             <Maximize2 size={12} /> Detail
           </button>
         </div>
@@ -762,7 +762,7 @@ const ReviewPage = () => {
       </div>
 
       {/* Sticky footer */}
-      <div className="fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-stone-200 lg:left-[260px]">
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-stone-200 lg:left-[260px] pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
             <div className="text-xs text-stone-500 shrink-0">Review progress</div>
@@ -772,8 +772,8 @@ const ReviewPage = () => {
             <div className="text-xs font-semibold text-stone-700 whitespace-nowrap tabular-nums">{totalApproved}/{totalAnswers} · {Math.round(overallProgress)}%</div>
           </div>
           <div className="flex items-center gap-2">
-            <button data-testid="btn-save" className="h-10 px-4 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium inline-flex items-center gap-2"><Save size={14} /> Save</button>
-            <button onClick={() => navigate(`/insights/${id}`)} data-testid="btn-finalize" className="h-10 px-5 rounded-lg bg-blue-800 hover:bg-blue-900 text-white text-sm font-medium inline-flex items-center gap-2 shadow-sm">
+            <button data-testid="btn-save" className="h-11 px-4 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium inline-flex items-center gap-2"><Save size={14} /> Save</button>
+            <button onClick={() => navigate(`/insights/${id}`)} data-testid="btn-finalize" className="h-11 px-5 rounded-lg bg-blue-800 hover:bg-blue-900 text-white text-sm font-medium inline-flex items-center gap-2 shadow-sm">
               Finalize & View Insights <ArrowRight size={14} />
             </button>
           </div>

@@ -248,7 +248,7 @@ const Insights = () => {
               <button
                 onClick={() => navigate(`/student/${id}/${s.studentId}`)}
                 data-testid={`btn-view-profile-${s.studentId}`}
-                className="shrink-0 inline-flex items-center gap-1 px-3 h-9 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 text-sm font-medium"
+                className="shrink-0 inline-flex items-center gap-1 px-3 h-11 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 text-sm font-medium"
               >
                 {t("viewProfile")} <ChevronRight size={14} />
               </button>

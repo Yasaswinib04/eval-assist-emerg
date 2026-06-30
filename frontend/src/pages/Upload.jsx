@@ -20,7 +20,7 @@ const TabUpload = ({ files, onAdd, onRemove, testId }) => {
         <UploadCloud size={24} className="text-blue-800 mx-auto" />
         <div className="mt-2 text-sm font-medium text-stone-700">Click or drop files</div>
         <div className="text-xs text-stone-400 mt-1">JPEG or PNG only</div>
-        <input ref={ref} type="file" multiple accept="image/jpeg,image/png" className="hidden" data-testid={`${testId}-input`} onChange={(e) => { if (e.target.files?.length) onAdd(e.target.files); e.target.value = ""; }} />
+        <input ref={ref} type="file" multiple accept="image/jpeg,image/png" capture="environment" className="hidden" data-testid={`${testId}-input`} onChange={(e) => { if (e.target.files?.length) onAdd(e.target.files); e.target.value = ""; }} />
       </div>
       {files.length > 0 && (
         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-52 overflow-auto scrollbar-thin">
@@ -29,7 +29,7 @@ const TabUpload = ({ files, onAdd, onRemove, testId }) => {
               <img src={f.preview} alt="" className="w-full h-full object-cover" />
               <button
                 onClick={() => onRemove(f.id || i)}
-                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X size={14} />
               </button>
@@ -235,30 +235,30 @@ const Upload = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[180px]">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("assessmentName")}</label>
-            <input disabled={!!assessmentId} value={name} onChange={(e) => setName(e.target.value)} data-testid="input-assessment-name" className="w-full h-10 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-sm focus:outline-none focus:ring-2 focus:ring-blue-800" />
+            <input disabled={!!assessmentId} value={name} onChange={(e) => setName(e.target.value)} data-testid="input-assessment-name" className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800" />
           </div>
           <div className="w-28">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("subject")}</label>
-            <select disabled={!!assessmentId} value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full h-10 px-2.5 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            <select disabled={!!assessmentId} value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800">
               {subjects.map((s) => <option key={s}>{s}</option>)}
               <option value="__custom__">+ Custom</option>
             </select>
           </div>
           <div className="w-24">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("class")}</label>
-            <select disabled={!!assessmentId} value={klass} onChange={(e) => setKlass(e.target.value)} className="w-full h-10 px-2.5 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            <select disabled={!!assessmentId} value={klass} onChange={(e) => setKlass(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800">
               {["Class 6","Class 7","Class 8","Class 9","Class 10"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div className="w-36">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Type</label>
-            <select disabled={!!assessmentId} value={type} onChange={(e) => setType(e.target.value)} className="w-full h-10 px-2.5 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-sm focus:outline-none focus:ring-2 focus:ring-blue-800">
+            <select disabled={!!assessmentId} value={type} onChange={(e) => setType(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800">
               {["Revision Test","Unit Test","Formative Assessment","Summative Assessment","Practice Quiz"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div className="w-20">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("totalMarks")}</label>
-            <input disabled={!!assessmentId} type="number" value={marks} onChange={(e) => setMarks(parseInt(e.target.value || 0, 10))} className="w-full h-10 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-sm focus:outline-none focus:ring-2 focus:ring-blue-800" />
+            <input disabled={!!assessmentId} type="number" value={marks} onChange={(e) => setMarks(parseInt(e.target.value || 0, 10))} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800" />
           </div>
         </div>
       </div>
@@ -288,7 +288,7 @@ const Upload = () => {
               value={qText}
               onChange={(e) => setQText(e.target.value)}
               placeholder="Paste all questions here...&#10;&#10;1. Identify the odd one with respect to fertilization:&#10;2. Identify the correct statement about IVF...&#10;3. Best way to prevent Hepatitis A?..."
-              className="w-full h-48 px-4 py-3 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
+              className="w-full h-48 px-4 py-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
             />
           )}
         </div>
@@ -317,7 +317,7 @@ const Upload = () => {
               value={aText}
               onChange={(e) => setAText(e.target.value)}
               placeholder="Paste the answer key here...&#10;&#10;1. B&#10;2. C&#10;3. B&#10;4. D&#10;5. B&#10;6. C&#10;7. D&#10;8. A&#10;9. C&#10;10. B&#10;11. Weeds are unwanted plants. Controlled by weeding, weedicides, tilling.&#10;12. No — excess antibiotics cause resistance. Take on doctor's advice..."
-              className="w-full h-48 px-4 py-3 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
+              className="w-full h-48 px-4 py-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
             />
           ) : (
             <TabUpload files={aImages} onAdd={addImages(setAImages)} onRemove={removeImage(setAImages)} testId="zone-answer-key" />
@@ -348,7 +348,7 @@ const Upload = () => {
               value={cText}
               onChange={(e) => setCText(e.target.value)}
               placeholder="Paste chapter summaries, topics, or subtopics...&#10;&#10;Chapter 1: Cell Structure & Functions&#10;- Cell wall, cell membrane, cytoplasm, nucleus&#10;- Unicellular and multicellular organisms&#10;&#10;Chapter 2: Microorganisms&#10;- Bacteria, viruses, fungi, protozoa&#10;- Communicable diseases & prevention&#10;&#10;Chapter 3: Crop Production&#10;- Agricultural practices, irrigation, weeding&#10;&#10;Chapter 4: Reproduction in Animals&#10;- Sexual vs asexual reproduction&#10;- Fertilization, IVF, metamorphosis"
-              className="w-full h-40 px-4 py-3 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
+              className="w-full h-40 px-4 py-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
             />
           )}
           {cMode === "none" && (
