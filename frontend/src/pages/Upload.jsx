@@ -174,10 +174,16 @@ const Upload = () => {
         for (const img of sheetFiles) { if (img.file) formData.append("sheetFiles", img.file); }
 
         const result = await apiClient.createAssessment(formData);
+        console.log("Upload result:", result);
         if (result) {
           const id = result._id || result.id;
-          apiClient.processAssessment(id).catch(() => {});
-          navigate(`/processing/${id}`);
+          console.log("Assessment created:", id);
+          if (id) {
+            apiClient.processAssessment(id).catch((e) => console.warn("Process skipped:", e));
+            navigate(`/processing/${id}`);
+          } else {
+            setUploadError("Assessment created but no ID returned. Please try again.");
+          }
         } else {
           setUploadError("Upload failed — the server may be busy. Please try again or reduce the number of files.");
         }
