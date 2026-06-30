@@ -429,7 +429,7 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                qwen = QwenVisionOCR(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct"), qpaper, answer_key)
+                qwen = QwenVisionOCR(openrouter_key, "qwen/qwen2.5-vl-72b-instruct", qpaper, answer_key)
 
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
 

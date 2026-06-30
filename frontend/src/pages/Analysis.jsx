@@ -68,23 +68,6 @@ const Analysis = () => {
     }
   }, [QUESTIONS]);
 
-  // Auto-trigger Qwen analysis if question images are pending
-  useEffect(() => {
-    if (QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING" && !analyzing) {
-      setAnalyzing(true);
-      fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" })
-        .then((r) => r.json())
-        .then(async (data) => {
-          const wait = data.status === "ok" ? 500 : data.status === "error" ? 500 : 5000;
-          setTimeout(async () => {
-            setAnalyzing(false);
-            await refetchQuestions();
-          }, wait);
-        })
-        .catch(() => setAnalyzing(false));
-    }
-  }, [QUESTIONS, analyzing, id]);
-
   if (analyzing) {
     return <div className="flex flex-col items-center justify-center h-64 gap-4">
       <Loader2 className="animate-spin text-blue-800" size={32} />
@@ -98,12 +81,27 @@ const Analysis = () => {
   }
 
   const isSeedData = QUESTIONS.length > 0 && id !== "asm-001" && QUESTIONS[0]?._id?.includes(id);
+  const hasPendingOCR = QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING";
 
   const updateQuestion = (qId, field, value) => {
     setQuestionEdits((p) => ({ ...p, [qId]: { ...p[qId], [field]: value } }));
   };
 
   const getQ = (q) => ({ ...q, ...(questionEdits[q.id] || {}) });
+
+  const handleAnalyzeQPaper = async () => {
+    setAnalyzing(true);
+    try {
+      const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
+      const data = await r.json();
+      setTimeout(async () => {
+        setAnalyzing(false);
+        await refetchQuestions();
+      }, data.status === "ok" ? 1000 : 500);
+    } catch {
+      setAnalyzing(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-12" data-testid="analysis-page">
@@ -113,14 +111,19 @@ const Analysis = () => {
       ]} />
       {isSeedData && (
         <div className="mb-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700 italic">
-          Showing sample data for preview. Your question paper images have been uploaded. Enable OCR with OPENROUTER_API_KEY to extract real questions.
+          Showing sample data for preview. Your question paper images have been uploaded.
           {ASSESSMENT?.questionsImages?.length > 0 && (
-            <div className="flex gap-2 mt-2 flex-wrap">
+            <div className="flex gap-2 mt-2 flex-wrap items-center">
               <span className="text-[10px] text-amber-600 font-medium not-italic block mb-1">Your uploaded images:</span>
               {ASSESSMENT.questionsImages.map((img, i) => (
                 <img key={i} src={`/${img}`} alt={`Uploaded Q paper page ${i+1}`} className="h-16 rounded border border-amber-300 object-cover" />
               ))}
             </div>
+          )}
+          {hasPendingOCR && (
+            <button onClick={handleAnalyzeQPaper} disabled={analyzing} className="mt-3 not-italic inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-blue-800 text-white text-xs font-medium hover:bg-blue-900 disabled:opacity-50">
+              {analyzing ? <><Loader2 size={12} className="animate-spin" /> Analyzing with AI...</> : "🔍 Analyze Question Paper"}
+            </button>
           )}
         </div>
       )}
