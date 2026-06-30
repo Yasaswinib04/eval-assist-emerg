@@ -254,7 +254,7 @@ async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db
     print(f"[Qwen] Analyzing Q paper for {id}: {len(image_paths)} images")
     try:
         from backend.tools.ocr.qwen_ocr import analyze_question_paper
-        result = analyze_question_paper(openrouter_key, getattr(settings, "QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct"), image_paths)
+        result = analyze_question_paper(openrouter_key, "qwen/qwen2.5-vl-72b-instruct", image_paths)
         questions = result.get("questions", [])
         if questions:
             for i, q in enumerate(questions):
