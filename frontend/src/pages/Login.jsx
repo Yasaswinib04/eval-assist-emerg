@@ -59,14 +59,17 @@ const Login = () => {
   }, []);
 
   const handleGoogle = () => {
-    if (!window.google?.accounts?.id) return;
-    setError("");
-    setGoogleLoading(true);
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        setGoogleLoading(false);
-      }
-    });
+    if (window.google?.accounts?.id) {
+      setError("");
+      setGoogleLoading(true);
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          setGoogleLoading(false);
+        }
+      });
+    } else {
+      setShowEmail(true);
+    }
   };
 
   const handleEmailSubmit = async (e) => {
@@ -150,8 +153,7 @@ const Login = () => {
 
               <button
                 onClick={handleGoogle}
-                disabled={!googleReady || googleLoading}
-                className="w-full h-11 rounded-lg bg-white border border-stone-300 text-stone-600 font-medium hover:bg-stone-50 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-lg bg-white border border-stone-300 text-stone-600 font-medium hover:bg-stone-50 transition-colors inline-flex items-center justify-center gap-2"
               >
                 {googleLoading ? (
                   <><Loader2 size={14} className="animate-spin" /> Connecting...</>
@@ -161,7 +163,7 @@ const Login = () => {
                     Sign in with Google
                   </>
                 ) : (
-                  "Sign in with Google"
+                  "Sign in"
                 )}
               </button>
 

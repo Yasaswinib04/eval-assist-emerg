@@ -16,7 +16,9 @@ const Landing = () => {
     if (user) return;
     apiClient.getGoogleConfig().then((cfg) => {
       if (!cfg.clientId) return;
+      let attempts = 0;
       const check = setInterval(() => {
+        attempts++;
         if (window.google?.accounts?.id) {
           window.google.accounts.id.initialize({
             client_id: cfg.clientId,
@@ -32,19 +34,23 @@ const Landing = () => {
           setGoogleReady(true);
           clearInterval(check);
         }
+        if (attempts >= 40) clearInterval(check);
       }, 200);
       return () => clearInterval(check);
     });
   }, [user]);
 
   const handleGoogle = () => {
-    if (!window.google?.accounts?.id) return;
-    setGoogleLoading(true);
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        setGoogleLoading(false);
-      }
-    });
+    if (window.google?.accounts?.id) {
+      setGoogleLoading(true);
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          setGoogleLoading(false);
+        }
+      });
+    } else {
+      navigate("/login");
+    }
   };
 
   const handleDemo = async () => {
@@ -108,8 +114,7 @@ const Landing = () => {
 
             <button
               onClick={handleGoogle}
-              disabled={!googleReady || googleLoading}
-              className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border border-stone-300 text-stone-600 font-medium hover:bg-stone-100 transition-colors text-sm disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border border-stone-300 text-stone-600 font-medium hover:bg-stone-100 transition-colors text-sm"
             >
               {googleLoading ? (
                 <><Loader2 size={14} className="animate-spin" /> Connecting...</>
@@ -119,7 +124,7 @@ const Landing = () => {
                   Sign in with Google
                 </>
               ) : (
-                "Sign in with Google"
+                "Sign in"
               )}
             </button>
           </div>
