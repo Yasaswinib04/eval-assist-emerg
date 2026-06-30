@@ -11,8 +11,10 @@ import Processing from "@/pages/Processing";
 import Analysis from "@/pages/Analysis";
 import Review from "@/pages/Review";
 import Insights from "@/pages/Insights";
+import ClassPerformance from "@/pages/ClassPerformance";
 import StudentProfile from "@/pages/StudentProfile";
 import Interventions from "@/pages/Interventions";
+import FeedbackWidget from "@/components/FeedbackWidget";
 import { Toaster } from "@/components/ui/sonner";
 
 const Protected = ({ children }) => {
@@ -40,6 +42,7 @@ function App() {
             <Route element={<Protected><Layout /></Protected>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/upload" element={<Upload />} />
+              <Route path="/class/:className" element={<ClassPerformance />} />
               <Route path="/analysis/:id" element={<Analysis />} />
               <Route path="/processing/:id" element={<Processing />} />
               <Route path="/review/:id" element={<Review />} />
@@ -50,6 +53,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        <FeedbackWidget />
         <Toaster richColors position="top-right" />
       </AppProvider>
     </div>

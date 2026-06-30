@@ -162,6 +162,20 @@ async def health_check():
         "mongoUrl": settings.MONGO_URL[:40] + "...",
     }
 
+@router.get("/health")
+async def health_check():
+    return {"status": "ok", "mode": "demo", "mongoUrl": settings.MONGO_URL[:40] + "..."}
+
+@router.post("/feedback")
+async def submit_feedback(request: Request):
+    body = await request.json()
+    feedback_dir = os.path.join(os.path.dirname(__file__), "..", "..", "feedback_logs")
+    os.makedirs(feedback_dir, exist_ok=True)
+    log_path = os.path.join(feedback_dir, "feedback.jsonl")
+    with open(log_path, "a") as f:
+        f.write(json.dumps(body) + "\n")
+    return {"status": "ok", "message": "Feedback saved"}
+
 @router.get("/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user

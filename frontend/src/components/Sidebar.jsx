@@ -15,12 +15,12 @@ export const Sidebar = () => {
   const { id: routeAssessmentId } = useParams();
   const aid = routeAssessmentId || "asm-001";
   const [collapsed, setCollapsed] = useState(false);
-  const onAssessment = isAssessmentPage(location.pathname);
-
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: `/student/${aid}/stu-01`, label: "Student Performance", icon: Users, testId: "nav-students" },
+    { to: "/class/class-8-biology", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
   ];
+
+  const onAssessment = isAssessmentPage(location.pathname);
 
   const assessmentLinks = [
     { to: `/analysis/${aid}`, label: "Analysis", icon: FileText, testId: "nav-analysis" },
@@ -186,7 +186,7 @@ export const MobileNav = () => {
 
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: `/student/${aid}/stu-01`, label: "Student Performance", icon: Users, testId: "nav-students" },
+    { to: "/class/class-8-biology", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
   ];
 
   const assessmentLinks = [
