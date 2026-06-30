@@ -25,12 +25,14 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
     for f in files:
         if not f.filename:
             continue
-        safe_name = f.filename.replace(" ", "_").replace("/", "_")
-        dest = os.path.join(target, safe_name)
-        with open(dest, "wb") as buf:
-            shutil.copyfileobj(f.file, buf)
-        # Store relative to media for frontend access: media/uploads/{aid}/{subdir}/{file}
-        saved.append(f"media/uploads/{assessment_id}/{subdir}/{safe_name}")
+        try:
+            safe_name = f.filename.replace(" ", "_").replace("/", "_")
+            dest = os.path.join(target, safe_name)
+            with open(dest, "wb") as buf:
+                shutil.copyfileobj(f.file, buf)
+            saved.append(f"media/uploads/{assessment_id}/{subdir}/{safe_name}")
+        except Exception as e:
+            print(f"[Upload] Failed to save {f.filename}: {e}")
     return saved
 
 
@@ -131,88 +133,85 @@ async def create_assessment(
     sheetFiles: List[UploadFile] = File(default=[]),
 ):
     """Create a new assessment with optional files and text content."""
-    assessment_id = f"asm-{uuid.uuid4().hex[:6]}"
-    created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    try:
+        print(f"[Upload] Step 1: id generation for '{name}'")
+        assessment_id = f"asm-{uuid.uuid4().hex[:6]}"
+        created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Save uploaded files
-    question_images = _save_uploaded_files(
-        assessment_id, questionFiles or [], "questions"
-    )
-    answer_key_images = _save_uploaded_files(
-        assessment_id, answerKeyFiles or [], "answer_key"
-    )
-    sheet_images = _save_uploaded_files(
-        assessment_id, sheetFiles or [], "sheets"
-    )
+        print(f"[Upload] Step 2: saving {len(questionFiles)} question files")
+        question_images = _save_uploaded_files(assessment_id, questionFiles or [], "questions")
+        print(f"[Upload] Step 3: saving {len(answerKeyFiles)} answer key files")
+        answer_key_images = _save_uploaded_files(assessment_id, answerKeyFiles or [], "answer_key")
+        print(f"[Upload] Step 4: saving {len(sheetFiles)} sheet files")
+        sheet_images = _save_uploaded_files(assessment_id, sheetFiles or [], "sheets")
 
-    doc = {
-        "_id": assessment_id,
-        "name": name,
-        "class": class_name,
-        "subject": subject,
-        "type": type,
-        "totalMarks": totalMarks,
-        "totalPapers": len(sheet_images),
-        "pendingReview": len(sheet_images),
-        "avgScore": 0.0,
-        "status": "draft",
-        "createdAt": created_at,
-        "questionsText": questionsText,
-        "answerKeyText": answerKeyText,
-        "curriculumText": curriculumText,
-        "questionsImages": question_images,
-        "answerKeyImages": answer_key_images,
-        "sheetImages": sheet_images,
-        "processingStatus": "pending",
-        "parsedQuestions": None,
-        "parsedAnswerKey": None,
-    }
+        print(f"[Upload] Step 5: building doc")
+        doc = {
+            "_id": assessment_id,
+            "name": name,
+            "class": class_name,
+            "subject": subject,
+            "type": type,
+            "totalMarks": totalMarks,
+            "totalPapers": len(sheet_images),
+            "pendingReview": len(sheet_images),
+            "avgScore": 0.0,
+            "status": "draft",
+            "createdAt": created_at,
+            "questionsText": questionsText,
+            "answerKeyText": answerKeyText,
+            "curriculumText": curriculumText,
+            "questionsImages": question_images,
+            "answerKeyImages": answer_key_images,
+            "sheetImages": sheet_images,
+            "processingStatus": "pending",
+            "parsedQuestions": None,
+            "parsedAnswerKey": None,
+        }
 
-    await db.assessments.insert_one(doc)
+        print(f"[Upload] Step 6: inserting into MongoDB (id={assessment_id})")
+        await db.assessments.insert_one(doc)
+        print(f"[Upload] Step 6 done: inserted")
 
-    # If answer key text was provided, parse it now
-    if answerKeyText and answerKeyText.strip():
-        try:
-            from backend.services.answer_key_parser import parse_answer_key
-            parsed = parse_answer_key(answerKeyText)
-            if parsed:
-                await db.assessments.update_one(
-                    {"_id": assessment_id},
-                    {"$set": {"parsedAnswerKey": parsed}}
-                )
-                doc["parsedAnswerKey"] = parsed
-        except Exception as e:
-            print(f"  Answer key parsing skipped (Ollama may not be running): {e}")
+        print(f"[Upload] Step 7: optional parsing...")
+        if answerKeyText and answerKeyText.strip():
+            try:
+                from backend.services.answer_key_parser import parse_answer_key
+                parsed = parse_answer_key(answerKeyText)
+                if parsed:
+                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedAnswerKey": parsed}})
+                    doc["parsedAnswerKey"] = parsed
+            except Exception as e:
+                print(f"[Upload] Answer key parse skip: {e}")
 
-    # If questions text was provided, parse it now
-    if questionsText and questionsText.strip():
-        try:
-            from backend.services.answer_key_parser import parse_questions_text
-            parsed_qs = parse_questions_text(questionsText)
-            if parsed_qs:
-                await db.assessments.update_one(
-                    {"_id": assessment_id},
-                    {"$set": {"parsedQuestions": parsed_qs}}
-                )
-                doc["parsedQuestions"] = parsed_qs
-        except Exception as e:
-            print(f"  Questions parsing skipped (Ollama may not be running): {e}")
+        if questionsText and questionsText.strip():
+            try:
+                from backend.services.answer_key_parser import parse_questions_text
+                parsed_qs = parse_questions_text(questionsText)
+                if parsed_qs:
+                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedQuestions": parsed_qs}})
+                    doc["parsedQuestions"] = parsed_qs
+            except Exception as e:
+                print(f"[Upload] Questions parse skip: {e}")
 
-    # If curriculum text was provided, parse it now
-    if curriculumText and curriculumText.strip():
-        try:
-            from backend.services.answer_key_parser import parse_curriculum_text
-            parsed_curr = parse_curriculum_text(curriculumText)
-            if parsed_curr:
-                await db.assessments.update_one(
-                    {"_id": assessment_id},
-                    {"$set": {"parsedCurriculum": parsed_curr}}
-                )
-                doc["parsedCurriculum"] = parsed_curr
-        except Exception as e:
-            print(f"  Curriculum parsing skipped: {e}")
+        if curriculumText and curriculumText.strip():
+            try:
+                from backend.services.answer_key_parser import parse_curriculum_text
+                parsed_curr = parse_curriculum_text(curriculumText)
+                if parsed_curr:
+                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedCurriculum": parsed_curr}})
+                    doc["parsedCurriculum"] = parsed_curr
+            except Exception as e:
+                print(f"[Upload] Curriculum parse skip: {e}")
 
-    return doc
+        print(f"[Upload] DONE — returning doc")
+        return doc
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        detail = f"{e.__class__.__name__}: {str(e)[:300]}"
+        print(f"[Upload] CRASH at step: {detail}")
+        raise HTTPException(status_code=500, detail=detail)
 
 
 @router.post("/{id}/process")
