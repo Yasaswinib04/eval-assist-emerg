@@ -19,6 +19,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let check = null;
     apiClient.getGoogleConfig().then((cfg) => {
       if (!cfg.clientId) {
         setError("Google sign-in not configured yet. Use email sign-in below.");
@@ -27,35 +28,38 @@ const Login = () => {
       }
       let attempts = 0;
       const maxAttempts = 40;
-      const check = setInterval(() => {
+      check = setInterval(() => {
         attempts++;
         if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
-          client_id: cfg.clientId,
-          callback: async (response) => {
-            try {
-              await googleLogin(response.credential, "");
-              setTimeout(() => {
-                window.location.replace("/dashboard");
-              }, 300);
-            } catch (err) {
-              setError(err.message || "Google sign-in failed. Use email below.");
-              setShowEmail(true);
-              setGoogleLoading(false);
-            }
-          },
-        });
+          window.google.accounts.id.initialize({
+            client_id: cfg.clientId,
+            callback: async (response) => {
+              try {
+                console.log("[Google] Credential received, length:", response.credential?.length);
+                await googleLogin(response.credential, "");
+                navigate("/dashboard");
+              } catch (err) {
+                console.error("[Google] Login failed:", err.message, err);
+                setError(err.message || "Google sign-in failed. Use email below.");
+                setShowEmail(true);
+                setGoogleLoading(false);
+              }
+            },
+          });
           setGoogleReady(true);
           clearInterval(check);
+          check = null;
         }
         if (attempts >= maxAttempts) {
           clearInterval(check);
+          check = null;
+          console.warn("[Google] GIS script did not load after 8s");
           setError("Google sign-in timed out. Use email below.");
           setShowEmail(true);
         }
       }, 200);
-      return () => clearInterval(check);
     });
+    return () => { if (check) clearInterval(check); };
   }, []);
 
   const handleGoogle = () => {
@@ -63,9 +67,16 @@ const Login = () => {
       setError("");
       setGoogleLoading(true);
       window.google.accounts.id.prompt((notification) => {
+        console.log("[Google] Prompt notification:", notification.getMomentType(), notification.isNotDisplayed(), notification.isSkippedMoment(), notification.isDismissedMoment());
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          setGoogleLoading(false);
+          if (notification.isNotDisplayed()) {
+            const reason = notification.getNotDisplayedReason();
+            console.error("[Google] One Tap not displayed. Reason:", reason);
+            setError(`Google sign-in unavailable: ${reason}. Use email below.`);
+            setShowEmail(true);
+          }
         }
+        setGoogleLoading(false);
       });
     } else {
       setShowEmail(true);

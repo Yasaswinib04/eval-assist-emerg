@@ -48,7 +48,7 @@ const Upload = () => {
   const [searchParams] = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
 
-  const subjects = user?.subjects?.length ? user.subjects : ["Biology"];
+  const subjects = user?.subjects?.length ? user.subjects : ["Biology", "Physics", "Chemistry", "Maths", "Social Science", "Hindi", "English", "Telugu"];
   const [name, setName] = useState("SA1 — Biological Science");
   const [subject, setSubject] = useState(activeSubject || subjects[0]);
   const [customSubject, setCustomSubject] = useState("");

@@ -7,6 +7,8 @@ from backend.core.config import settings
 from datetime import timedelta
 from jose import JWTError, jwt
 import bcrypt
+import os
+import json
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -43,7 +45,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             "name": "Teacher",
             "email": form_data.username,
             "school": "Z.P. High School, Hyderabad",
-            "subjects": ["Biology", "Physics"],
+            "subjects": ["Biology", "Physics", "Chemistry", "Maths", "Social Science", "Hindi", "English", "Telugu"],
         }
     }
 

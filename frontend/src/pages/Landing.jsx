@@ -14,39 +14,49 @@ const Landing = () => {
 
   useEffect(() => {
     if (user) return;
+    let check = null;
     apiClient.getGoogleConfig().then((cfg) => {
       if (!cfg.clientId) return;
       let attempts = 0;
-      const check = setInterval(() => {
+      check = setInterval(() => {
         attempts++;
         if (window.google?.accounts?.id) {
           window.google.accounts.id.initialize({
             client_id: cfg.clientId,
             callback: async (response) => {
               try {
+                console.log("[Google] Credential received, length:", response.credential?.length);
                 await googleLogin(response.credential, "");
-                setTimeout(() => window.location.replace("/loading"), 300);
-              } catch {
+                navigate("/loading");
+              } catch (err) {
+                console.error("[Google] Login failed:", err.message, err);
                 setGoogleLoading(false);
               }
             },
           });
           setGoogleReady(true);
           clearInterval(check);
+          check = null;
         }
-        if (attempts >= 40) clearInterval(check);
+        if (attempts >= 40) {
+          clearInterval(check);
+          check = null;
+          console.warn("[Google] GIS script did not load after 8s on landing");
+        }
       }, 200);
-      return () => clearInterval(check);
     });
+    return () => { if (check) clearInterval(check); };
   }, [user]);
 
   const handleGoogle = () => {
     if (window.google?.accounts?.id) {
       setGoogleLoading(true);
       window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          setGoogleLoading(false);
+        console.log("[Google] Prompt notification:", notification.getMomentType());
+        if (notification.isNotDisplayed()) {
+          console.error("[Google] One Tap not displayed. Reason:", notification.getNotDisplayedReason());
         }
+        setGoogleLoading(false);
       });
     } else {
       navigate("/login");
