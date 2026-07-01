@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { translations } from "@/data/translations";
-import { analytics } from "@/data/analytics";
 
 const AppContext = createContext(null);
 
@@ -59,8 +58,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(data.user));
     setToken(data.access_token);
     setUser(data.user);
-    analytics.identify(email, data.user?.name);
-    analytics.track("user_signed_in", { method: "email", email });
     const subjects = data.user?.subjects;
     if (subjects?.length) {
       localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
@@ -79,8 +76,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
-    analytics.identify(email, displayName);
-    analytics.track("user_signed_in", { method: "demo", email });
     const subjects = data.user?.subjects;
     if (subjects?.length) {
       localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
@@ -99,8 +94,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
-    analytics.identify(data.user?.email, userWithName?.name);
-    analytics.track("user_signed_in", { method: "google", email: data.user?.email });
     const subjects = data.user?.subjects;
     if (subjects?.length) {
       localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));

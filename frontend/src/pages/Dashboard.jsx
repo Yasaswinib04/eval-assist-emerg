@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
-import { Upload as UploadIcon, Zap, ChevronRight, Loader2 } from "lucide-react";
+import { Upload as UploadIcon, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const StatusPill = ({ status, t }) => {
@@ -71,24 +71,14 @@ const Dashboard = () => {
           </h1>
           <p className="mt-1.5 text-stone-600 text-lg">Select an assessment to review or analyze</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/score-entry"
-            data-testid="score-entry-cta-header"
-            className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition-colors shadow-sm"
-          >
-            <Zap size={18} />
-            Quick Score Entry
-          </Link>
-          <Link
-            to="/upload"
-            data-testid="upload-cta-header"
-            className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 transition-colors shadow-sm"
-          >
-            <UploadIcon size={18} />
-            New Assessment
-          </Link>
-        </div>
+        <Link
+          to="/upload"
+          data-testid="upload-cta-header"
+          className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 transition-colors shadow-sm"
+        >
+          <UploadIcon size={18} />
+          New Assessment
+        </Link>
       </div>
 
       {/* Assessment Directory */}

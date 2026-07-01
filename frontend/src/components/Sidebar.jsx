@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, ChevronLeft, Menu, X, Zap } from "lucide-react";
+import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, ChevronLeft, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const isAssessmentPage = (pathname) => {
@@ -17,7 +17,6 @@ export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: "/score-entry", label: "Quick Score Entry", icon: Zap, testId: "nav-score-entry" },
     { to: "/class/class-8-biology", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
   ];
 
@@ -175,7 +174,6 @@ export const MobileNav = () => {
 
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
-    { to: "/score-entry", label: "Quick Score Entry", icon: Zap, testId: "nav-score-entry" },
     { to: "/class/class-8-biology", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
   ];
 

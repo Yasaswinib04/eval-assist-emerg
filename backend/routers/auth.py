@@ -138,14 +138,6 @@ async def google_login(request: Request, db=Depends(get_db)):
 async def get_google_config():
     return {"clientId": settings.GOOGLE_CLIENT_ID}
 
-@router.get("/config")
-async def get_app_config():
-    return {
-        "googleClientId": settings.GOOGLE_CLIENT_ID,
-        "posthogKey": settings.POSTHOG_API_KEY,
-        "posthogHost": settings.POSTHOG_HOST,
-    }
-
 @router.get("/google-debug")
 async def google_debug():
     """Debug endpoint to verify Google OAuth setup."""

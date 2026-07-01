@@ -16,8 +16,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "dependencies": {
-    "posthog-js": "^1.396.3"
   }
 }

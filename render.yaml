@@ -21,7 +21,3 @@ services:
         sync: false
       - key: QWEN_MODEL
         value: qwen/qwen3-vl-235b-a22b-instruct
-      - key: POSTHOG_API_KEY
-        sync: false
-      - key: POSTHOG_HOST
-        value: https://us.i.posthog.com

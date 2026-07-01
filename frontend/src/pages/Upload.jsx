@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen, CheckCircle, Network } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
-import { analytics } from "@/data/analytics";
 
 const TabUpload = ({ files, onAdd, onRemove, testId }) => {
   const ref = useRef(null);
@@ -176,7 +175,6 @@ const Upload = () => {
 
         const result = await apiClient.createAssessment(formData);
         const id = result._id || result.id;
-        analytics.track("assessment_created", { class: klass, subject: subject === "__custom__" ? customSubject : subject, type, totalMarks: marks, studentCount: sheetFiles.length });
         apiClient.processAssessment(id).catch(() => {});
         navigate(`/analysis/${id}`);
       }
