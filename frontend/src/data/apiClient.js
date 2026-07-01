@@ -287,5 +287,60 @@ export const apiClient = {
         if (data) return data;
         const mock = await import('./mockData.mjs');
         return mock.getStudentConceptTrend(studentId);
-    }
+    },
+
+    async createScoreEntry(payload) {
+        const token = getToken();
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 30000);
+        try {
+            const res = await fetch(`${API_BASE}/assessments/score-entry`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error((data && data.detail) || `Server error (${res.status})`);
+            }
+            return data;
+        } catch (err) {
+            console.warn('Score entry creation failed:', err.message);
+            throw err;
+        }
+    },
+
+    async getScoreEntry(id) {
+        const data = await fetchWithFallback(`/assessments/${id}/score-entry`);
+        return data;
+    },
+
+    async updateScoreEntry(id, payload) {
+        const token = getToken();
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 30000);
+        try {
+            const res = await fetch(`${API_BASE}/assessments/${id}/score-entry`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error((data && data.detail) || `Server error (${res.status})`);
+            }
+            return data;
+        } catch (err) {
+            console.warn('Score entry update failed:', err.message);
+            throw err;
+        }
+    },
 };

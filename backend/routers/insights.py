@@ -37,6 +37,19 @@ async def _get_curriculum(db):
     return curriculum
 
 
+def _build_qmap(questions):
+    """Build a lookup map: matches both q._id and q{number} -> question."""
+    q_map = {}
+    for q in questions:
+        q_id = q.get("_id", q.get("id", ""))
+        if q_id:
+            q_map[q_id] = q
+        num = q.get("number", 0)
+        if num:
+            q_map[f"q{num}"] = q
+    return q_map
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
 
 
@@ -76,7 +89,7 @@ async def get_root_cause(id: str, db=Depends(get_db)):
     # Build concept mastery map
     concept_scores = {}
     concept_attempts = {}
-    q_map = {q.get("_id", q.get("id", "")): q for q in questions}
+    q_map = _build_qmap(questions)
 
     for ev in evaluations:
         q_id = ev.get("qId", "")
@@ -152,7 +165,7 @@ async def get_concept_mastery(id: str, db=Depends(get_db)):
     if not evaluations or not questions:
         return []
 
-    q_map = {q.get("_id", q.get("id", "")): q for q in questions}
+    q_map = _build_qmap(questions)
     concept_scores = {}
     concept_attempts = {}
     concept_chapter = {}

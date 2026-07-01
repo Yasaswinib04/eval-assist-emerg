@@ -57,6 +57,7 @@ async def get_interventions(id: str, db=Depends(get_db)):
         _get_assessment_questions,
         _get_evaluations,
         _get_students,
+        _build_qmap,
     )
 
     questions = await _get_assessment_questions(db, id)
@@ -66,7 +67,7 @@ async def get_interventions(id: str, db=Depends(get_db)):
     if not evaluations or not questions:
         return []
 
-    q_map = {q.get("_id", q.get("id", "")): q for q in questions}
+    q_map = _build_qmap(questions)
     concept_scores = {}
     concept_attempts = {}
     concept_chapter = {}

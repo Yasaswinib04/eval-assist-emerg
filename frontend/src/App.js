@@ -14,6 +14,7 @@ import Insights from "@/pages/Insights";
 import ClassPerformance from "@/pages/ClassPerformance";
 import StudentProfile from "@/pages/StudentProfile";
 import Interventions from "@/pages/Interventions";
+import ScoreEntry from "@/pages/ScoreEntry";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -48,6 +49,7 @@ function App() {
               <Route path="/review/:id" element={<Review />} />
               <Route path="/insights/:id" element={<Insights />} />
               <Route path="/interventions/:id" element={<Interventions />} />
+              <Route path="/score-entry" element={<ScoreEntry />} />
               <Route path="/student/:id/:studentId" element={<StudentProfile />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

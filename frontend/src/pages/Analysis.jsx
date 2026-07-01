@@ -61,6 +61,19 @@ const Analysis = () => {
   const [editingQ, setEditingQ] = useState(null);
   const [questionEdits, setQuestionEdits] = useState({});
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
+
+  // Safety: stop analyzing after 60 seconds max
+  useEffect(() => {
+    if (!analyzing) return;
+    const t = setTimeout(() => {
+      setAnalyzing(false);
+      setAnalysisError("Analysis timed out. Your images are saved — try again.");
+    }, 60000);
+    return () => clearTimeout(t);
+  }, [analyzing]);
+
+  useEffect(() => {
 
   useEffect(() => {
     if (QUESTIONS.length > 0 && concepts.length === 0) {
@@ -80,6 +93,19 @@ const Analysis = () => {
       <Loader2 className="animate-spin text-blue-800" size={32} />
       <p className="text-sm text-stone-600">Analyzing your question paper with AI...</p>
       <p className="text-xs text-stone-400">Extracting questions, concepts, and chapter mappings</p>
+      <button onClick={() => { setAnalyzing(false); setAnalysisError("Skipped. Click 'Analyze Question Paper' to try again."); }} className="text-xs text-stone-500 underline hover:text-stone-700">
+        Skip & show sample data
+      </button>
+    </div>;
+  }
+
+  if (analysisError && QUESTIONS.length === 0) {
+    return <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <p className="text-sm text-red-600">{analysisError}</p>
+      <div className="flex gap-2">
+        <button onClick={handleAnalyzeQPaper} className="h-9 px-4 rounded-lg bg-blue-800 text-white text-xs font-medium">Retry Analysis</button>
+        <button onClick={() => navigate("/dashboard")} className="h-9 px-4 rounded-lg border border-stone-300 text-stone-600 text-xs font-medium">Back to Dashboard</button>
+      </div>
     </div>;
   }
 
@@ -98,15 +124,23 @@ const Analysis = () => {
 
   const handleAnalyzeQPaper = async () => {
     setAnalyzing(true);
+    setAnalysisError("");
     try {
       const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
       const data = await r.json();
-      setTimeout(async () => {
+      if (data.status === "ok") {
+        setTimeout(async () => {
+          setAnalyzing(false);
+          await refetchQuestions();
+        }, 1000);
+      } else {
         setAnalyzing(false);
+        setAnalysisError(data.message || "Analysis failed. Your images are saved — try again.");
         await refetchQuestions();
-      }, data.status === "ok" ? 1000 : 500);
-    } catch {
+      }
+    } catch (err) {
       setAnalyzing(false);
+      setAnalysisError("Network error. Check your connection and try again.");
     }
   };
 
