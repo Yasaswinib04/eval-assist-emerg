@@ -7,6 +7,7 @@ from concept mastery and returns them with real student-affected counts.
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from backend.core.database import get_db
+from backend.routers.auth import get_current_user
 
 router = APIRouter()
 

@@ -3,6 +3,7 @@ from typing import List, Optional
 from backend.core.database import get_db
 from backend.core.config import settings
 from backend.models.assessment import Assessment, AssessmentCreate, AssessmentProcessRequest
+from backend.routers.auth import get_current_user
 from datetime import datetime, timezone
 import uuid
 import os
@@ -44,7 +45,7 @@ async def get_assessments(db=Depends(get_db)):
 
 
 @router.get("/seed")
-async def seed_database_route(db=Depends(get_db)):
+async def seed_database_route(db=Depends(get_db), current_user=Depends(get_current_user)):
     """Seed the database with demo data. Call this once after deployment."""
     seed_dir = os.path.join(os.path.dirname(__file__), "..", "seed")
 
@@ -121,6 +122,7 @@ async def get_assessment(id: str, db=Depends(get_db)):
 @router.post("/", response_model=Assessment)
 async def create_assessment(
     db=Depends(get_db),
+    current_user=Depends(get_current_user),
     name: str = Form(...),
     class_name: str = Form(..., alias="class"),
     subject: str = Form(...),
@@ -216,7 +218,7 @@ async def create_assessment(
 
 
 @router.post("/{id}/analyze-qpaper")
-async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db=Depends(get_db)):
+async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db=Depends(get_db), current_user=Depends(get_current_user)):
     """Analyze uploaded question paper images using Qwen OCR — extracts questions, concepts, chapters."""
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
@@ -316,6 +318,7 @@ async def process_assessment(
     id: str,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """Trigger OCR pipeline processing for the assessment."""
     assessment = await db.assessments.find_one({"_id": id})
@@ -339,6 +342,7 @@ async def append_sheets(
     id: str,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
+    current_user=Depends(get_current_user),
     sheetFiles: List[UploadFile] = File(default=[]),
 ):
     """Append new student answer sheets to an existing assessment and trigger OCR."""
@@ -816,7 +820,7 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
 
 
 @router.patch("/{id}", response_model=Assessment)
-async def update_assessment(id: str, updates: dict, db=Depends(get_db)):
+async def update_assessment(id: str, updates: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
     result = await db.assessments.update_one({"_id": id}, {"$set": updates})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Assessment not found")

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from backend.core.database import get_db
 from backend.models.question import Question
+from backend.routers.auth import get_current_user
 
 router = APIRouter()
 
@@ -52,7 +53,7 @@ async def get_questions(id: str, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Questions error v2: {e.__class__.__name__}: {str(e)[:300]}")
 
 @router.put("/{id}/questions/{qid}", response_model=Question)
-async def update_question(id: str, qid: str, updates: dict, db=Depends(get_db)):
+async def update_question(id: str, qid: str, updates: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
     result = await db.questions.update_one({"_id": qid, "assessmentId": id}, {"$set": updates})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Question not found")

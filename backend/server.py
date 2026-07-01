@@ -34,6 +34,14 @@ api_router.include_router(insights.router, prefix="/assessments", tags=["insight
 api_router.include_router(interventions.router, prefix="/assessments", tags=["interventions"])
 api_router.include_router(score_entry.router, prefix="/assessments", tags=["score-entry"])
 
+@api_router.get("/config")
+async def app_config():
+    return {
+        "googleClientId": settings.GOOGLE_CLIENT_ID,
+        "posthogKey": settings.POSTHOG_API_KEY,
+        "posthogHost": settings.POSTHOG_HOST or "https://us.i.posthog.com",
+    }
+
 app.include_router(api_router)
 
 @app.exception_handler(RequestValidationError)

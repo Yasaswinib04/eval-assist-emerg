@@ -52,11 +52,9 @@ const Landing = () => {
     if (window.google?.accounts?.id) {
       setGoogleLoading(true);
       window.google.accounts.id.prompt((notification) => {
-        console.log("[Google] Prompt notification:", notification.getMomentType());
-        if (notification.isNotDisplayed()) {
-          console.error("[Google] One Tap not displayed. Reason:", notification.getNotDisplayedReason());
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          setGoogleLoading(false);
         }
-        setGoogleLoading(false);
       });
     } else {
       navigate("/login");
@@ -124,7 +122,7 @@ const Landing = () => {
 
             <button
               onClick={handleGoogle}
-              className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border border-stone-300 text-stone-600 font-medium hover:bg-stone-100 transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border-2 border-blue-800 text-blue-800 font-medium hover:bg-blue-50 transition-colors text-sm"
             >
               {googleLoading ? (
                 <><Loader2 size={14} className="animate-spin" /> Connecting...</>
