@@ -49,7 +49,7 @@ async def get_questions(id: str, db=Depends(get_db)):
             return await db.questions.find({"assessmentId": id}).to_list(100)
         return []
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Questions error: {e.__class__.__name__}: {str(e)[:300]}")
+        raise HTTPException(status_code=500, detail=f"Questions error v2: {e.__class__.__name__}: {str(e)[:300]}")
 
 @router.put("/{id}/questions/{qid}", response_model=Question)
 async def update_question(id: str, qid: str, updates: dict, db=Depends(get_db)):
