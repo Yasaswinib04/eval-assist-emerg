@@ -175,20 +175,21 @@ def build_answer_key_json(answer_key_path: str = None) -> list:
 
 
 def analyze_question_paper(api_key: str, model: str, image_paths: list, answer_key_path: str = None) -> dict:
-    """Send question paper images to Qwen to extract questions with chapters, concepts, difficulty."""
+    """Send question paper images to Qwen to extract questions."""
     if not image_paths:
         return {"error": "No question paper images provided"}
 
-    prompt = """You are analyzing a Class 8 Biological Science exam question paper. Extract:
-1. For each question: question number, text, section (A/B/C/D), max marks, expected concepts, skill level (Easy/Medium/Hard)
-2. Total marks per section
-3. Chapter mapping: which biology chapter each question belongs to (Cell Structure, Microorganisms, Crop Production, Reproduction)
-
-Return ONLY a JSON object:
-{"questions": [{"number": 1, "section": "A", "text": "...", "maxMarks": 1, "type": "MCQ", "concept": "Fertilization", "chapter": "ch4", "skill": "Recall", "difficulty": "Easy", "options": ["Frog","Butterfly","Hen","Humans"]}, ...], "totalMarks": 40, "sectionMarks": {"A": 10, "B": 6, "C": 8, "D": 16}}"""
+    prompt = """Read every question from this exam paper image. Return ONLY a JSON array of questions:
+[
+  {"number": 1, "text": "complete question text including all options if MCQ", "section": "A", "maxMarks": 1},
+  {"number": 2, "text": "complete question text including all options", "section": "A", "maxMarks": 1},
+  ...
+]
+Include every question you can read. For MCQs, include ALL option choices in the text field. For subjective questions, include the complete question. If you can't read something, skip that question. Return ONLY the JSON array, no other text."""
 
     results = {"questions": [], "totalMarks": 40, "images": len(image_paths)}
     for i, path in enumerate(image_paths):
+        print(f"[Qwen] Analyzing page {i+1}: {os.path.basename(path)}")
         with open(path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode("utf-8")
 
@@ -210,13 +211,23 @@ Return ONLY a JSON object:
         if "choices" not in data:
             raise Exception(f"Unexpected OpenRouter response: {json.dumps(data)[:200]}")
         content = data["choices"][0]["message"]["content"]
+        print(f"[Qwen] Raw response ({len(content)} chars): {content[:300]}...")
         try:
-            j = json.loads(content[content.find("{"):content.rfind("}")+1])
-            results["questions"].extend(j.get("questions", []))
-            results["totalMarks"] = results["totalMarks"] or j.get("totalMarks", 40)
-            results["sectionMarks"] = j.get("sectionMarks", {})
+            j_start = content.find("[")
+            j_end = content.rfind("]") + 1
+            if j_start >= 0 and j_end > j_start:
+                parsed = json.loads(content[j_start:j_end])
+                if isinstance(parsed, list):
+                    results["questions"].extend(parsed)
+                elif isinstance(parsed, dict) and "questions" in parsed:
+                    results["questions"].extend(parsed["questions"])
+            else:
+                print(f"[Qwen] No JSON array found in response. Trying raw text extraction...")
+                lines = [l.strip() for l in content.split("\n") if l.strip() and any(c.isdigit() for c in l[:5])]
+                for line in lines[:30]:
+                    results["questions"].append({"number": len(results["questions"])+1, "text": line[:200], "section": "?", "maxMarks": 1})
         except Exception as e:
-            print(f"[Qwen] Failed to parse Q paper page {i+1}: {e}")
+            print(f"[Qwen] Parse error for page {i+1}: {e}")
     return results
 
 
