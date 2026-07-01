@@ -9,6 +9,7 @@ No preprocessing, segmentation, or local models needed.
 import base64
 import json
 import os
+import time
 import requests
 from typing import List, Dict, Optional
 
@@ -203,7 +204,14 @@ Include every question you can read. For MCQs, include ALL option choices in the
         }
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
                     "HTTP-Referer": "https://eval-assist-emerg.onrender.com", "X-Title": "EvalAssist"}
-        resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
+        resp = None
+        for attempt in range(3):
+            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
+            if resp.status_code == 429:
+                print(f"[Qwen] Rate limited, retrying ({attempt+1}/3)...")
+                time.sleep(2)
+                continue
+            break
         resp.raise_for_status()
         data = resp.json()
         if "error" in data:
