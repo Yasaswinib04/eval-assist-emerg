@@ -99,7 +99,7 @@ export const Sidebar = () => {
           <>
             {!collapsed && (
               <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">
-                SA1 — Biological Science
+                Current Assessment
               </div>
             )}
             <div className="space-y-0.5">
@@ -272,7 +272,7 @@ export const MobileNav = () => {
           {onAssessment && (
             <>
               <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-stone-400 px-3 mt-6 mb-2">
-                SA1 — Biological Science
+                Current Assessment
               </div>
               <div className="space-y-0.5">
                 {assessmentLinks.map((item) => {
