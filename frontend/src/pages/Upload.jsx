@@ -152,8 +152,6 @@ const Upload = () => {
         const result = await apiClient.appendStudentResponses(assessmentId, formData);
         if (result) {
           navigate(`/processing/${assessmentId}`);
-        } else {
-          setUploadError("Upload failed — please check your connection and try again.");
         }
       } else {
         const formData = new FormData();
@@ -179,7 +177,12 @@ const Upload = () => {
         navigate(`/analysis/${id}`);
       }
     } catch (err) {
-      setUploadError(`Upload error: ${err.message || "Something went wrong"}. Please try again.`);
+      console.error('Upload full error:', err);
+      const msg = err?.message;
+      const displayMsg = (typeof msg === 'string' && msg && msg !== '[object Object]')
+        ? msg
+        : 'Something went wrong on the server. Check your inputs and try again.';
+      setUploadError(`${displayMsg}`);
     } finally {
       setSubmitting(false);
     }

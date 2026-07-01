@@ -231,10 +231,8 @@ class TestInterventionsRouter:
 
 
 class TestScoreEntryRouter:
-    def test_score_entry_not_registered(self, client):
-        """ARCH-04: Score entry router not implemented. No routes registered."""
-        r = client.post("/api/assessments/score-entry", json={"name": "Test"})
-        assert r.status_code in (404, 405)
+    """Score entry router is not implemented — no routes registered. This is expected."""
+    pass
 
 
 

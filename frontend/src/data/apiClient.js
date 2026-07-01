@@ -5,6 +5,17 @@ function getToken() {
     return localStorage.getItem('evalassist-token');
 }
 
+function normalizeErrorDetail(data, status) {
+    if (!data || !data.detail) return `Server error (${status})`;
+    if (typeof data.detail === 'string') return data.detail;
+    if (Array.isArray(data.detail)) {
+        return data.detail
+            .map((e) => `${e.loc ? e.loc.join('.') + ': ' : ''}${e.msg}`)
+            .join('; ');
+    }
+    return String(data.detail);
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -81,8 +92,8 @@ export const apiClient = {
             });
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                const msg = (data && data.detail) || `Server error (${res.status})`;
-                console.warn('Create assessment failed:', data);
+                const msg = normalizeErrorDetail(data, res.status);
+                console.warn('Create assessment failed:', msg, data);
                 throw new Error(msg);
             }
             return data;
@@ -131,13 +142,15 @@ export const apiClient = {
             });
             const data = await res.json();
             if (!res.ok) {
-                console.warn('Append student responses failed:', data);
-                return null;
+                const msg = normalizeErrorDetail(data, res.status);
+                console.warn('Append student responses failed:', msg, data);
+                throw new Error(msg);
             }
             return data;
         } catch (err) {
-            console.warn('Append student responses error:', err.message);
-            return null;
+            const msg = err.name === 'AbortError' ? 'Upload timed out — try fewer files or a faster connection.' : err.message;
+            console.warn('Append student responses error:', msg);
+            throw new Error(msg);
         }
     },
 
@@ -305,7 +318,7 @@ export const apiClient = {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error((data && data.detail) || `Server error (${res.status})`);
+                throw new Error(normalizeErrorDetail(data, res.status));
             }
             return data;
         } catch (err) {
@@ -335,7 +348,7 @@ export const apiClient = {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error((data && data.detail) || `Server error (${res.status})`);
+                throw new Error(normalizeErrorDetail(data, res.status));
             }
             return data;
         } catch (err) {

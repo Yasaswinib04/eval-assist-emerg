@@ -4,8 +4,9 @@ import logging
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions, score_entry
@@ -34,6 +35,16 @@ api_router.include_router(interventions.router, prefix="/assessments", tags=["in
 api_router.include_router(score_entry.router, prefix="/assessments", tags=["score-entry"])
 
 app.include_router(api_router)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    errors = exc.errors()
+    messages = []
+    for err in errors:
+        loc = " -> ".join(str(l) for l in err.get("loc", []))
+        messages.append(f"{loc}: {err.get('msg', 'Invalid value')}")
+    detail = "; ".join(messages)
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 # Serve media files (sample answer sheets, etc.)
 media_dir = os.path.join(os.path.dirname(__file__), "..", "media")
