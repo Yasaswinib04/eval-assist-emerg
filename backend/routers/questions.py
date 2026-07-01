@@ -15,7 +15,7 @@ async def get_questions(id: str, db=Depends(get_db)):
             return assessment["parsedQuestions"]
 
         # 2. Try parsing text if provided
-        if assessment and (assessment.get("questionsText") or "").strip():
+        if assessment and (assessment.get("questionsText") or "").strip() and assessment.get("questionsText") is not None:
             try:
                 from backend.services.answer_key_parser import parse_questions_text
                 parsed = parse_questions_text(assessment["questionsText"])

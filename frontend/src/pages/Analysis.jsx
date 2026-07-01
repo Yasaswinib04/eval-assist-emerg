@@ -55,7 +55,7 @@ const Analysis = () => {
   };
 
   // Unique concepts from questions
-  const uniqueConcepts = [...new Set(QUESTIONS.map((q) => q.concept))];
+  const uniqueConcepts = [...new Set(QUESTIONS.map((q) => q.concept || "Unmapped"))];
   const [concepts, setConcepts] = useState([]);
   const [newConcept, setNewConcept] = useState("");
   const [editingQ, setEditingQ] = useState(null);
@@ -75,7 +75,7 @@ const Analysis = () => {
 
   useEffect(() => {
     if (QUESTIONS.length > 0 && concepts.length === 0) {
-      setConcepts([...new Set(QUESTIONS.map((q) => q.concept))]);
+      setConcepts([...new Set(QUESTIONS.map((q) => q.concept || "Unmapped"))]);
     }
   }, [QUESTIONS]);
 
@@ -186,7 +186,7 @@ const Analysis = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {[
           { label: "Total Questions", value: QUESTIONS.length },
-          { label: "Total Marks", value: QUESTIONS.reduce((s, q) => s + q.maxMarks, 0) },
+          { label: "Total Marks", value: QUESTIONS.reduce((s, q) => s + (q.maxMarks || 1), 0) },
           { label: "Chapters Covered", value: Array.isArray(CHAPTERS) ? CHAPTERS.length : Object.keys(CHAPTERS).length },
           { label: "Concepts Tested", value: uniqueConcepts.length },
         ].map((s) => (
@@ -203,9 +203,9 @@ const Analysis = () => {
         <p className="text-sm text-stone-500 mb-4">How marks are distributed across chapters in this paper.</p>
         <div className="space-y-3">
           {(Array.isArray(CHAPTERS) ? CHAPTERS : Object.values(CHAPTERS)).map((ch) => {
-            const qs = QUESTIONS.filter((q) => q.chapter === ch.id);
-            const marks = qs.reduce((s, q) => s + q.maxMarks, 0);
-            const total = QUESTIONS.reduce((s, q) => s + q.maxMarks, 0);
+            const qs = QUESTIONS.filter((q) => (q.chapter || "ch4") === ch.id);
+            const marks = qs.reduce((s, q) => s + (q.maxMarks || 1), 0);
+            const total = QUESTIONS.reduce((s, q) => s + (q.maxMarks || 1), 0);
             const pct = (marks / total) * 100;
             const colorBg = { blue: "bg-blue-700", emerald: "bg-emerald-700", amber: "bg-amber-600", rose: "bg-rose-700" }[ch.color];
             return (
@@ -269,9 +269,9 @@ const Analysis = () => {
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-stone-800 line-clamp-2">{q.text}</div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">{q.maxMarks} mark{q.maxMarks > 1 ? "s" : ""}</span>
-                      {chapterChip(q.chapter)}
-                      <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-semibold">{q.concept}</span>
+                      <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">{(q.maxMarks || 1)} mark{(q.maxMarks || 1) > 1 ? "s" : ""}</span>
+                      {chapterChip(q.chapter || "ch4")}
+                      <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-semibold">{q.concept || "Unknown"}</span>
                       <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[11px]">{q.skill}</span>
                       {difficultyChip(q.difficulty)}
                     </div>
