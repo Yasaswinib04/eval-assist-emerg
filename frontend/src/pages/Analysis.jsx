@@ -74,8 +74,6 @@ const Analysis = () => {
   }, [analyzing]);
 
   useEffect(() => {
-
-  useEffect(() => {
     if (QUESTIONS.length > 0 && concepts.length === 0) {
       setConcepts([...new Set(QUESTIONS.map((q) => q.concept))]);
     }
