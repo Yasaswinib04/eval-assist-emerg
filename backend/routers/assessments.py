@@ -251,7 +251,8 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
             image_paths.append(abs_path)
 
     if not image_paths:
-        return {"status": "error", "message": "Question paper image files not found on disk"}
+        await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
+        return {"status": "error", "message": "Question paper image files not found on disk. Please re-upload after deploy."}
 
     print(f"[Qwen] Analyzing Q paper for {id}: {len(image_paths)} images")
     try:
