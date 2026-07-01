@@ -5,7 +5,8 @@ import { apiClient } from "@/data/apiClient";
 import { GRADES } from "@/data/gradeUtils";
 import {
   ArrowLeft, Plus, Trash2, BarChart3, ClipboardPaste,
-  Users, Loader2, Zap
+  Loader2, Zap, UploadCloud, X, Image as ImageIcon, FileSpreadsheet,
+  Search, Type, FileText
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,13 +18,49 @@ const CHAPTERS = [
 ];
 
 const SECTIONS = ["A", "B", "C", "D"];
+const STUDENT_COUNT_OPTIONS = [10, 20, 30, 40, 50];
 
 const getGrade = (total, maxMarks) => {
   const pct = maxMarks ? (total / maxMarks) * 100 : 0;
   return GRADES.find((g) => pct >= (g.min / 40) * 100) || GRADES[GRADES.length - 1];
 };
 
-const EditableCell = ({ value, onChange, onKeyDown, onFocus, className = "" }) => {
+const DropZone = ({ files, onAdd, onRemove, testId, acceptLabel = "JPEG or PNG" }) => {
+  const ref = useRef(null);
+  const [drag, setDrag] = useState(false);
+  return (
+    <div>
+      <div
+        onClick={() => ref.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files?.length) onAdd(e.dataTransfer.files); }}
+        data-testid={`${testId}-dropzone`}
+        className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${drag ? "border-blue-800 bg-blue-50" : "border-stone-300 bg-stone-50 hover:border-blue-400 hover:bg-blue-50/40"}`}
+      >
+        <UploadCloud size={24} className="text-blue-800 mx-auto" />
+        <div className="mt-2 text-sm font-medium text-stone-700">Click or drop files</div>
+        <div className="text-xs text-stone-400 mt-1">{acceptLabel}</div>
+        <input ref={ref} type="file" multiple accept="image/jpeg,image/png" capture="environment" className="hidden" data-testid={`${testId}-input`} onChange={(e) => { if (e.target.files?.length) onAdd(e.target.files); e.target.value = ""; }} />
+      </div>
+      {files.length > 0 && (
+        <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-40 overflow-auto">
+          {files.map((f, i) => (
+            <div key={f.id || i} className="relative group aspect-square rounded-lg overflow-hidden border border-stone-200 bg-stone-100">
+              <img src={f.preview} alt="" className="w-full h-full object-cover" />
+              <button onClick={() => onRemove(f.id || i)} className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px] flex items-center justify-center">
+                <X size={14} />
+              </button>
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 truncate">{f.name}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EditableCell = ({ value, onChange, onKeyDown, className = "" }) => {
   const [editing, setEditing] = useState(false);
   const [localVal, setLocalVal] = useState(String(value ?? ""));
   const ref = useRef(null);
@@ -33,36 +70,23 @@ const EditableCell = ({ value, onChange, onKeyDown, onFocus, className = "" }) =
 
   const commit = () => {
     const num = parseFloat(localVal);
-    if (!isNaN(num) && num >= 0) {
-      onChange(num);
-    } else if (localVal === "" || localVal === "-") {
-      onChange(0);
-    } else {
-      setLocalVal(String(value ?? ""));
-    }
+    if (!isNaN(num) && num >= 0) onChange(num);
+    else if (localVal === "" || localVal === "-") onChange(0);
+    else setLocalVal(String(value ?? ""));
     setEditing(false);
   };
 
   if (!editing) {
     return (
-      <div
-        tabIndex={0}
-        onClick={() => setEditing(true)}
-        onFocus={() => setEditing(true)}
-        className={`h-9 min-w-[52px] px-2 flex items-center justify-center text-sm font-mono cursor-pointer rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 ${className}`}
-      >
-        {value ?? "-"}
+      <div tabIndex={0} onClick={() => setEditing(true)} onFocus={() => setEditing(true)} className={`h-9 min-w-[52px] px-2 flex items-center justify-center text-sm font-mono cursor-pointer rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 ${className}`}>
+        {value != null && value !== "" ? value : <span className="text-stone-300">—</span>}
       </div>
     );
   }
 
   return (
     <input
-      ref={ref}
-      type="number"
-      min="0"
-      step="0.5"
-      value={localVal}
+      ref={ref} type="number" min="0" step="0.5" value={localVal}
       onChange={(e) => setLocalVal(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -74,7 +98,7 @@ const EditableCell = ({ value, onChange, onKeyDown, onFocus, className = "" }) =
         if (e.key === "ArrowUp") { e.preventDefault(); commit(); onKeyDown?.("up"); }
         if (e.key === "Escape") { setLocalVal(String(value ?? "")); setEditing(false); }
       }}
-      className={`h-9 w-full min-w-[52px] px-1 text-center text-sm font-mono border-2 border-blue-500 rounded bg-white focus:outline-none ${className}`}
+      className="h-9 w-full min-w-[52px] px-1 text-center text-sm font-mono border-2 border-blue-500 rounded bg-white focus:outline-none"
     />
   );
 };
@@ -83,12 +107,12 @@ const ScoreEntry = () => {
   const { t, user, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
   const gridRef = useRef(null);
+  const excelInputRef = useRef(null);
 
   const subjects = user?.subjects?.length ? user.subjects : ["Biology"];
 
   const [name, setName] = useState("");
   const [subject, setSubject] = useState(activeSubject || "Biology");
-  const [customSubject, setCustomSubject] = useState("");
   const [klass, setKlass] = useState(activeClass || "Class 8");
   const [type, setType] = useState("Unit Test");
   const [totalMarks, setTotalMarks] = useState(40);
@@ -100,10 +124,14 @@ const ScoreEntry = () => {
   const [qChapter, setQChapter] = useState("ch1");
   const [qConcept, setQConcept] = useState("");
 
-  const [studentNames, setStudentNames] = useState("");
-  const [students, setStudents] = useState([]);
+  const [studentCount, setStudentCount] = useState(30);
   const [scores, setScores] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  const [qImages, setQImages] = useState([]);
+  const [qTextInput, setQTextInput] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [showQPaperUpload, setShowQPaperUpload] = useState(false);
 
   const selectedChapterConcepts = useMemo(() => {
     const ch = CHAPTERS.find((c) => c.id === qChapter);
@@ -116,32 +144,107 @@ const ScoreEntry = () => {
     }
   }, [qChapter, selectedChapterConcepts]);
 
+  const addImages = useCallback((incoming) => {
+    const list = Array.from(incoming).map((f, i) => ({
+      id: `img-${Date.now()}-${i}`, name: f.name, file: f, preview: URL.createObjectURL(f),
+    }));
+    setQImages((prev) => [...prev, ...list].slice(0, 10));
+  }, []);
+
+  const removeQImage = useCallback((id) => {
+    setQImages((prev) => {
+      const item = prev.find((f) => f.id === id);
+      if (item?.preview) URL.revokeObjectURL(item.preview);
+      return prev.filter((f) => f.id !== id);
+    });
+  }, []);
+
+  const handleAnalyzeQPaper = useCallback(async () => {
+    if (qImages.length === 0 && !qTextInput.trim()) {
+      toast.error("Upload question paper images or paste text first");
+      return;
+    }
+
+    if (qImages.length === 0 && qTextInput.trim()) {
+      try {
+        const parsed = qTextInput.trim().split("\n").filter(Boolean).map((line, i) => {
+          const num = i + 1;
+          return { number: num, section: "A", maxMarks: 1, chapter: "ch1", concept: "" };
+        });
+        if (parsed.length > 0) {
+          setQuestions(parsed);
+          toast.success(`Parsed ${parsed.length} questions from text`);
+        }
+      } catch (e) { toast.error("Could not parse text"); }
+      return;
+    }
+
+    setAnalyzing(true);
+    const metadata = { name: name || "Draft", class: klass, subject: subject === "__custom__" ? subjects[0] : subject, type, totalMarks };
+
+    try {
+      const token = localStorage.getItem("evalassist-token");
+      const formData = new FormData();
+      formData.append("name", metadata.name);
+      formData.append("class", metadata.class);
+      formData.append("subject", metadata.subject);
+      formData.append("type", metadata.type);
+      formData.append("totalMarks", String(metadata.totalMarks));
+      for (const img of qImages) { if (img.file) formData.append("questionFiles", img.file); }
+      if (qTextInput.trim()) formData.append("questionsText", qTextInput);
+
+      const res = await fetch("/api/assessments/", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      const created = await res.json();
+      const assessmentId = created._id || created.id;
+      if (!assessmentId) throw new Error("Failed to create draft assessment");
+
+      const r2 = await fetch(`/api/assessments/${assessmentId}/analyze-qpaper`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" },
+      });
+      const analysis = await r2.json();
+
+      if (analysis.status === "ok") {
+        const qs = await apiClient.getQuestions(assessmentId);
+        if (qs && qs.length > 0) {
+          const mapped = qs.map((q) => ({
+            number: q.number, section: q.section || "A",
+            maxMarks: q.maxMarks || 1, chapter: q.chapter || "ch1",
+            concept: q.concept || "",
+          }));
+          setQuestions(mapped);
+          toast.success(`AI extracted ${mapped.length} questions`);
+        } else {
+          toast.error("Questions extracted but none were mapped");
+        }
+      } else if (analysis.status === "skipped") {
+        toast("Could not analyze images. Use templates or manual entry instead.");
+      } else {
+        toast.error(analysis.message || "Analysis failed");
+      }
+    } catch (err) {
+      toast.error(err.message || "Analysis failed. Try templates or manual entry.");
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [qImages, qTextInput, name, klass, subject, type, totalMarks, subjects]);
+
   const addQuestions = useCallback(() => {
     const startNum = questions.length + 1;
     const newQs = [];
     for (let i = 0; i < qCount; i++) {
-      newQs.push({
-        number: startNum + i,
-        section: qSection,
-        maxMarks: qMarks,
-        chapter: qChapter,
-        concept: qConcept || selectedChapterConcepts[0] || "",
-      });
+      newQs.push({ number: startNum + i, section: qSection, maxMarks: qMarks, chapter: qChapter, concept: qConcept || selectedChapterConcepts[0] || "" });
     }
     setQuestions((prev) => [...prev, ...newQs]);
   }, [questions.length, qCount, qSection, qMarks, qChapter, qConcept, selectedChapterConcepts]);
 
   const applyTemplate = useCallback((template) => {
     const templates = {
-      "10-mcq": (() => {
-        const qs = [];
-        for (let i = 1; i <= 10; i++) {
-          const chIdx = (i - 1) % CHAPTERS.length;
-          const ch = CHAPTERS[chIdx];
-          qs.push({ number: i, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[(i - 1) % ch.concepts.length] });
-        }
-        return qs;
-      })(),
+      "10-mcq": Array.from({ length: 10 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
       "17-standard": [
         ...Array.from({ length: 10 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
         ...Array.from({ length: 3 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: 11 + i, section: "B", maxMarks: 2, chapter: ch.id, concept: ch.concepts[(i + 2) % ch.concepts.length] }; }),
@@ -158,7 +261,7 @@ const ScoreEntry = () => {
       updated[idx] = { ...updated[idx], [field]: value };
       if (field === "chapter") {
         const ch = CHAPTERS.find((c) => c.id === value);
-        if (ch && ch.concepts.length > 0) updated[idx].concept = ch.concepts[0];
+        if (ch?.concepts.length) updated[idx].concept = ch.concepts[0];
       }
       return updated;
     });
@@ -171,55 +274,78 @@ const ScoreEntry = () => {
     });
   }, []);
 
-  const parseStudentNames = useCallback(() => {
-    const names = studentNames.split(/[\n,]+/).map((n) => n.trim()).filter(Boolean);
-    if (names.length === 0) return;
-    setStudents((prev) => {
-      const existing = new Set(prev.map((s) => s.name.toLowerCase()));
-      const unique = names.filter((n) => !existing.has(n.toLowerCase()));
-      return [...prev, ...unique.map((name) => ({ name, roll: "" }))];
-    });
-    setStudentNames("");
-  }, [studentNames]);
-
-  const removeStudent = useCallback((idx) => {
-    setStudents((prev) => prev.filter((_, i) => i !== idx));
-    setScores((prev) => {
-      const updated = { ...prev };
-      delete updated[idx];
-      return updated;
-    });
-  }, []);
-
   const handlePasteFromClipboard = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();
       const rows = text.split("\n").filter((line) => line.trim());
-      const parsedStudents = [];
-      const parsedScores = {};
+      const newScores = { ...scores };
+      let count = 0;
       for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].split("\t");
-        const name = cells[0]?.trim();
-        if (!name || name.toLowerCase() === "student" || name.toLowerCase() === "name") continue;
-        parsedStudents.push({ name, roll: "" });
+        const rollCell = cells[0]?.trim();
+        if (!rollCell || rollCell.toLowerCase() === "roll" || rollCell.toLowerCase() === "#") continue;
+        const rollNum = parseInt(rollCell, 10);
+        if (isNaN(rollNum) || rollNum < 1 || rollNum > studentCount) continue;
         const studentScores = {};
         for (let j = 1; j < cells.length && j <= questions.length + 1; j++) {
           const val = parseFloat(cells[j]?.trim());
           if (!isNaN(val)) studentScores[String(j)] = val;
         }
-        parsedScores[parsedStudents.length - 1] = studentScores;
+        if (Object.keys(studentScores).length > 0) {
+          newScores[rollNum - 1] = studentScores;
+          count++;
+        }
       }
-      if (parsedStudents.length > 0) {
-        setStudents(parsedStudents);
-        setScores(parsedScores);
-        toast.success(`Pasted ${parsedStudents.length} students`);
+      if (count > 0) {
+        setScores(newScores);
+        toast.success(`Pasted scores for ${count} students`);
       } else {
-        toast.error("No student data found. Use Tab-separated format: Name, Q1, Q2...");
+        toast.error("No score data found. Format: Roll [Tab] Q1 [Tab] Q2...");
       }
     } catch (err) {
-      toast.error("Clipboard access denied. Please paste data manually.");
+      toast.error("Clipboard access denied.");
     }
-  }, [questions.length]);
+  }, [scores, studentCount, questions.length]);
+
+  const handleExcelUpload = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    try {
+      const XLSX = await import("xlsx");
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      const newScores = { ...scores };
+      let count = 0;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+        const rollCell = String(row[0] || "").trim();
+        if (!rollCell || rollCell.toLowerCase() === "roll" || rollCell.toLowerCase() === "#") continue;
+        const rollNum = parseInt(rollCell, 10);
+        if (isNaN(rollNum) || rollNum < 1 || rollNum > studentCount) continue;
+        const studentScores = {};
+        for (let j = 1; j < row.length && j <= questions.length + 1; j++) {
+          const val = parseFloat(row[j]);
+          if (!isNaN(val)) studentScores[String(j)] = val;
+        }
+        if (Object.keys(studentScores).length > 0) {
+          newScores[rollNum - 1] = studentScores;
+          count++;
+        }
+      }
+      if (count > 0) {
+        setScores(newScores);
+        toast.success(`Imported scores for ${count} students from ${file.name}`);
+      } else {
+        toast.error("No scores found. Expected columns: Roll, Q1, Q2, ...");
+      }
+    } catch (err) {
+      toast.error("Could not parse Excel file. Try a .xlsx file with columns: Roll, Q1, Q2...");
+    }
+  }, [scores, studentCount, questions.length]);
 
   const updateScore = useCallback((studentIdx, qNum, value) => {
     setScores((prev) => {
@@ -238,45 +364,44 @@ const ScoreEntry = () => {
     return getGrade(getStudentTotal(studentIdx), totalMarks);
   }, [getStudentTotal, totalMarks]);
 
+  const hasScore = useCallback((studentIdx) => {
+    const studentScores = scores[studentIdx] || {};
+    return Object.values(studentScores).some((v) => v > 0);
+  }, [scores]);
+
   const classStats = useMemo(() => {
-    if (students.length === 0 || questions.length === 0) return { avg: 0, passRate: 0, highest: 0, lowest: 0 };
-    const totals = students.map((_, i) => getStudentTotal(i));
+    if (questions.length === 0) return { avg: 0, passRate: 0, highest: 0, lowest: 0, scored: 0 };
+    const totals = [];
+    for (let i = 0; i < studentCount; i++) {
+      if (hasScore(i)) totals.push(getStudentTotal(i));
+    }
+    if (totals.length === 0) return { avg: 0, passRate: 0, highest: 0, lowest: 0, scored: 0 };
     const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
     const passMark = totalMarks * 0.5;
     const passed = totals.filter((t) => t >= passMark).length;
-    return {
-      avg: Math.round(avg * 10) / 10,
-      passRate: Math.round((passed / totals.length) * 100),
-      highest: Math.max(...totals),
-      lowest: Math.min(...totals),
-    };
-  }, [students, questions, getStudentTotal, totalMarks]);
+    return { avg: Math.round(avg * 10) / 10, passRate: Math.round((passed / totals.length) * 100), highest: Math.max(...totals), lowest: Math.min(...totals), scored: totals.length };
+  }, [studentCount, questions, getStudentTotal, hasScore, totalMarks]);
 
-  const canSave = name && questions.length > 0 && students.length > 0;
+  const canSave = name && questions.length > 0 && classStats.scored > 0;
 
   const handleSave = async () => {
     if (!canSave || submitting) return;
     setSubmitting(true);
     const payload = {
-      name,
-      class: klass,
-      subject: subject === "__custom__" ? customSubject : subject,
-      type,
-      totalMarks,
-      questions: questions.map((q) => ({
-        number: q.number, section: q.section, maxMarks: q.maxMarks,
-        chapter: q.chapter, concept: q.concept,
-      })),
-      students: students.map((s, i) => {
-        const studentScores = scores[i] || {};
-        const scoreMap = {};
-        questions.forEach((q) => { scoreMap[String(q.number)] = studentScores[String(q.number)] || 0; });
-        return { name: s.name, roll: s.roll, scores: scoreMap };
-      }),
+      name, class: klass, subject: subject === "__custom__" ? subjects[0] : subject, type, totalMarks,
+      questions: questions.map((q) => ({ number: q.number, section: q.section, maxMarks: q.maxMarks, chapter: q.chapter, concept: q.concept })),
+      students: [],
     };
+    for (let i = 0; i < studentCount; i++) {
+      if (!hasScore(i)) continue;
+      const studentScores = scores[i] || {};
+      const scoreMap = {};
+      questions.forEach((q) => { scoreMap[String(q.number)] = studentScores[String(q.number)] || 0; });
+      payload.students.push({ name: `Roll ${String(i + 1).padStart(2, "0")}`, roll: String(i + 1).padStart(2, "0"), scores: scoreMap });
+    }
     try {
       const data = await apiClient.createScoreEntry(payload);
-      toast.success("Assessment saved! Opening insights...");
+      toast.success(`Saved ${payload.students.length} student scores. Opening insights...`);
       navigate(`/insights/${data._id || data.id}`);
     } catch (err) {
       toast.error(err.message || "Failed to save assessment");
@@ -297,10 +422,7 @@ const ScoreEntry = () => {
     else if (direction === "left") nextIdx = flatIndex - 1;
     else if (direction === "down" || direction === "enter") nextIdx = flatIndex + colsPerRow;
     else if (direction === "up") nextIdx = flatIndex - colsPerRow;
-    if (nextIdx >= 0 && nextIdx < cells.length) {
-      cells[nextIdx].focus();
-      cells[nextIdx].click();
-    }
+    if (nextIdx >= 0 && nextIdx < cells.length) { cells[nextIdx].focus(); cells[nextIdx].click(); }
   };
 
   return (
@@ -311,13 +433,11 @@ const ScoreEntry = () => {
 
       <div className="mb-6 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-5">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-            <Zap size={20} />
-          </div>
+          <div className="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0"><Zap size={20} /></div>
           <div>
             <div className="text-sm font-semibold tracking-[0.08em] uppercase text-emerald-800">Quick Score Entry</div>
             <h1 className="mt-0.5 font-display text-3xl font-semibold text-stone-900">Enter Marks Directly</h1>
-            <p className="text-sm text-stone-600 mt-1">Skip scanning — enter scores you've already given and get concept-wise analysis instantly.</p>
+            <p className="text-sm text-stone-600 mt-1">Upload Q paper images for AI extraction, or use quick templates. Enter scores manually or import from Excel.</p>
           </div>
         </div>
       </div>
@@ -356,19 +476,58 @@ const ScoreEntry = () => {
         </div>
       </div>
 
-      {/* Step 2: Question Builder */}
+      {/* Step 2: Question Structure */}
       <div className="bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm mb-6">
         <div className="text-sm font-semibold text-stone-700 mb-4">2. Question Structure</div>
-        {questions.length === 0 && (
-          <div className="mb-4">
-            <div className="text-xs font-semibold text-stone-500 mb-2">Quick templates:</div>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => applyTemplate("10-mcq")} className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 border border-stone-200 hover:border-emerald-200 text-sm font-medium transition-colors">10 MCQs (1 mark each)</button>
-              <button onClick={() => applyTemplate("17-standard")} className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 border border-stone-200 hover:border-emerald-200 text-sm font-medium transition-colors">17 Qs Standard (10 MCQ + 3 Short + 2 Long + 2 Essay)</button>
-            </div>
-          </div>
-        )}
 
+        {/* Q Paper Upload — collapsible */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowQPaperUpload((v) => !v)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${showQPaperUpload ? "bg-blue-50 border-blue-300 text-blue-800" : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-stone-800"}`}
+          >
+            <ImageIcon size={16} />
+            AI Extract from Q Paper Images
+            <span className="text-xs text-stone-400 ml-1">{showQPaperUpload ? "(close)" : "(optional)"}</span>
+          </button>
+          {showQPaperUpload && (
+            <div className="mt-3 p-4 rounded-lg bg-blue-50/30 border border-blue-100">
+              <p className="text-xs text-stone-500 mb-3">
+                Upload photos of the question paper. AI will extract question numbers, sections, marks, chapters, and concepts.
+                Multiple screenshots, textbook paragraphs, and board-written questions are all supported — the AI will do its best to structure them.
+              </p>
+              <DropZone files={qImages} onAdd={addImages} onRemove={removeQImage} testId="zone-qpaper" acceptLabel="JPEG or PNG — Q paper, paragraphs, screenshots" />
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={handleAnalyzeQPaper}
+                  disabled={analyzing || (qImages.length === 0 && !qTextInput.trim())}
+                  className={`inline-flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm transition-colors ${analyzing ? "bg-blue-100 text-blue-600" : "bg-blue-800 text-white hover:bg-blue-900"} disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  {analyzing ? <><Loader2 size={14} className="animate-spin" /> Analyzing with AI...</> : <><Search size={14} /> Analyze Q Paper</>}
+                </button>
+                <span className="text-xs text-stone-400">or paste text below</span>
+              </div>
+              <textarea
+                value={qTextInput}
+                onChange={(e) => setQTextInput(e.target.value)}
+                placeholder="Paste question text here if you prefer...&#10;1. Identify the odd one with respect to fertilization&#10;2. Best way to prevent Hepatitis A?&#10;..."
+                rows={3}
+                className="mt-3 w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 resize-none"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Templates */}
+        <div className="mb-4">
+          <div className="text-xs font-semibold text-stone-500 mb-2">Quick templates {questions.length > 0 ? "(will replace)" : ""}:</div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => applyTemplate("10-mcq")} className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 border border-stone-200 hover:border-emerald-200 text-sm font-medium transition-colors">10 MCQs (1 mark each)</button>
+            <button onClick={() => applyTemplate("17-standard")} className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 border border-stone-200 hover:border-emerald-200 text-sm font-medium transition-colors">17 Qs Standard</button>
+          </div>
+        </div>
+
+        {/* Manual builder */}
         <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-stone-50 rounded-lg border border-stone-200">
           <div>
             <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Add</label>
@@ -396,9 +555,7 @@ const ScoreEntry = () => {
               {selectedChapterConcepts.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <button onClick={addQuestions} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-1.5">
-            <Plus size={14} /> Add
-          </button>
+          <button onClick={addQuestions} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-1.5"><Plus size={14} /> Add</button>
         </div>
 
         {questions.length > 0 && (
@@ -424,9 +581,7 @@ const ScoreEntry = () => {
                       {concepts.map((c) => <option key={c} value={c}>{c}</option>)}
                       {!concepts.includes(q.concept) && q.concept && <option value={q.concept}>{q.concept}</option>}
                     </select>
-                    <button onClick={() => removeQuestion(i)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center">
-                      <Trash2 size={14} />
-                    </button>
+                    <button onClick={() => removeQuestion(i)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center"><Trash2 size={14} /></button>
                   </div>
                 );
               })}
@@ -435,105 +590,107 @@ const ScoreEntry = () => {
         )}
       </div>
 
-      {/* Step 3: Students */}
-      <div className="bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm mb-6">
-        <div className="text-sm font-semibold text-stone-700 mb-4">3. Students</div>
-        <div className="flex flex-wrap items-end gap-2 mb-3">
-          <div className="flex-1 min-w-[280px]">
-            <label className="block text-xs font-semibold text-stone-500 mb-1">Add students (comma or newline separated)</label>
-            <textarea value={studentNames} onChange={(e) => setStudentNames(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); parseStudentNames(); } }} placeholder="e.g. Karan Singh, Rahul Sharma, Aryan Patel&#10;Paste names from your register..." rows={2} className="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none" data-testid="input-student-names" />
+      {/* Step 3: Score Grid */}
+      <div className="bg-white border border-stone-200 rounded-xl shadow-sm mb-6 overflow-hidden">
+        <div className="px-5 py-4 border-b border-stone-200 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="text-sm font-semibold text-stone-700">3. Enter Scores</div>
+              <div className="text-xs text-stone-500 mt-0.5">Click any cell or use Tab/Enter to navigate. Only rows with scores are saved.</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-stone-500">Students:</label>
+              <select value={studentCount} onChange={(e) => setStudentCount(parseInt(e.target.value, 10))} className="h-8 px-2 rounded border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                {STUDENT_COUNT_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
           </div>
-          <button onClick={parseStudentNames} className="h-11 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-1.5">
-            <Plus size={14} /> Add Students
-          </button>
-          <button onClick={handlePasteFromClipboard} disabled={questions.length === 0} className="h-11 px-4 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed" title={questions.length === 0 ? "Add questions first" : "Paste tab-separated data (Name, Q1, Q2, ...)"}>
-            <ClipboardPaste size={14} /> Paste from Excel
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={handlePasteFromClipboard} disabled={questions.length === 0} className="h-9 px-3 rounded-lg bg-white border border-stone-300 text-stone-600 text-xs font-medium hover:bg-stone-50 inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed" title="Paste tab-separated scores from clipboard">
+              <ClipboardPaste size={14} /> Paste
+            </button>
+            <button
+              onClick={() => excelInputRef.current?.click()}
+              disabled={questions.length === 0}
+              className="h-9 px-3 rounded-lg bg-white border border-stone-300 text-stone-600 text-xs font-medium hover:bg-stone-50 inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Upload an Excel (.xlsx) file"
+            >
+              <FileSpreadsheet size={14} /> Upload Excel
+            </button>
+            <input ref={excelInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelUpload} />
+          </div>
         </div>
-        {students.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {students.map((s, i) => (
-              <div key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-200 text-sm">
-                <Users size={12} className="text-stone-400" /><span className="text-stone-700">{s.name}</span>
-                <button onClick={() => removeStudent(i)} className="h-5 w-5 rounded-full hover:bg-rose-100 text-stone-400 hover:text-rose-600 flex items-center justify-center"><Trash2 size={10} /></button>
-              </div>
-            ))}
-            <button onClick={() => { setStudents([]); setScores({}); }} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-sm hover:bg-rose-100">Clear all</button>
-          </div>
+
+        {questions.length === 0 ? (
+          <div className="px-5 py-12 text-center text-stone-400 text-sm">Define question structure above to begin entering scores.</div>
+        ) : (
+          <>
+            <div className="px-5 py-2 border-b border-stone-100 flex items-center gap-4 text-xs text-stone-500">
+              <span>Avg: <strong className="text-stone-800">{classStats.avg}</strong></span>
+              <span>Pass: <strong className={classStats.passRate >= 50 ? "text-emerald-700" : "text-rose-700"}>{classStats.passRate}%</strong></span>
+              <span>High: <strong className="text-stone-800">{classStats.highest}</strong></span>
+              <span>Low: <strong className="text-stone-800">{classStats.lowest}</strong></span>
+              <span className="text-stone-400">| Scored: {classStats.scored}/{studentCount}</span>
+            </div>
+            <div className="overflow-x-auto" ref={gridRef}>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 z-10 bg-stone-50 border-b border-r border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[52px]">#</th>
+                    {questions.map((q) => (
+                      <th key={q.number} className="bg-stone-50 border-b border-r border-stone-100 px-2 py-2 text-center text-xs font-semibold text-stone-600 min-w-[60px]" title={`${q.concept} (${q.maxMarks} marks)`}>
+                        <div>Q{q.number}</div><div className="text-[10px] text-stone-400 font-normal">{q.maxMarks}</div>
+                      </th>
+                    ))}
+                    <th className="bg-stone-50 border-b border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[72px]">Total</th>
+                    <th className="bg-stone-50 border-b border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[56px]">Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: studentCount }, (_, i) => {
+                    const rollNum = String(i + 1).padStart(2, "0");
+                    const total = getStudentTotal(i);
+                    const grade = getStudentGradeLabel(i);
+                    const active = hasScore(i);
+                    return (
+                      <tr key={i} className={`hover:bg-stone-50/50 border-b border-stone-100 ${!active ? "opacity-40" : ""}`}>
+                        <td className="sticky left-0 z-10 bg-white border-r border-stone-200 px-2 py-1.5 text-center">
+                          <span className="text-sm font-mono font-bold text-stone-600">{rollNum}</span>
+                        </td>
+                        {questions.map((q) => {
+                          const cellValue = (scores[i] || {})[String(q.number)];
+                          return (
+                            <td key={q.number} className="border-r border-stone-50 px-0 py-0 text-center">
+                              <div data-cell={`${i}-${q.number}`}>
+                                <EditableCell value={cellValue} onChange={(val) => updateScore(i, q.number, val)} onKeyDown={handleCellKey(i, q.number)} />
+                              </div>
+                            </td>
+                          );
+                        })}
+                        <td className="border-r border-stone-100 px-3 py-1.5 text-center">
+                          <span className="text-sm font-bold font-mono text-stone-900">{total}</span>
+                          <span className="text-stone-400 text-xs font-normal">/{totalMarks}</span>
+                        </td>
+                        <td className="px-3 py-1.5 text-center">
+                          <span className={`inline-flex items-center justify-center h-7 w-10 rounded-md text-xs font-bold ${grade.color === "emerald" ? "bg-emerald-100 text-emerald-800" : grade.color === "blue" ? "bg-blue-100 text-blue-800" : grade.color === "amber" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"} ${!active ? "opacity-30" : ""}`}>
+                            {active ? grade.grade : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
-
-      {/* Step 4: Score Grid */}
-      {students.length > 0 && questions.length > 0 && (
-        <div className="bg-white border border-stone-200 rounded-xl shadow-sm mb-6 overflow-hidden">
-          <div className="px-5 py-4 border-b border-stone-200 flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <div className="text-sm font-semibold text-stone-700">4. Enter Scores</div>
-              <div className="text-xs text-stone-500 mt-0.5">Click any cell or use Tab/Enter to navigate.</div>
-            </div>
-            <div className="flex items-center gap-4 text-xs">
-              <span className="text-stone-500">Avg: <strong className="text-stone-900">{classStats.avg}</strong></span>
-              <span className="text-stone-500">Pass: <strong className={classStats.passRate >= 50 ? "text-emerald-700" : "text-rose-700"}>{classStats.passRate}%</strong></span>
-              <span className="text-stone-500">High: <strong className="text-stone-900">{classStats.highest}</strong></span>
-              <span className="text-stone-500">Low: <strong className="text-stone-900">{classStats.lowest}</strong></span>
-            </div>
-          </div>
-          <div className="overflow-x-auto" ref={gridRef}>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="sticky left-0 z-10 bg-stone-50 border-b border-r border-stone-200 px-3 py-2 text-left text-xs font-semibold text-stone-600 min-w-[140px]">Student</th>
-                  {questions.map((q) => (
-                    <th key={q.number} className="bg-stone-50 border-b border-r border-stone-100 px-2 py-2 text-center text-xs font-semibold text-stone-600 min-w-[60px]" title={`${q.concept} (${q.maxMarks} marks)`}>
-                      <div>Q{q.number}</div><div className="text-[10px] text-stone-400 font-normal">{q.maxMarks}</div>
-                    </th>
-                  ))}
-                  <th className="bg-stone-50 border-b border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[72px]">Total</th>
-                  <th className="bg-stone-50 border-b border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[60px]">Grade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((s, studentIdx) => {
-                  const total = getStudentTotal(studentIdx);
-                  const grade = getStudentGradeLabel(studentIdx);
-                  return (
-                    <tr key={studentIdx} className="hover:bg-stone-50/50 border-b border-stone-100">
-                      <td className="sticky left-0 z-10 bg-white border-r border-stone-200 px-3 py-1.5">
-                        <div className="text-sm font-medium text-stone-900 truncate">{s.name}</div>
-                      </td>
-                      {questions.map((q) => {
-                        const cellValue = (scores[studentIdx] || {})[String(q.number)];
-                        return (
-                          <td key={q.number} className="border-r border-stone-50 px-0 py-0 text-center">
-                            <div data-cell={`${studentIdx}-${q.number}`}>
-                              <EditableCell value={cellValue} onChange={(val) => updateScore(studentIdx, q.number, val)} onKeyDown={handleCellKey(studentIdx, q.number)} />
-                            </div>
-                          </td>
-                        );
-                      })}
-                      <td className="border-r border-stone-100 px-3 py-1.5 text-center">
-                        <span className="text-sm font-bold font-mono text-stone-900">{total}</span>
-                        <span className="text-stone-400 text-xs font-normal">/{totalMarks}</span>
-                      </td>
-                      <td className="px-3 py-1.5 text-center">
-                        <span className={`inline-flex items-center justify-center h-7 w-10 rounded-md text-xs font-bold ${grade.color === "emerald" ? "bg-emerald-100 text-emerald-800" : grade.color === "blue" ? "bg-blue-100 text-blue-800" : grade.color === "amber" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>
-                          {grade.grade}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
         <button onClick={() => navigate("/dashboard")} className="h-12 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium">Cancel</button>
         <button disabled={!canSave || submitting} onClick={handleSave} className={`inline-flex items-center gap-2 h-12 px-6 rounded-lg font-medium text-white transition-colors ${canSave ? "bg-emerald-700 hover:bg-emerald-800" : "bg-stone-300 cursor-not-allowed"}`} data-testid="btn-save-scores">
-          {submitting ? (<><Loader2 size={18} className="animate-spin" /> Saving...</>) : (<><BarChart3 size={18} /> Save & View Insights</>)}
+          {submitting ? (<><Loader2 size={18} className="animate-spin" /> Saving...</>) : (<><BarChart3 size={18} /> Save & View Insights ({classStats.scored} students)</>)}
         </button>
       </div>
     </div>

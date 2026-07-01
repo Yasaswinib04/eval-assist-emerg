@@ -63,6 +63,31 @@ const Analysis = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
 
+  const isSeedData = QUESTIONS.length > 0 && id !== "asm-001" && QUESTIONS[0]?._id?.includes(id);
+  const hasPendingOCR = QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING";
+
+  const handleAnalyzeQPaper = async () => {
+    setAnalyzing(true);
+    setAnalysisError("");
+    try {
+      const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
+      const data = await r.json();
+      if (data.status === "ok") {
+        setTimeout(async () => {
+          setAnalyzing(false);
+          await refetchQuestions();
+        }, 1000);
+      } else {
+        setAnalyzing(false);
+        setAnalysisError(data.message || "Analysis failed. Your images are saved — try again.");
+        await refetchQuestions();
+      }
+    } catch (err) {
+      setAnalyzing(false);
+      setAnalysisError("Network error. Check your connection and try again.");
+    }
+  };
+
   // Safety: stop analyzing after 60 seconds max
   useEffect(() => {
     if (!analyzing) return;
@@ -111,36 +136,11 @@ const Analysis = () => {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
   }
 
-  const isSeedData = QUESTIONS.length > 0 && id !== "asm-001" && QUESTIONS[0]?._id?.includes(id);
-  const hasPendingOCR = QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING";
-
   const updateQuestion = (qId, field, value) => {
     setQuestionEdits((p) => ({ ...p, [qId]: { ...p[qId], [field]: value } }));
   };
 
   const getQ = (q) => ({ ...q, ...(questionEdits[q.id] || {}) });
-
-  const handleAnalyzeQPaper = async () => {
-    setAnalyzing(true);
-    setAnalysisError("");
-    try {
-      const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
-      const data = await r.json();
-      if (data.status === "ok") {
-        setTimeout(async () => {
-          setAnalyzing(false);
-          await refetchQuestions();
-        }, 1000);
-      } else {
-        setAnalyzing(false);
-        setAnalysisError(data.message || "Analysis failed. Your images are saved — try again.");
-        await refetchQuestions();
-      }
-    } catch (err) {
-      setAnalyzing(false);
-      setAnalysisError("Network error. Check your connection and try again.");
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-12" data-testid="analysis-page">
