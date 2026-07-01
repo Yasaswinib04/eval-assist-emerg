@@ -68,6 +68,13 @@ const Analysis = () => {
     }
   }, [QUESTIONS]);
 
+  // Auto-trigger Qwen analysis on page load if images are pending
+  useEffect(() => {
+    if (hasPendingOCR && !analyzing) {
+      handleAnalyzeQPaper();
+    }
+  }, [hasPendingOCR]);
+
   if (analyzing) {
     return <div className="flex flex-col items-center justify-center h-64 gap-4">
       <Loader2 className="animate-spin text-blue-800" size={32} />

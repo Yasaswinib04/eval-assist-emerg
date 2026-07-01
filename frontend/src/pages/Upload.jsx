@@ -175,6 +175,7 @@ const Upload = () => {
 
         const result = await apiClient.createAssessment(formData);
         const id = result._id || result.id;
+        apiClient.processAssessment(id).catch(() => {});
         navigate(`/analysis/${id}`);
       }
     } catch (err) {
