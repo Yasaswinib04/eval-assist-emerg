@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from backend.core.config import settings
-from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions
+from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions, score_entry
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -31,6 +31,7 @@ api_router.include_router(students.router, prefix="/assessments", tags=["student
 api_router.include_router(evaluations.router, prefix="/assessments", tags=["evaluations"])
 api_router.include_router(insights.router, prefix="/assessments", tags=["insights"])
 api_router.include_router(interventions.router, prefix="/assessments", tags=["interventions"])
+api_router.include_router(score_entry.router, prefix="/assessments", tags=["score-entry"])
 
 app.include_router(api_router)
 

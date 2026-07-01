@@ -4,6 +4,7 @@ import { useApp } from "@/contexts/AppContext";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
+import { analytics } from "@/data/analytics";
 import { GRADE_BOUNDARIES, getGradeContext } from "@/data/gradeUtils";
 import {
   Search, X, Check, AlertTriangle, Sparkles, ChevronRight, ChevronDown, ChevronLeft,
@@ -463,6 +464,11 @@ const ReviewPage = () => {
     if (!drawer) return;
     setApprovedKey(drawer.studentId, drawer.qId, true);
     updateOverrideMutation.mutate({ qid: drawer.qId, mark: marks[`${drawer.studentId}-${drawer.qId}`] });
+    const ev = (allEvals[drawer.studentId] || []).find((e) => e.qId === drawer.qId);
+    if (ev) {
+      const finalMark = marks[`${drawer.studentId}-${drawer.qId}`] ?? ev.aiMark;
+      analytics.track("answer_approved", { qId: drawer.qId, aiMark: ev.aiMark, teacherMark: finalMark, overridden: finalMark !== ev.aiMark });
+    }
     toast.success("Approved", { duration: 700 });
     if (drawer.queue && drawer.queueIdx !== null && drawer.queueIdx < drawer.queue.length - 1) {
       const nextIdx = drawer.queueIdx + 1;
@@ -483,6 +489,10 @@ const ReviewPage = () => {
   const drawerMarkChange = (val) => {
     if (!drawer) return;
     setMarks((m) => ({ ...m, [`${drawer.studentId}-${drawer.qId}`]: val }));
+    const ev = (allEvals[drawer.studentId] || []).find((e) => e.qId === drawer.qId);
+    if (ev && val !== ev.aiMark) {
+      analytics.track("teacher_override", { qId: drawer.qId, aiMark: ev.aiMark, teacherMark: val });
+    }
   };
 
   // ── Bulk approve high-confidence ──

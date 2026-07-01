@@ -11,5 +11,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list = ["*"]
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     QWEN_MODEL: str = os.getenv("QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct")
+    POSTHOG_API_KEY: str = os.getenv("POSTHOG_API_KEY", "")
+    POSTHOG_HOST: str = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 
 settings = Settings()
