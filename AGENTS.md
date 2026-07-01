@@ -44,7 +44,7 @@ Shipyard/
 ## Backend Conventions
 
 ### Routers (FastAPI)
-- Each resource has its own file in `backend/routers/` (auth.py, assessments.py, questions.py, students.py, evaluations.py, insights.py, interventions.py, score_entry.py)
+- Each resource has its own file in `backend/routers/` (auth.py, assessments.py, questions.py, students.py, evaluations.py, insights.py, interventions.py)
 - All routes mounted under `APIRouter(prefix="/api")` in `server.py`
 - DB access: `Depends(get_db)` returns Motor database instance
 - Auth protection: `Depends(get_current_user)` — JWT decoded from `Authorization: Bearer <token>`
