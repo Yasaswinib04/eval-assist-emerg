@@ -218,7 +218,7 @@ async def create_assessment(
 
 
 @router.post("/{id}/analyze-qpaper")
-async def analyze_qpaper_endpoint(id: str, background_tasks: BackgroundTasks, db=Depends(get_db), current_user=Depends(get_current_user)):
+async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
     """Analyze uploaded question paper images using Qwen OCR — extracts questions, concepts, chapters."""
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:

@@ -133,7 +133,7 @@ async def get_interventions(id: str, db=Depends(get_db)):
 
 
 @router.put("/{id}/interventions/{actId}/plan")
-async def update_intervention_plan(id: str, actId: str, plan: dict, db=Depends(get_db)):
+async def update_intervention_plan(id: str, actId: str, plan: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
     """Mark an intervention as planned / not planned."""
     result = await db.interventions.update_one(
         {"_id": actId, "assessmentId": id},

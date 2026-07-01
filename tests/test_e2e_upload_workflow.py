@@ -61,7 +61,11 @@ def mock_db():
 def client(mock_db):
     from backend.server import app
     from backend.core.database import get_db
+    from backend.routers.auth import get_current_user
+    from backend.models.user import User
     app.dependency_overrides[get_db] = lambda: mock_db
+    mock_user = User(_id="teacher-1", name="Test Teacher", email="test@school.gov.in", school="Test School", subjects=["Biology"])
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 
