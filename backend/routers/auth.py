@@ -141,8 +141,15 @@ async def get_google_config():
     return {"clientId": settings.GOOGLE_CLIENT_ID}
 
 @router.get("/health")
-async def health_check():
-    return {"status": "ok"}
+async def health_check(db=Depends(get_db)):
+    # Ping MongoDB with a short timeout so WarmUp can distinguish "backend up
+    # but DB unreachable" from "backend up and healthy". Returns 503 if DB
+    # isn't answering — the frontend WarmUp component shows the wake-up UI.
+    try:
+        await db.command("ping")
+        return {"status": "ok", "db": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"db unreachable: {e.__class__.__name__}")
 
 @router.post("/feedback")
 async def submit_feedback(request: Request):
