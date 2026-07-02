@@ -17,7 +17,10 @@ const Landing = () => {
   const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
-    if (user) return;
+    if (user) {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
     let check = null;
     apiClient.getGoogleConfig().then((cfg) => {
       if (!cfg.clientId) return;
@@ -56,8 +59,9 @@ const Landing = () => {
     if (window.google?.accounts?.id) {
       setGoogleLoading(true);
       window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
           setGoogleLoading(false);
+          setShowEmail(true);
         }
       });
     } else {
@@ -90,15 +94,6 @@ const Landing = () => {
         </Link>
         <div className="flex items-center gap-3">
           <LanguageToggle />
-          {user ? (
-            <button onClick={() => navigate("/dashboard")} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900 transition-colors">
-              {t("dashboard")}
-            </button>
-          ) : (
-            <button onClick={() => setShowEmail(true)} className="h-10 px-4 rounded-lg border-2 border-blue-800 text-blue-800 text-sm font-medium hover:bg-blue-50 transition-colors">
-              Sign in
-            </button>
-          )}
         </div>
       </header>
 
