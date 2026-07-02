@@ -371,17 +371,20 @@ Return JSON array only, no markdown, no explanation."""
     def _fallback_postprocess(self, raw_texts: List[str]) -> List[Dict[str, Any]]:
         """Heuristic post-processing when Ollama is unavailable."""
         results: List[Dict[str, Any]] = []
+        num_questions = len(self._questions) if self._questions else 17
+        mcq_count = sum(1 for q in self._questions if q.get("options") or q.get("section") == "A") if self._questions else 10
+
         q_index = 0
         for raw in raw_texts:
             text = raw.strip()
             if not text:
                 continue
-            if q_index >= 17:
+            if q_index >= num_questions:
                 break
             mcq_matches = self._parse_mcq_row(text)
             if mcq_matches and len(mcq_matches) >= 2:
                 for mcq_num, mcq_letter in mcq_matches.items():
-                    if 1 <= mcq_num <= 17:
+                    if 1 <= mcq_num <= num_questions:
                         results.append({
                             "questionNumber": mcq_num,
                             "extractedAnswer": f"Option {mcq_letter}",
@@ -392,7 +395,7 @@ Return JSON array only, no markdown, no explanation."""
                 continue
             q_index += 1
             q_num = q_index
-            if q_num > 17:
+            if q_num > num_questions:
                 break
             if any(r.get("questionNumber") == q_num for r in results):
                 continue
@@ -402,13 +405,13 @@ Return JSON array only, no markdown, no explanation."""
                 "mcqChoice": None,
                 "needsReview": True,
             }
-            if q_num <= 10:
+            if q_num <= mcq_count:
                 entry["mcqChoice"] = self._extract_mcq_choice(text)
                 if entry["mcqChoice"]:
                     entry["needsReview"] = False
             results.append(entry)
         filled = {r.get("questionNumber") for r in results}
-        for q_num in range(1, 18):
+        for q_num in range(1, num_questions + 1):
             if q_num not in filled:
                 results.append({"questionNumber": q_num, "extractedAnswer": "", "mcqChoice": None, "needsReview": True})
         results.sort(key=lambda r: r.get("questionNumber", 999))
@@ -422,7 +425,7 @@ Return JSON array only, no markdown, no explanation."""
         result = {}
         for num_str, letter in found:
             num = int(num_str)
-            if 1 <= num <= 10 and num not in result:
+            if num not in result:
                 result[num] = letter.upper()
         return result if len(result) >= 2 else {}
 

@@ -2,14 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { BookCheck, User, Shield, Loader2 } from "lucide-react";
+import { BookCheck, User, Loader2 } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
 const Welcome = () => {
-  const { t, loginWithName, googleLogin, user } = useApp();
+  const { t, googleLogin, user } = useApp();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [googleReady, setGoogleReady] = useState(false);
@@ -27,7 +25,7 @@ const Welcome = () => {
     if (!googleClientId) return;
     const checkGoogle = setInterval(() => {
       if (window.google?.accounts?.id) {
-        const displayName = name.trim() || "";
+        const displayName = "";
         window.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: async (response) => {
@@ -35,7 +33,7 @@ const Welcome = () => {
               await googleLogin(response.credential, displayName);
               navigate("/loading", { state: { name: displayName || "Teacher" } });
             } catch (err) {
-              setError("Google sign-in failed. Try demo instead.");
+              setError("Google sign-in failed. Please try again.");
               setGoogleLoading(false);
             }
           },
@@ -45,7 +43,7 @@ const Welcome = () => {
       }
     }, 200);
     return () => clearInterval(checkGoogle);
-  }, [googleClientId, name]);
+  }, [googleClientId]);
 
   if (user) {
     return (
@@ -59,21 +57,6 @@ const Welcome = () => {
       </div>
     );
   }
-
-  const handleDemoSubmit = async (e) => {
-    e.preventDefault();
-    const displayName = name.trim() || "Teacher";
-    setError("");
-    setLoading(true);
-    try {
-      await loginWithName("teacher@school.gov.in", "demo1234", displayName);
-      navigate("/loading", { state: { name: displayName } });
-    } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogle = () => {
     if (!window.google?.accounts?.id) return;
@@ -109,14 +92,14 @@ const Welcome = () => {
               <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center mx-auto mb-4">
                 <User size={22} />
               </div>
-              <h1 className="font-display text-2xl font-semibold text-stone-900">See the demo</h1>
-              <p className="mt-2 text-sm text-stone-500">Sign in with Google — we only use your email to identify you. Or skip and use a demo account.</p>
+              <h1 className="font-display text-2xl font-semibold text-stone-900">Welcome to EvalAssist</h1>
+              <p className="mt-2 text-sm text-stone-500">Sign in with Google to get started — we only use your email to identify you.</p>
             </div>
 
             <button
               onClick={handleGoogle}
               disabled={!googleReady || googleLoading}
-              className="w-full h-12 rounded-lg bg-white border-2 border-stone-300 text-stone-800 font-medium hover:bg-stone-50 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2 shadow-sm"
+              className="w-full h-12 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2 shadow-sm"
             >
               {googleLoading ? (
                 <><Loader2 size={16} className="animate-spin" /> Connecting...</>
@@ -130,41 +113,20 @@ const Welcome = () => {
               )}
             </button>
 
+            {error && (
+              <p className="mt-3 text-red-600 text-sm text-center">{error}</p>
+            )}
+
             <div className="mt-5">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200" /></div>
-                <div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-stone-400">or try without sign-in</span></div>
+                <div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-stone-400">or</span></div>
               </div>
-            </div>
-
-            <form onSubmit={handleDemoSubmit} className="mt-4 space-y-3">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="What should we call you?"
-                className="w-full h-11 px-4 rounded-lg border border-stone-300 bg-stone-50 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800"
-              />
-
-              {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >
-                {loading ? <><Loader2 size={14} className="animate-spin" /> Signing in...</> : "Continue to demo  →"}
-              </button>
-            </form>
-
-            <div className="mt-5 flex items-start gap-2 text-xs text-stone-400">
-              <Shield size={14} className="shrink-0 mt-0.5" />
-              <span>Pre-loaded with real Class 8 Biology data. No real student info.</span>
             </div>
 
             <div className="mt-4 text-center text-xs text-stone-500">
               Already have an account?{" "}
-              <Link to="/login" className="text-blue-800 hover:underline font-medium">Sign in</Link>
+              <Link to="/login" className="text-blue-800 hover:underline font-medium">Sign in with email</Link>
             </div>
           </div>
         </div>

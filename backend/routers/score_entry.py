@@ -157,7 +157,7 @@ async def get_score_entry(id: str, db=Depends(get_db)):
 
     questions = await db.questions.find({"assessmentId": id}).to_list(100)
     if not questions:
-        questions = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
+        return []
 
     students = await db.students.find({"assessmentId": id}).to_list(100)
     student_scores = []
@@ -216,8 +216,6 @@ async def update_score_entry(id: str, data: ScoreEntryUpdateRequest, db=Depends(
                 await db.questions.insert_many(question_docs)
         else:
             questions_list = await db.questions.find({"assessmentId": id}).to_list(100)
-            if not questions_list:
-                questions_list = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
 
         total_marks_scored = 0
         student_ids = []
