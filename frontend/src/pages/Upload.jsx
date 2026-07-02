@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen, CheckCircle, Network } from "lucide-react";
+import { UploadCloud, X, ArrowRight, Image as ImageIcon, Type, FileText, Loader2, BookOpen, CheckCircle, Network, AlertTriangle, LogIn } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
 const TabUpload = ({ files, onAdd, onRemove, testId }) => {
@@ -184,11 +184,12 @@ const Upload = () => {
       }
     } catch (err) {
       console.error('Upload full error:', err);
-      const msg = err?.message;
+      const msg = err?.message || '';
+      const isAuthError = msg.includes('Session expired') || msg.includes('Could not validate') || msg.includes('401');
       const displayMsg = (typeof msg === 'string' && msg && msg !== '[object Object]')
         ? msg
         : 'Something went wrong on the server. Check your inputs and try again.';
-      setUploadError(`${displayMsg}`);
+      setUploadError(isAuthError ? 'Session expired — please log in again' : displayMsg);
     } finally {
       setSubmitting(false);
     }
@@ -361,7 +362,25 @@ const Upload = () => {
 
       {/* Actions */}
       {uploadError && (
-        <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{uploadError}</div>
+        <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="text-sm font-medium text-red-800">{uploadError}</div>
+              {uploadError.includes('log in again') && (
+                <div className="mt-2">
+                  <button onClick={() => {
+                    localStorage.removeItem('evalassist-token');
+                    localStorage.removeItem('evalassist-user');
+                    navigate('/login');
+                  }} className="inline-flex items-center gap-1.5 text-sm font-medium text-red-700 hover:text-red-900 underline underline-offset-4">
+                    <LogIn size={14} /> Log in again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
       <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
         <button onClick={() => navigate(assessmentId ? `/review/${assessmentId}` : "/dashboard")} className="h-12 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium">{t("cancel")}</button>

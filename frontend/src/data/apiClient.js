@@ -5,7 +5,24 @@ function getToken() {
     return localStorage.getItem('evalassist-token');
 }
 
+function clearAuth() {
+    localStorage.removeItem('evalassist-token');
+    localStorage.removeItem('evalassist-user');
+    localStorage.removeItem('evalassist-subjects');
+    localStorage.removeItem('evalassist-active-subject');
+}
+
+function handleAuthError(status) {
+    if (status === 401) {
+        clearAuth();
+        return 'Session expired. Please log in again.';
+    }
+    return null;
+}
+
 function normalizeErrorDetail(data, status) {
+    const authMsg = handleAuthError(status);
+    if (authMsg) return authMsg;
     if (!data || !data.detail) return `Server error (${status})`;
     if (typeof data.detail === 'string') return data.detail;
     if (Array.isArray(data.detail)) {
@@ -38,6 +55,9 @@ async function fetchWithFallback(url, options = {}) {
             headers['Authorization'] = `Bearer ${token}`;
         }
         const res = await fetchWithTimeout(`${API_BASE}${url}`, { ...options, headers });
+        if (res.status === 401) {
+            clearAuth();
+        }
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return await res.json();
     } catch (error) {
