@@ -31,7 +31,7 @@ export const Sidebar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   const isActive = (to) => {
@@ -308,7 +308,7 @@ export const MobileNav = () => {
                   <div className="text-[11px] text-stone-500 truncate">{activeSubject || "Subject"} · {activeClass || "Class"}</div>
                 </div>
                 <button
-                  onClick={() => { logout(); navigate("/login"); }}
+                  onClick={() => { logout(); navigate("/"); }}
                   className="h-11 w-11 rounded-lg hover:bg-stone-100 text-stone-500 flex items-center justify-center"
                   data-testid="mobile-logout"
                   aria-label={t("logout")}

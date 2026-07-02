@@ -389,11 +389,25 @@ const Analysis = () => {
 
       {!hasAnswerKey && QUESTIONS.length > 0 && !hasPendingOCR && !generatingKey && !isSeedData && (
         <div className="bg-white border border-stone-200 rounded-xl p-6 mb-6 text-center">
-          <p className="text-sm text-stone-500 mb-3">Answer key has not been generated yet.</p>
-          <button onClick={handleGenerateAnswerKey} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
-            Generate Answer Key with AI
-          </button>
-          {keyError && <p className="mt-2 text-xs text-rose-600">{keyError}</p>}
+          {keyError ? (
+            <>
+              <div className="flex items-center justify-center gap-2 text-rose-700 mb-3">
+                <X size={18} className="text-rose-500" />
+                <span className="font-semibold text-sm">Answer key generation failed</span>
+              </div>
+              <p className="text-sm text-rose-600 mb-4">{keyError}</p>
+              <button onClick={handleGenerateAnswerKey} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
+                Retry Generation
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-stone-500 mb-3">Answer key has not been generated yet.</p>
+              <button onClick={handleGenerateAnswerKey} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
+                Generate Answer Key with AI
+              </button>
+            </>
+          )}
         </div>
       )}
 

@@ -157,16 +157,10 @@ async def google_debug():
 
 @router.get("/health")
 async def health_check():
-    """Health check — always ok for demo mode (MongoDB bypassed)."""
     return {
         "status": "ok",
-        "mode": "demo",
-        "mongoUrl": settings.MONGO_URL[:40] + "...",
+        "mongoUrl": (settings.MONGO_URL[:40] + "...") if settings.MONGO_URL else "not configured",
     }
-
-@router.get("/health")
-async def health_check():
-    return {"status": "ok", "mode": "demo", "mongoUrl": settings.MONGO_URL[:40] + "..."}
 
 @router.post("/feedback")
 async def submit_feedback(request: Request):

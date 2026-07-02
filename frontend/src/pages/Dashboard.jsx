@@ -1,10 +1,8 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
-import { Upload as UploadIcon, Zap, ChevronRight, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Upload as UploadIcon, Zap, ChevronRight, Loader2, Plus, FileText } from "lucide-react";
 
 const StatusPill = ({ status, t }) => {
   const map = {
@@ -33,17 +31,6 @@ const greetingKey = () => {
 const Dashboard = () => {
   const { t, user, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.state?.fromLoader) {
-      const displayName = location.state.name || user?.name || "Teacher";
-      toast(`You're ${displayName} (demo). Click any assessment to explore.`, {
-        description: "All data is pre-loaded and ready.",
-        duration: 7000,
-      });
-    }
-  }, []);
 
   const { data: ALL_ASSESSMENTS = [], isLoading } = useQuery({
     queryKey: ['assessments'],
@@ -101,13 +88,30 @@ const Dashboard = () => {
           <div className="col-span-2 text-right">Action</div>
         </div>
 
-        {ASSESSMENTS.map((a) => (
-          <div
-            key={a.id}
-            data-testid={`assessment-row-${a.id}`}
-            onClick={() => navigate(`/analysis/${a.id}`)}
-            className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 border-b border-stone-100 last:border-0 hover:bg-stone-50/60 transition-colors cursor-pointer"
-          >
+        {ASSESSMENTS.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="h-14 w-14 rounded-full bg-blue-50 text-blue-800 flex items-center justify-center mx-auto mb-4">
+              <FileText size={26} />
+            </div>
+            <h2 className="font-display text-xl font-semibold text-stone-900 mb-1">No assessments yet</h2>
+            <p className="text-stone-500 mb-6 max-w-sm mx-auto">Create your first assessment by uploading a question paper and student answer sheets.</p>
+            <div className="flex items-center justify-center gap-3">
+              <Link to="/upload" className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 transition-colors shadow-sm">
+                <Plus size={18} /> New Assessment
+              </Link>
+              <Link to="/score-entry" className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition-colors shadow-sm">
+                <Zap size={18} /> Quick Score Entry
+              </Link>
+            </div>
+          </div>
+        ) : (<>
+          {ASSESSMENTS.map((a) => (
+            <div
+              key={a.id}
+              data-testid={`assessment-row-${a.id}`}
+              onClick={() => navigate(`/analysis/${a.id}`)}
+              className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 border-b border-stone-100 last:border-0 hover:bg-stone-50/60 transition-colors cursor-pointer"
+            >
             <div className="md:col-span-4">
               <div className="font-medium text-stone-900">{a.name}</div>
               <div className="text-sm text-stone-500 mt-0.5">{a.type} · {a.createdAt}</div>
@@ -143,6 +147,7 @@ const Dashboard = () => {
             </div>
           </div>
         ))}
+        </>)}
       </div>
     </div>
   );
