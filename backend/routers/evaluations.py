@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from backend.core.database import get_db
 from backend.models.evaluation import Evaluation
+from backend.routers.auth import get_current_user
 
 router = APIRouter()
 
@@ -11,7 +12,7 @@ async def get_evaluations(id: str, sid: str, db=Depends(get_db)):
     return evals
 
 @router.put("/{id}/students/{sid}/evaluations/{qid}/override", response_model=Evaluation)
-async def update_override(id: str, sid: str, qid: str, updates: dict, db=Depends(get_db)):
+async def update_override(id: str, sid: str, qid: str, updates: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
     mark = updates.get("teacherMark")
     result = await db.evaluations.update_one(
         {"assessmentId": id, "studentId": sid, "qId": qid},
@@ -22,7 +23,7 @@ async def update_override(id: str, sid: str, qid: str, updates: dict, db=Depends
     return await db.evaluations.find_one({"assessmentId": id, "studentId": sid, "qId": qid})
 
 @router.post("/{id}/students/{sid}/approve")
-async def approve_all_student(id: str, sid: str, db=Depends(get_db)):
+async def approve_all_student(id: str, sid: str, db=Depends(get_db), current_user=Depends(get_current_user)):
     await db.evaluations.update_many(
         {"assessmentId": id, "studentId": sid},
         {"$set": {"approved": True}}
@@ -30,7 +31,7 @@ async def approve_all_student(id: str, sid: str, db=Depends(get_db)):
     return {"message": "All evaluations approved for student"}
 
 @router.post("/{id}/approve-high")
-async def approve_all_high(id: str, db=Depends(get_db)):
+async def approve_all_high(id: str, db=Depends(get_db), current_user=Depends(get_current_user)):
     await db.evaluations.update_many(
         {"assessmentId": id, "needsReview": False},
         {"$set": {"approved": True}}

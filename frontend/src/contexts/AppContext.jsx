@@ -49,13 +49,61 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-active-class", activeClass);
   }, [activeClass]);
 
+  useEffect(() => {
+    const handleExpired = () => {
+      setToken(null);
+      setUser(null);
+      setActiveSubject("");
+    };
+    window.addEventListener("evalassist:auth-expired", handleExpired);
+    return () => window.removeEventListener("evalassist:auth-expired", handleExpired);
+  }, []);
+
   const t = (key) => translations[lang]?.[key] ?? translations.en[key] ?? key;
 
   const login = async (email, password) => {
     const { apiClient } = await import("@/data/apiClient");
     const data = await apiClient.login(email, password);
+    localStorage.setItem("evalassist-token", data.access_token);
+    localStorage.setItem("evalassist-user", JSON.stringify(data.user));
     setToken(data.access_token);
     setUser(data.user);
+    const subjects = data.user?.subjects;
+    if (subjects?.length) {
+      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
+      if (!localStorage.getItem("evalassist-active-subject")) {
+        setActiveSubject(subjects[0]);
+      }
+    }
+    return data;
+  };
+
+  const loginWithName = async (email, password, displayName) => {
+    const { apiClient } = await import("@/data/apiClient");
+    const data = await apiClient.login(email, password);
+    const userWithName = { ...data.user, name: displayName };
+    localStorage.setItem("evalassist-token", data.access_token);
+    localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
+    setToken(data.access_token);
+    setUser(userWithName);
+    const subjects = data.user?.subjects;
+    if (subjects?.length) {
+      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
+      if (!localStorage.getItem("evalassist-active-subject")) {
+        setActiveSubject(subjects[0]);
+      }
+    }
+    return data;
+  };
+
+  const googleLogin = async (credential, displayName) => {
+    const { apiClient } = await import("@/data/apiClient");
+    const data = await apiClient.googleLogin(credential, displayName);
+    const userWithName = displayName ? { ...data.user, name: displayName } : data.user;
+    localStorage.setItem("evalassist-token", data.access_token);
+    localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
+    setToken(data.access_token);
+    setUser(userWithName);
     const subjects = data.user?.subjects;
     if (subjects?.length) {
       localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
@@ -74,7 +122,7 @@ export const AppProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ lang, setLang, t, user, login, logout, activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS }}>
+    <AppContext.Provider value={{ lang, setLang, t, user, setUser, login, loginWithName, googleLogin, logout, activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS }}>
       {children}
     </AppContext.Provider>
   );

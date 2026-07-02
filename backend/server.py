@@ -1,9 +1,15 @@
-from fastapi import FastAPI, APIRouter
-from starlette.middleware.cors import CORSMiddleware
+import sys
 import os
 import logging
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import RequestValidationError
+from starlette.middleware.cors import CORSMiddleware
 from backend.core.config import settings
-from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions
+from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions, score_entry
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -26,19 +32,57 @@ api_router.include_router(students.router, prefix="/assessments", tags=["student
 api_router.include_router(evaluations.router, prefix="/assessments", tags=["evaluations"])
 api_router.include_router(insights.router, prefix="/assessments", tags=["insights"])
 api_router.include_router(interventions.router, prefix="/assessments", tags=["interventions"])
+api_router.include_router(score_entry.router, prefix="/assessments", tags=["score-entry"])
+
+@api_router.get("/config")
+async def app_config():
+    return {
+        "googleClientId": settings.GOOGLE_CLIENT_ID,
+        "posthogKey": settings.POSTHOG_API_KEY,
+        "posthogHost": settings.POSTHOG_HOST or "https://us.i.posthog.com",
+    }
 
 app.include_router(api_router)
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    errors = exc.errors()
+    messages = []
+    for err in errors:
+        loc = " -> ".join(str(l) for l in err.get("loc", []))
+        messages.append(f"{loc}: {err.get('msg', 'Invalid value')}")
+    detail = "; ".join(messages)
+    return JSONResponse(status_code=422, content={"detail": detail})
+
 # Serve media files (sample answer sheets, etc.)
-from fastapi.staticfiles import StaticFiles
 media_dir = os.path.join(os.path.dirname(__file__), "..", "media")
 if os.path.exists(media_dir):
     app.mount("/media", StaticFiles(directory=media_dir), name="media")
 
-# Serve frontend production build (SPA)
+# Serve frontend static assets (JS, CSS, etc.)
 frontend_build = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
 if os.path.exists(frontend_build):
-    app.mount("/", StaticFiles(directory=frontend_build, html=True), name="frontend")
+    app.mount("/static", StaticFiles(directory=os.path.join(frontend_build, "static")), name="static")
+
+# SPA catch-all — serve index.html for all non-API, non-static, non-media routes
+index_html = os.path.join(frontend_build, "index.html") if os.path.exists(frontend_build) else None
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    if full_path.startswith("media/"):
+        raise HTTPException(status_code=404)
+    if full_path.startswith("static/"):
+        raise HTTPException(status_code=404)
+    # Try serving exact file from build dir
+    file_path = os.path.join(frontend_build, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    # SPA fallback
+    if index_html and os.path.exists(index_html):
+        return FileResponse(index_html)
+    raise HTTPException(status_code=404)
 
 # Configure logging
 logging.basicConfig(

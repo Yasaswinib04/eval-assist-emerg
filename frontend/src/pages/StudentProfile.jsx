@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
 import {
-  ArrowLeft, CheckCircle2, Circle, AlertCircle, Sparkles, Download,
+  ArrowLeft, CheckCircle2, Circle, AlertCircle, Download,
   TrendingUp, TrendingDown, Minus, Activity, ChevronRight, Loader2
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
@@ -41,7 +41,7 @@ const TrendIcon = ({ trend }) => {
 const StudentProfile = () => {
   const { t } = useApp();
   const navigate = useNavigate();
-  const { id: assessmentId = "asm-001", studentId = "stu-02" } = useParams();
+  const { id: assessmentId, studentId } = useParams();
 
   const { data: STUDENTS = [] } = useQuery({ queryKey: ['students', assessmentId], queryFn: () => apiClient.getStudents(assessmentId) });
   const { data: ASSESSMENTS = [] } = useQuery({ queryKey: ['assessments'], queryFn: apiClient.getAssessments });
@@ -168,23 +168,6 @@ const StudentProfile = () => {
             <Section icon={CheckCircle2} title={t("strongConcepts")} color="bg-emerald-50 text-emerald-700" items={profile?.strong ?? []} testId="section-strong" mastery={masteryColor} />
             <Section icon={Circle} title={t("developingConcepts")} color="bg-amber-50 text-amber-700" items={profile?.developing ?? []} testId="section-developing" mastery={masteryColor} />
             <Section icon={AlertCircle} title={t("needsSupport")} color="bg-rose-50 text-rose-700" items={profile?.weak ?? []} testId="section-weak" mastery={masteryColor} />
-          </div>
-
-          {/* AI misconceptions */}
-          <div className="bg-white border border-stone-200 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={18} className="text-blue-800" />
-              <h2 className="font-display text-xl font-semibold text-stone-900">{t("aiMisconceptions")}</h2>
-            </div>
-            <p className="text-sm text-stone-500 mb-4">Patterns the AI noticed across this student's answers.</p>
-            <div className="space-y-3">
-              {(profile?.misconceptions ?? []).map((m, i) => (
-                <div key={i} data-testid={`misconception-${i}`} className="flex gap-3 p-3 rounded-lg bg-amber-50/60 border border-amber-200">
-                  <div className="h-6 w-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
-                  <div className="text-sm text-stone-800 leading-relaxed italic">"{m}"</div>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Topic-wise mastery */}

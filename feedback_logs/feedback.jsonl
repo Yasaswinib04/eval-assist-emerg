@@ -1,0 +1,19 @@
+{"message": "test", "url": "/"}
+{"message": "<script>alert('xss')</script>", "url": "/"}
+{}
+{"message": "test", "url": "/"}
+{"message": "<script>alert('xss')</script>", "url": "/"}
+{}
+{"message": "test", "url": "/"}
+{"message": "<script>alert('xss')</script>", "url": "/"}
+{}
+{"message": "test", "url": "/"}
+{"message": "<script>alert('xss')</script>", "url": "/"}
+{}
+{"message": "test", "url": "/"}
+{"message": "test", "url": "/"}
+{"message": "<script>alert('xss')</script>", "url": "/"}
+{}
+{"message": "test", "url": "/"}
+{"message": "<script>alert('xss')</script>", "url": "/"}
+{}

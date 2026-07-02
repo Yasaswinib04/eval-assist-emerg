@@ -18,7 +18,7 @@ export const LanguageToggle = () => {
           key={l.code}
           onClick={() => setLang(l.code)}
           data-testid={`lang-${l.code}`}
-          className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-colors ${
+          className={`px-3 py-2 text-sm font-semibold rounded-full transition-colors ${
             lang === l.code
               ? "bg-blue-800 text-white"
               : "text-stone-600 hover:text-stone-900"
