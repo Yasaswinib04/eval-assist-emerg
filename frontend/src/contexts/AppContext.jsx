@@ -49,6 +49,16 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-active-class", activeClass);
   }, [activeClass]);
 
+  useEffect(() => {
+    const handleExpired = () => {
+      setToken(null);
+      setUser(null);
+      setActiveSubject("");
+    };
+    window.addEventListener("evalassist:auth-expired", handleExpired);
+    return () => window.removeEventListener("evalassist:auth-expired", handleExpired);
+  }, []);
+
   const t = (key) => translations[lang]?.[key] ?? translations.en[key] ?? key;
 
   const login = async (email, password) => {

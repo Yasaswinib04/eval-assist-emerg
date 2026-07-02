@@ -49,12 +49,35 @@ const Upload = () => {
   const assessmentId = searchParams.get("assessmentId");
 
   const subjects = user?.subjects?.length ? user.subjects : ["Biology", "Physics", "Chemistry", "Maths", "Social Science", "Hindi", "English", "Telugu"];
-  const [name, setName] = useState("SA1 — Biological Science");
-  const [subject, setSubject] = useState(activeSubject || subjects[0]);
-  const [customSubject, setCustomSubject] = useState("");
-  const [klass, setKlass] = useState(activeClass || "Class 8");
-  const [type, setType] = useState("Summative Assessment");
-  const [marks, setMarks] = useState(40);
+
+  const restoreForm = () => {
+    try {
+      const saved = sessionStorage.getItem('evalassist-upload-form');
+      if (saved) {
+        const d = JSON.parse(saved);
+        return {
+          name: d.n || "SA1 — Biological Science",
+          subject: d.s || activeSubject || subjects[0],
+          customSubject: d.cs || "",
+          klass: d.k || activeClass || "Class 8",
+          type: d.t || "Summative Assessment",
+          marks: d.m || 40,
+          qText: d.qt || "",
+          aText: d.at || "",
+          cText: d.ct || "",
+        };
+      }
+    } catch {}
+    return {};
+  };
+
+  const saved = restoreForm();
+  const [name, setName] = useState(saved.name || "SA1 — Biological Science");
+  const [subject, setSubject] = useState(saved.subject || activeSubject || subjects[0]);
+  const [customSubject, setCustomSubject] = useState(saved.customSubject || "");
+  const [klass, setKlass] = useState(saved.klass || activeClass || "Class 8");
+  const [type, setType] = useState(saved.type || "Summative Assessment");
+  const [marks, setMarks] = useState(saved.marks || 40);
 
   const [submitting, setSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -74,14 +97,23 @@ const Upload = () => {
     }
   }, [assessmentId]);
 
+  // Persist text fields so users don't lose work on forced re-login
+  useEffect(() => {
+    if (assessmentId) return;
+    sessionStorage.setItem('evalassist-upload-form', JSON.stringify({
+      n: name, s: subject, cs: customSubject, k: klass, t: type, m: marks,
+      qt: qText, at: aText, ct: cText,
+    }));
+  }, [assessmentId, name, subject, customSubject, klass, type, marks, qText, aText, cText]);
+
   // Questions section
   const [qMode, setQMode] = useState("images");
   const [qImages, setQImages] = useState([]);
-  const [qText, setQText] = useState("");
+  const [qText, setQText] = useState(saved.qText || "");
 
   // Curriculum section (optional)
   const [cMode, setCMode] = useState("none");
-  const [cText, setCText] = useState("");
+  const [cText, setCText] = useState(saved.cText || "");
 
   // Student sheets section
   const [sheetFiles, setSheetFiles] = useState([]);
@@ -89,7 +121,7 @@ const Upload = () => {
   // Answer key section
   const [aMode, setAMode] = useState("text");
   const [aImages, setAImages] = useState([]);
-  const [aText, setAText] = useState("");
+  const [aText, setAText] = useState(saved.aText || "");
 
   const [showSampleAnimation, setShowSampleAnimation] = useState(false);
   const [animStep, setAnimStep] = useState(0);
@@ -175,6 +207,7 @@ const Upload = () => {
         if (!result || (!result._id && !result.id)) {
           throw new Error("Server returned an empty response. Try again.");
         }
+        sessionStorage.removeItem('evalassist-upload-form');
         const id = result._id || result.id;
         // Fire-and-forget, but surface failures to console so we can debug.
         apiClient.processAssessment(id).catch((err) => {

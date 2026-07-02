@@ -10,6 +10,7 @@ function clearAuth() {
     localStorage.removeItem('evalassist-user');
     localStorage.removeItem('evalassist-subjects');
     localStorage.removeItem('evalassist-active-subject');
+    window.dispatchEvent(new CustomEvent('evalassist:auth-expired'));
 }
 
 function handleAuthError(status) {

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "evalassist"
     JWT_SECRET: str = "dev-secret-change-in-production"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30
     GOOGLE_CLIENT_ID: str = ""
     CORS_ORIGINS: list = ["*"]
     OPENROUTER_API_KEY: str = ""
