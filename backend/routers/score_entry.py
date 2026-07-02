@@ -187,15 +187,13 @@ async def update_score_entry(id: str, data: ScoreEntryUpdateRequest, db=Depends(
         raise HTTPException(status_code=404, detail="Assessment not found")
 
     if data.students:
-        await db.students.delete_many({"assessmentId": id})
-        await db.evaluations.delete_many({"assessmentId": id})
+        questions_list = []
 
         if data.questions:
-            await db.questions.delete_many({"assessmentId": id})
-            question_docs = []
-            questions_list = []
             for q in data.questions:
-                q_doc = {
+                questions_list.append(q)
+            question_docs = [
+                {
                     "_id": f"q{q.number}",
                     "assessmentId": id,
                     "number": q.number,
@@ -210,15 +208,18 @@ async def update_score_entry(id: str, data: ScoreEntryUpdateRequest, db=Depends(
                     "options": None,
                     "correctAnswer": None,
                 }
-                question_docs.append(q_doc)
-                questions_list.append(q)
+                for q in data.questions
+            ]
             if question_docs:
-                await db.questions.insert_many(question_docs)
+                for q_doc in question_docs:
+                    await db.questions.update_one({"_id": q_doc["_id"]}, {"$set": q_doc}, upsert=True)
+            await db.questions.delete_many({"assessmentId": id, "_id": {"$nin": [f"q{q.number}" for q in data.questions]}})
         else:
             questions_list = await db.questions.find({"assessmentId": id}).to_list(100)
 
         total_marks_scored = 0
-        student_ids = []
+        new_student_ids = []
+        new_eval_ids = []
         all_evals = []
 
         for s in data.students:
@@ -227,7 +228,7 @@ async def update_score_entry(id: str, data: ScoreEntryUpdateRequest, db=Depends(
                 "_id": student_id,
                 "assessmentId": id,
                 "name": s.name,
-                "roll": s.roll or f"{len(student_ids)+1:03d}",
+                "roll": s.roll or f"{len(new_student_ids)+1:03d}",
                 "total": 0.0,
                 "status": "complete",
                 "imageUrls": [],
@@ -253,17 +254,23 @@ async def update_score_entry(id: str, data: ScoreEntryUpdateRequest, db=Depends(
                     "teacherMark": None,
                     "approved": True,
                 }
+                new_eval_ids.append(eval_id)
                 all_evals.append(eval_doc)
 
             student_doc["total"] = round(student_total, 1)
-            student_ids.append(student_id)
+            new_student_ids.append(student_id)
             total_marks_scored += student_total
             await db.students.update_one({"_id": student_id}, {"$set": student_doc}, upsert=True)
 
         for ev in all_evals:
             await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
 
-        num_students = len(student_ids)
+        if new_student_ids:
+            await db.students.delete_many({"assessmentId": id, "_id": {"$nin": new_student_ids}})
+        if new_eval_ids:
+            await db.evaluations.delete_many({"assessmentId": id, "_id": {"$nin": new_eval_ids}})
+
+        num_students = len(new_student_ids)
         avg_score = round(total_marks_scored / num_students, 1) if num_students > 0 else 0.0
 
         await db.assessments.update_one(

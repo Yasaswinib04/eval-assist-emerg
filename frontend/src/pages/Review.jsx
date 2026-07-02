@@ -992,7 +992,20 @@ const ReviewPage = () => {
             <div className="text-xs font-semibold text-stone-700 whitespace-nowrap tabular-nums">{totalApproved}/{totalAnswers} · {Math.round(overallProgress)}%</div>
           </div>
           <div className="flex items-center gap-2">
-            <button data-testid="btn-save" className="h-11 px-4 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium inline-flex items-center gap-2"><Save size={14} /> Save</button>
+            <button onClick={() => {
+              const entries = Object.entries(marks);
+              if (!entries.length) { toast.info("No changes to save"); return; }
+              Promise.all(
+                entries.map(([key, mark]) => {
+                  const idx = key.lastIndexOf('-q');
+                  if (idx === -1) return Promise.resolve();
+                  return updateOverrideMutation.mutateAsync({ studentId: key.slice(0, idx), qid: key.slice(idx + 1), mark });
+                })
+              ).then(() => {
+                queryClient.invalidateQueries(['evaluations', id]);
+                toast.success("All changes saved");
+              });
+            }} data-testid="btn-save" className="h-11 px-4 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium inline-flex items-center gap-2"><Save size={14} /> Save</button>
             <button onClick={() => navigate(`/insights/${id}`)} data-testid="btn-finalize-footer" className="h-11 px-5 rounded-lg bg-blue-800 hover:bg-blue-900 text-white text-sm font-medium inline-flex items-center gap-2 shadow-sm">
               {t("finalizeInsights")} <ArrowRight size={14} />
             </button>

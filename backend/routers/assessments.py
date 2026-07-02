@@ -26,7 +26,9 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
         if not f.filename:
             continue
         try:
-            safe_name = f.filename.replace(" ", "_").replace("/", "_")
+            safe_name = f.filename.replace(" ", "_").replace("/", "_").replace("\\", "_")
+            if safe_name.startswith(".") or ".." in safe_name:
+                safe_name = os.path.basename(safe_name)
             dest = os.path.join(target, safe_name)
             with open(dest, "wb") as buf:
                 shutil.copyfileobj(f.file, buf)
@@ -113,10 +115,31 @@ async def create_assessment(
                 from backend.services.answer_key_parser import parse_answer_key
                 parsed = parse_answer_key(answerKeyText)
                 if parsed:
-                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedAnswerKey": parsed}})
+                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedAnswerKey": parsed, "answerKeyStatus": "uploaded"}})
                     doc["parsedAnswerKey"] = parsed
+                    doc["answerKeyStatus"] = "uploaded"
             except Exception as e:
                 print(f"[Upload] Answer key parse skip: {e}")
+        elif answerKeyFiles and answer_key_images:
+            try:
+                openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+                if openrouter_key:
+                    from backend.tools.ocr.qwen_ocr import analyze_answer_key
+                    abs_ak_paths = []
+                    for img in answer_key_images:
+                        abs_path = os.path.join(os.path.dirname(__file__), "..", "..", img)
+                        if os.path.exists(abs_path):
+                            abs_ak_paths.append(abs_path)
+                    if abs_ak_paths:
+                        print(f"[Upload] OCR'ing {len(abs_ak_paths)} answer key images...")
+                        parsed_ak = analyze_answer_key(openrouter_key, settings.QWEN_MODEL, answer_key_images=abs_ak_paths)
+                        if parsed_ak:
+                            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedAnswerKey": parsed_ak, "answerKeyStatus": "uploaded"}})
+                            doc["parsedAnswerKey"] = parsed_ak
+                            doc["answerKeyStatus"] = "uploaded"
+                            print(f"[Upload] Answer key OCR done: {len(parsed_ak)} answers extracted")
+            except Exception as e:
+                print(f"[Upload] Answer key image OCR failed: {e}")
 
         if questionsText and questionsText.strip():
             try:
@@ -798,7 +821,7 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
 @router.patch("/{id}", response_model=Assessment)
 async def update_assessment(id: str, updates: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
     result = await db.assessments.update_one({"_id": id}, {"$set": updates})
-    if result.modified_count == 0:
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Assessment not found")
     return await get_assessment(id, db)
 

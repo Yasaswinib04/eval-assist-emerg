@@ -115,8 +115,8 @@ const Insights = () => {
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard testId="kpi-class-avg" label={t("classAverage")} value={`${((assessment.avgScore / assessment.totalMarks) * 100).toFixed(0)}%`} sub={`${assessment.avgScore.toFixed(1)} / ${assessment.totalMarks}`} icon={Users} accent="bg-blue-50 text-blue-800" />
-        <KpiCard testId="kpi-highest" label={t("highestScore")} value={`${Math.max(...STUDENTS.map((s) => s.total))}`} sub={`/ ${assessment.totalMarks}`} icon={Trophy} accent="bg-emerald-50 text-emerald-800" />
-        <KpiCard testId="kpi-lowest" label={t("lowestScore")} value={`${Math.min(...STUDENTS.map((s) => s.total))}`} sub={`/ ${assessment.totalMarks}`} icon={TrendingDown} accent="bg-rose-50 text-rose-800" />
+        <KpiCard testId="kpi-highest" label={t("highestScore")} value={STUDENTS.length ? `${Math.max(...STUDENTS.map((s) => s.total))}` : "—"} sub={`/ ${assessment.totalMarks}`} icon={Trophy} accent="bg-emerald-50 text-emerald-800" />
+        <KpiCard testId="kpi-lowest" label={t("lowestScore")} value={STUDENTS.length ? `${Math.min(...STUDENTS.map((s) => s.total))}` : "—"} sub={`/ ${assessment.totalMarks}`} icon={TrendingDown} accent="bg-rose-50 text-rose-800" />
         <KpiCard testId="kpi-pass-rate" label={t("passRate")} value={`${passRate}%`} sub={`${passing} of ${totalStudents} passed`} icon={TrendingUp} accent="bg-amber-50 text-amber-800" />
       </div>
 

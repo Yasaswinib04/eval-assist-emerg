@@ -140,27 +140,9 @@ async def google_login(request: Request, db=Depends(get_db)):
 async def get_google_config():
     return {"clientId": settings.GOOGLE_CLIENT_ID}
 
-@router.get("/google-debug")
-async def google_debug():
-    """Debug endpoint to verify Google OAuth setup."""
-    has_client_id = bool(settings.GOOGLE_CLIENT_ID)
-    try:
-        from google.oauth2 import id_token
-        has_google_auth = True
-    except ImportError:
-        has_google_auth = False
-    return {
-        "hasClientId": has_client_id,
-        "clientIdPreview": settings.GOOGLE_CLIENT_ID[:30] + "..." if has_client_id else "",
-        "googleAuthInstalled": has_google_auth,
-    }
-
 @router.get("/health")
 async def health_check():
-    return {
-        "status": "ok",
-        "mongoUrl": (settings.MONGO_URL[:40] + "...") if settings.MONGO_URL else "not configured",
-    }
+    return {"status": "ok"}
 
 @router.post("/feedback")
 async def submit_feedback(request: Request):

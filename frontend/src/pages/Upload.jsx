@@ -172,8 +172,14 @@ const Upload = () => {
         for (const img of sheetFiles) { if (img.file) formData.append("sheetFiles", img.file); }
 
         const result = await apiClient.createAssessment(formData);
+        if (!result || (!result._id && !result.id)) {
+          throw new Error("Server returned an empty response. Try again.");
+        }
         const id = result._id || result.id;
-        apiClient.processAssessment(id).catch(() => {});
+        // Fire-and-forget, but surface failures to console so we can debug.
+        apiClient.processAssessment(id).catch((err) => {
+          console.warn('[Upload] processAssessment failed (background):', err?.message || err);
+        });
         navigate(`/analysis/${id}`);
       }
     } catch (err) {
@@ -209,11 +215,6 @@ const Upload = () => {
           <h1 className="mt-1 font-display text-3xl md:text-4xl font-semibold text-stone-900">{assessmentId ? "Add Student Responses" : t("createAssessment")}</h1>
           <p className="mt-1.5 text-stone-600 text-lg">{assessmentId ? "Scan and add new student answer sheets for this existing assessment." : t("createSub")}</p>
         </div>
-        {!assessmentId && (
-          <button onClick={seedSample} data-testid="btn-seed-sample" className="self-start text-sm font-medium text-blue-800 hover:text-blue-900 underline underline-offset-4">
-            Try with sample papers
-          </button>
-        )}
       </div>
 
       {/* Metadata */}

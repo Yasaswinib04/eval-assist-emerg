@@ -142,11 +142,24 @@ const Analysis = () => {
     }
   }, [hasPendingOCR]);
 
+  // Guard against retry storm: once we've attempted answer-key generation for this
+  // assessment, don't auto-retry on the same page mount even if it failed.
+  const [answerKeyAttempted, setAnswerKeyAttempted] = useState(false);
   useEffect(() => {
-    if (QUESTIONS.length > 0 && !hasPendingOCR && !hasAnswerKey && !generatingKey && !isSeedData && !analysisError) {
+    if (
+      QUESTIONS.length > 0 &&
+      !hasPendingOCR &&
+      !hasAnswerKey &&
+      !generatingKey &&
+      !isSeedData &&
+      !analysisError &&
+      !keyError &&
+      !answerKeyAttempted
+    ) {
+      setAnswerKeyAttempted(true);
       handleGenerateAnswerKey();
     }
-  }, [QUESTIONS.length, hasPendingOCR, hasAnswerKey, generatingKey, isSeedData, analysisError]);
+  }, [QUESTIONS.length, hasPendingOCR, hasAnswerKey, generatingKey, isSeedData, analysisError, keyError, answerKeyAttempted]);
 
   if (analyzing || generatingKey) {
     return (

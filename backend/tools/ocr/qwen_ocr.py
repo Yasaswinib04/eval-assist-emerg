@@ -176,7 +176,6 @@ Return ONLY a JSON object with "studentName", "rollNumber", and "questions" arra
         }
 
         print(f"[Qwen] Processing {os.path.basename(image_path)} for student {student_id}...")
-        print(f"[Qwen] API key: {self.api_key[:20]}... (length: {len(self.api_key)})")
         resp = requests.post(self.endpoint, headers=headers, json=payload, timeout=120)
         resp.raise_for_status()
 

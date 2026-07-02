@@ -125,7 +125,7 @@ const Dashboard = () => {
             </div>
             <div className="md:col-span-2 flex md:block items-center gap-2">
               <div className="md:hidden text-xs uppercase tracking-wide text-stone-500">Avg</div>
-              <div className="font-medium text-stone-900">{a.avgScore.toFixed(1)} <span className="text-stone-500 text-sm font-normal">/ {a.totalMarks}</span></div>
+              <div className="font-medium text-stone-900">{(a.avgScore ?? 0).toFixed(1)} <span className="text-stone-500 text-sm font-normal">/ {a.totalMarks}</span></div>
             </div>
             <div className="md:col-span-2">
               <StatusPill status={a.status} t={t} />

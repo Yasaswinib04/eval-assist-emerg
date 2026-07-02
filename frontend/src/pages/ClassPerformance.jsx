@@ -100,7 +100,7 @@ const ClassPerformance = () => {
           const avg = getAvg(s.id);
           const growth = getGrowth(s.id);
           return (
-            <div key={s.id} onClick={() => navigate(`/student/asm-001/${s.id}`)} className="flex items-center gap-3 px-6 py-4 border-b border-stone-100 last:border-0 hover:bg-stone-50/60 cursor-pointer">
+            <div key={s.id} className="flex items-center gap-3 px-6 py-4 border-b border-stone-100 last:border-0">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-stone-900">{s.name}</div>
                 <div className="text-[11px] text-stone-500">{s.roll}</div>
