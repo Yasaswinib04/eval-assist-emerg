@@ -1,11 +1,11 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Target, ChevronLeft, Menu, X, Zap } from "lucide-react";
+import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, ChevronLeft, Menu, X, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const isAssessmentPage = (pathname) => {
-  return /^\/(analysis|processing|review|insights|interventions|student)\//.test(pathname);
+  return /^\/(analysis|processing|review|insights|student)\//.test(pathname);
 };
 
 export const Sidebar = () => {
@@ -13,7 +13,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: routeAssessmentId } = useParams();
-  const aid = routeAssessmentId || "asm-001";
+  const aid = routeAssessmentId;
   const [collapsed, setCollapsed] = useState(false);
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
@@ -24,10 +24,9 @@ export const Sidebar = () => {
   const onAssessment = isAssessmentPage(location.pathname);
 
   const assessmentLinks = [
-    { to: `/analysis/${aid}`, label: "Analysis", icon: FileText, testId: "nav-analysis" },
+    { to: `/analysis/${aid}`, label: "Confirm", icon: FileText, testId: "nav-analysis" },
     { to: `/review/${aid}`, label: "Review & Override", icon: ClipboardCheck, testId: "nav-review" },
     { to: `/insights/${aid}`, label: "Exam Insights", icon: BarChart3, testId: "nav-insights" },
-    { to: `/interventions/${aid}`, label: "Interventions", icon: Target, testId: "nav-interventions" },
   ];
 
   const handleLogout = () => {
@@ -165,7 +164,7 @@ export const MobileNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: routeAssessmentId } = useParams();
-  const aid = routeAssessmentId || "asm-001";
+  const aid = routeAssessmentId;
   const [open, setOpen] = useState(false);
   const onAssessment = isAssessmentPage(location.pathname);
 
@@ -180,10 +179,9 @@ export const MobileNav = () => {
   ];
 
   const assessmentLinks = [
-    { to: `/analysis/${aid}`, label: "Analysis", icon: FileText, testId: "nav-analysis" },
+    { to: `/analysis/${aid}`, label: "Confirm", icon: FileText, testId: "nav-analysis" },
     { to: `/review/${aid}`, label: "Review & Override", icon: ClipboardCheck, testId: "nav-review" },
     { to: `/insights/${aid}`, label: "Exam Insights", icon: BarChart3, testId: "nav-insights" },
-    { to: `/interventions/${aid}`, label: "Interventions", icon: Target, testId: "nav-interventions" },
   ];
 
   const isActive = (to) => {

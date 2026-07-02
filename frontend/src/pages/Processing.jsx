@@ -21,7 +21,7 @@ const TOTAL_DURATION = STEPS.length * STEP_DURATION;
 const Processing = () => {
   const { t } = useApp();
   const navigate = useNavigate();
-  const { id = "asm-001" } = useParams();
+  const { id } = useParams();
 
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);

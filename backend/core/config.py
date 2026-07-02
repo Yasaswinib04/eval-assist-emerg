@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list = ["*"]
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     QWEN_MODEL: str = os.getenv("QWEN_MODEL", "qwen/qwen3-vl-235b-a22b-instruct")
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
+    DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
     POSTHOG_API_KEY: str = os.getenv("POSTHOG_API_KEY", "")
     POSTHOG_HOST: str = os.getenv("POSTHOG_HOST", "")
 

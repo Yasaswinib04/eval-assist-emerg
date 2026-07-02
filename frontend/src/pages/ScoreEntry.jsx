@@ -10,12 +10,39 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const CHAPTERS = [
-  { id: "ch1", name: "Cell Structure & Functions", concepts: ["Cell Wall", "Cell Membrane", "Cytoplasm", "Nucleus", "Unicellular", "Multicellular"] },
-  { id: "ch2", name: "Microorganisms: Friend & Foe", concepts: ["Bacteria", "Virus", "Fungi", "Protozoa", "Communicable Diseases", "Antibiotics & Medicine", "Food Preservation"] },
-  { id: "ch3", name: "Crop Production & Management", concepts: ["Crop Production", "Crop Seasons", "Agricultural Implements", "Irrigation", "Weed Control"] },
-  { id: "ch4", name: "Reproduction in Animals", concepts: ["Sexual Reproduction", "Asexual Reproduction", "Fertilization", "Internal Fertilization", "IVF", "Metamorphosis", "Gametes", "Budding", "Binary Fission", "Male Reproductive System", "Female Reproductive System"] },
-];
+const SUBJECT_CHAPTERS = {
+  Biology: [
+    { id: "ch1", name: "Cell Structure & Functions", concepts: ["Cell Wall", "Cell Membrane", "Cytoplasm", "Nucleus", "Unicellular", "Multicellular"] },
+    { id: "ch2", name: "Microorganisms: Friend & Foe", concepts: ["Bacteria", "Virus", "Fungi", "Protozoa", "Communicable Diseases", "Antibiotics & Medicine", "Food Preservation"] },
+    { id: "ch3", name: "Crop Production & Management", concepts: ["Crop Production", "Crop Seasons", "Agricultural Implements", "Irrigation", "Weed Control"] },
+    { id: "ch4", name: "Reproduction in Animals", concepts: ["Sexual Reproduction", "Asexual Reproduction", "Fertilization", "Internal Fertilization", "IVF", "Metamorphosis", "Gametes", "Budding", "Binary Fission", "Male Reproductive System", "Female Reproductive System"] },
+  ],
+  Physics: [
+    { id: "ch1", name: "Force and Laws of Motion", concepts: ["Force", "Newton's Laws", "Friction", "Pressure", "Gravity"] },
+    { id: "ch2", name: "Sound", concepts: ["Vibration", "Frequency", "Amplitude", "Pitch", "Noise Pollution"] },
+    { id: "ch3", name: "Light", concepts: ["Reflection", "Refraction", "Lenses", "Mirrors", "Human Eye"] },
+    { id: "ch4", name: "Electric Current", concepts: ["Conductors", "Insulators", "Circuit", "Voltage", "Resistance"] },
+  ],
+  Chemistry: [
+    { id: "ch1", name: "Matter & Its States", concepts: ["Solid", "Liquid", "Gas", "Plasma", "Phase Change"] },
+    { id: "ch2", name: "Elements & Compounds", concepts: ["Atom", "Molecule", "Periodic Table", "Chemical Bond", "Mixture"] },
+    { id: "ch3", name: "Acids, Bases & Salts", concepts: ["pH Scale", "Indicator", "Neutralization", "Salt Formation"] },
+    { id: "ch4", name: "Chemical Reactions", concepts: ["Combination", "Decomposition", "Displacement", "Oxidation", "Reduction"] },
+  ],
+  Mathematics: [
+    { id: "ch1", name: "Rational Numbers", concepts: ["Fractions", "Decimals", "Number Line", "Operations"] },
+    { id: "ch2", name: "Algebra", concepts: ["Variables", "Equations", "Inequalities", "Polynomials"] },
+    { id: "ch3", name: "Geometry", concepts: ["Angles", "Triangles", "Quadrilaterals", "Circles", "Area"] },
+    { id: "ch4", name: "Data Handling", concepts: ["Mean", "Median", "Mode", "Bar Graph", "Probability"] },
+  ],
+};
+
+const getChaptersForSubject = (subject) => {
+  return SUBJECT_CHAPTERS[subject] || [
+    { id: "ch1", name: "Chapter 1", concepts: ["Concept A", "Concept B", "Concept C"] },
+    { id: "ch2", name: "Chapter 2", concepts: ["Concept D", "Concept E", "Concept F"] },
+  ];
+};
 
 const SECTIONS = ["A", "B", "C", "D"];
 const STUDENT_COUNT_OPTIONS = [10, 20, 30, 40, 50];
@@ -133,10 +160,12 @@ const ScoreEntry = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [showQPaperUpload, setShowQPaperUpload] = useState(false);
 
+  const chapters = useMemo(() => getChaptersForSubject(subject), [subject]);
+
   const selectedChapterConcepts = useMemo(() => {
-    const ch = CHAPTERS.find((c) => c.id === qChapter);
+    const ch = chapters.find((c) => c.id === qChapter);
     return ch ? ch.concepts : [];
-  }, [qChapter]);
+  }, [qChapter, chapters]);
 
   useEffect(() => {
     if (selectedChapterConcepts.length > 0 && !selectedChapterConcepts.includes(qConcept)) {
@@ -243,24 +272,26 @@ const ScoreEntry = () => {
   }, [questions.length, qCount, qSection, qMarks, qChapter, qConcept, selectedChapterConcepts]);
 
   const applyTemplate = useCallback((template) => {
+    const chs = chapters;
+    const chLen = chs.length || 1;
     const templates = {
-      "10-mcq": Array.from({ length: 10 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
+      "10-mcq": Array.from({ length: 10 }, (_, i) => { const ch = chs[i % chLen]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
       "17-standard": [
-        ...Array.from({ length: 10 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
-        ...Array.from({ length: 3 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: 11 + i, section: "B", maxMarks: 2, chapter: ch.id, concept: ch.concepts[(i + 2) % ch.concepts.length] }; }),
-        ...Array.from({ length: 2 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: 14 + i, section: "C", maxMarks: 4, chapter: ch.id, concept: ch.concepts[(i + 4) % ch.concepts.length] }; }),
-        ...Array.from({ length: 2 }, (_, i) => { const ch = CHAPTERS[i % 4]; return { number: 16 + i, section: "D", maxMarks: 8, chapter: ch.id, concept: ch.concepts[(i + 6) % ch.concepts.length] }; }),
+        ...Array.from({ length: 10 }, (_, i) => { const ch = chs[i % chLen]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
+        ...Array.from({ length: 3 }, (_, i) => { const ch = chs[i % chLen]; return { number: 11 + i, section: "B", maxMarks: 2, chapter: ch.id, concept: ch.concepts[(i + 2) % ch.concepts.length] }; }),
+        ...Array.from({ length: 2 }, (_, i) => { const ch = chs[i % chLen]; return { number: 14 + i, section: "C", maxMarks: 4, chapter: ch.id, concept: ch.concepts[(i + 4) % ch.concepts.length] }; }),
+        ...Array.from({ length: 2 }, (_, i) => { const ch = chs[i % chLen]; return { number: 16 + i, section: "D", maxMarks: 8, chapter: ch.id, concept: ch.concepts[(i + 6) % ch.concepts.length] }; }),
       ],
     };
     if (templates[template]) setQuestions(templates[template]);
-  }, []);
+  }, [chapters]);
 
   const updateQuestion = useCallback((idx, field, value) => {
     setQuestions((prev) => {
       const updated = [...prev];
       updated[idx] = { ...updated[idx], [field]: value };
       if (field === "chapter") {
-        const ch = CHAPTERS.find((c) => c.id === value);
+        const ch = chapters.find((c) => c.id === value);
         if (ch?.concepts.length) updated[idx].concept = ch.concepts[0];
       }
       return updated;
@@ -546,7 +577,7 @@ const ScoreEntry = () => {
           <div>
             <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Chapter</label>
             <select value={qChapter} onChange={(e) => setQChapter(e.target.value)} className="h-9 px-2 rounded border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-              {CHAPTERS.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
+              {chapters.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
             </select>
           </div>
           <div>
@@ -565,7 +596,7 @@ const ScoreEntry = () => {
             </div>
             <div className="divide-y divide-stone-100 max-h-96 overflow-y-auto">
               {questions.map((q, i) => {
-                const ch = CHAPTERS.find((c) => c.id === q.chapter);
+                const ch = chapters.find((c) => c.id === q.chapter);
                 const concepts = ch ? ch.concepts : [];
                 return (
                   <div key={i} className="grid grid-cols-[44px_64px_64px_1fr_1fr_44px] gap-1 px-3 py-1.5 items-center hover:bg-stone-50/50">
@@ -575,7 +606,7 @@ const ScoreEntry = () => {
                     </select>
                     <input type="number" min="0.5" step="0.5" value={q.maxMarks} onChange={(e) => updateQuestion(i, "maxMarks", parseFloat(e.target.value || "1"))} className="h-8 w-full px-1 rounded border border-stone-200 bg-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-emerald-500" />
                     <select value={q.chapter} onChange={(e) => updateQuestion(i, "chapter", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                      {CHAPTERS.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
+                      {chapters.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
                     </select>
                     <select value={q.concept} onChange={(e) => updateQuestion(i, "concept", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
                       {concepts.map((c) => <option key={c} value={c}>{c}</option>)}

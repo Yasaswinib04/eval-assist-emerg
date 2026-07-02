@@ -21,3 +21,7 @@ services:
         sync: false
       - key: QWEN_MODEL
         value: qwen/qwen3-vl-235b-a22b-instruct
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DEEPSEEK_MODEL
+        value: deepseek-chat

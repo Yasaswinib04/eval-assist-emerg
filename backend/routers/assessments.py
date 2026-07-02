@@ -7,8 +7,6 @@ from backend.routers.auth import get_current_user
 from datetime import datetime, timezone
 import uuid
 import os
-import json
-import bcrypt
 import shutil
 import asyncio
 
@@ -42,73 +40,6 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
 async def get_assessments(db=Depends(get_db)):
     assessments = await db.assessments.find().to_list(100)
     return assessments
-
-
-@router.get("/seed")
-async def seed_database_route(db=Depends(get_db), current_user=Depends(get_current_user)):
-    """Seed the database with demo data. Call this once after deployment."""
-    seed_dir = os.path.join(os.path.dirname(__file__), "..", "seed")
-
-    await db.curricula.delete_many({})
-    await db.assessments.delete_many({})
-    await db.questions.delete_many({})
-    await db.students.delete_many({})
-    await db.evaluations.delete_many({})
-    await db.interventions.delete_many({})
-    await db.users.delete_many({})
-
-    hashed = bcrypt.hashpw("demo1234".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    await db.users.insert_one({
-        "_id": "teacher-1",
-        "name": "Lakshmi Devi",
-        "email": "teacher@school.gov.in",
-        "school": "Z.P. High School, Hyderabad",
-        "subjects": ["Biology", "Physics"],
-        "password_hash": hashed,
-    })
-
-    curr_path = os.path.join(seed_dir, "curriculum", "ap-class8-bio.json")
-    if os.path.exists(curr_path):
-        with open(curr_path) as f:
-            await db.curricula.insert_one(json.load(f))
-
-    data_dir = os.path.join(seed_dir, "data")
-    for filename, collection_name in [
-        ("assessments.json", "assessments"),
-        ("questions.json", "questions"),
-        ("students.json", "students"),
-        ("evaluations.json", "evaluations"),
-        ("interventions.json", "interventions"),
-    ]:
-        filepath = os.path.join(data_dir, filename)
-        if not os.path.exists(filepath):
-            continue
-        with open(filepath) as f:
-            docs = json.load(f)
-        if isinstance(docs, dict):
-            items = []
-            for student_id, student_evals in docs.items():
-                for e in student_evals:
-                    e["_id"] = f"{student_id}-{e['qId']}"
-                    e["assessmentId"] = "asm-001"
-                    e["studentId"] = student_id
-                    e["approved"] = False
-                    items.append(e)
-            if items:
-                await db[collection_name].insert_many(items)
-        elif isinstance(docs, list):
-            for d in docs:
-                if "id" in d:
-                    d["_id"] = d.pop("id")
-                if collection_name != "assessments":
-                    d["assessmentId"] = "asm-001"
-            if docs:
-                await db[collection_name].insert_many(docs)
-
-    return {
-        "status": "ok",
-        "message": "Database seeded successfully. Login: teacher@school.gov.in / demo1234",
-    }
 
 
 @router.get("/{id}", response_model=Assessment)
@@ -254,10 +185,11 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
         await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
         return {"status": "error", "message": "Question paper image files not found on disk. Please re-upload after deploy."}
 
-    print(f"[Qwen] Analyzing Q paper for {id}: {len(image_paths)} images")
+    subject = assessment.get("subject", "")
+    print(f"[Qwen] Analyzing Q paper for {id} ({subject}): {len(image_paths)} images")
     try:
         from backend.tools.ocr.qwen_ocr import analyze_question_paper
-        result = analyze_question_paper(openrouter_key, "qwen/qwen2.5-vl-72b-instruct", image_paths)
+        result = analyze_question_paper(openrouter_key, settings.QWEN_MODEL, image_paths, subject=subject)
         questions = result.get("questions", [])
         if questions:
             for i, q in enumerate(questions):
@@ -267,7 +199,6 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
                 q["section"] = q.get("section", "A")
                 q["maxMarks"] = q.get("maxMarks", 1)
                 q["text"] = q.get("text", "")
-                q["chapter"] = q.get("chapter", "ch1")
                 q["concept"] = q.get("concept", "")
                 q["skill"] = q.get("skill", "Recall")
                 q["difficulty"] = q.get("difficulty", "Medium")
@@ -284,13 +215,72 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
         return {"status": "error", "message": str(e)[:200]}
 
 
-async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: str, model: str):
+@router.post("/{id}/generate-answer-key")
+async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
+    """Generate answer key using DeepSeek from extracted questions."""
+    assessment = await db.assessments.find_one({"_id": id})
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    questions = assessment.get("parsedQuestions")
+    if not questions:
+        return {"status": "error", "message": "No questions extracted yet. Run Q paper analysis first."}
+
+    deepseek_key = os.getenv("DEEPSEEK_API_KEY", "") or getattr(settings, "DEEPSEEK_API_KEY", "")
+    if not deepseek_key:
+        return {"status": "error", "message": "DEEPSEEK_API_KEY not configured"}
+
+    deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") or getattr(settings, "DEEPSEEK_MODEL", "deepseek-chat")
+    subject = assessment.get("subject", "")
+
+    print(f"[DeepSeek] Generating answer key for {id} ({subject}): {len(questions)} questions")
+    try:
+        from backend.tools.llm.deepseek import generate_answer_key
+        answer_key = generate_answer_key(deepseek_key, questions, subject, model=deepseek_model)
+        if not answer_key:
+            return {"status": "error", "message": "DeepSeek returned empty answer key"}
+
+        await db.assessments.update_one(
+            {"_id": id},
+            {"$set": {"parsedAnswerKey": answer_key, "answerKeyStatus": "generated"}}
+        )
+        print(f"[DeepSeek] Answer key generated: {len(answer_key)} answers")
+        return {"status": "ok", "answers": len(answer_key), "answerKey": answer_key}
+    except Exception as e:
+        print(f"[DeepSeek] Answer key generation failed: {e}")
+        return {"status": "error", "message": str(e)[:200]}
+
+
+@router.get("/{id}/answer-key")
+async def get_answer_key(id: str, db=Depends(get_db)):
+    """Get the generated or uploaded answer key for this assessment."""
+    assessment = await db.assessments.find_one({"_id": id})
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    return {
+        "status": assessment.get("answerKeyStatus", "none"),
+        "answerKey": assessment.get("parsedAnswerKey", []),
+    }
+
+
+@router.put("/{id}/answer-key")
+async def update_answer_key(id: str, body: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
+    """Update the answer key (teacher edits)."""
+    answer_key = body.get("answerKey", [])
+    await db.assessments.update_one(
+        {"_id": id},
+        {"$set": {"parsedAnswerKey": answer_key, "answerKeyStatus": "edited"}}
+    )
+    return {"status": "ok", "answers": len(answer_key)}
+
+
+async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: str, model: str, subject: str = ""):
     """Background: analyze question paper images with Qwen, save results."""
     from backend.core.database import get_db as _get_db
     from backend.tools.ocr.qwen_ocr import analyze_question_paper
     db = _get_db()
     try:
-        result = analyze_question_paper(api_key, model, image_paths)
+        result = analyze_question_paper(api_key, model, image_paths, subject=subject)
         questions = result.get("questions", [])
         if questions:
             for i, q in enumerate(questions):
@@ -300,7 +290,6 @@ async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: s
                 q["section"] = q.get("section", "A")
                 q["maxMarks"] = q.get("maxMarks", 1)
                 q["text"] = q.get("text", "")
-                q["chapter"] = q.get("chapter", "ch1")
                 q["concept"] = q.get("concept", "")
                 q["skill"] = q.get("skill", "Recall")
                 q["difficulty"] = q.get("difficulty", "Medium")
@@ -415,10 +404,17 @@ async def _run_ocr_pipeline(
         # ── Qwen/OpenRouter OCR (if configured) ──
         openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
         if openrouter_key:
-                from backend.tools.ocr.qwen_ocr import QwenVisionOCR, build_question_paper_text, build_answer_key_json
-                answer_key_path = os.path.join(os.path.dirname(__file__), "..", "seed", "data", "answer_key.json")
-                answer_key = build_answer_key_json(answer_key_path)
-                qpaper = build_question_paper_text()
+                from backend.tools.ocr.qwen_ocr import QwenVisionOCR, build_question_paper_from_questions, build_answer_key_from_parsed
+
+                parsed_questions = assessment.get("parsedQuestions")
+                parsed_answer_key = assessment.get("parsedAnswerKey")
+
+                if parsed_questions:
+                    answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
+                    qpaper = build_question_paper_from_questions(parsed_questions)
+                else:
+                    qpaper = assessment.get("questionsText", "")
+                    answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
 
                 # Resolve sheet paths
                 sheet_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads", assessment_id, "sheets")
@@ -434,7 +430,7 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                qwen = QwenVisionOCR(openrouter_key, "qwen/qwen2.5-vl-72b-instruct", qpaper, answer_key)
+                qwen = QwenVisionOCR(openrouter_key, settings.QWEN_MODEL, questions=parsed_questions, answer_key=answer_key)
 
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
 
@@ -447,7 +443,7 @@ async def _run_ocr_pipeline(
                     student_id = f"stu-{assessment_id}-{name_part.lower()}"
 
                     async with sem:
-                        result = await asyncio.to_thread(qwen.process, path, student_id)
+                        result = await asyncio.to_thread(qwen.process, path, student_id, assessment_id)
 
                     if "error" in result:
                         print(f"[Qwen] Error {name_part}: {result['error']}")
@@ -457,14 +453,19 @@ async def _run_ocr_pipeline(
                         await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
 
                     total = result.get("total", 0)
+                    qwen_name = result.get("studentName")
+                    qwen_roll = result.get("rollNumber")
+                    student_name = qwen_name if qwen_name else name_part
+                    student_roll = qwen_roll if qwen_roll else f"08-{total_sheets}"
+
                     await db.students.update_one({"_id": student_id}, {"$set": {
-                        "_id": student_id, "name": name_part,
-                        "roll": f"08-{total_sheets}",
+                        "_id": student_id, "name": student_name,
+                        "roll": student_roll,
                         "total": total, "status": "review",
                         "imageUrls": [os.path.join("media", "uploads", assessment_id, "sheets", os.path.basename(path))],
                         "assessmentId": assessment_id,
                     }}, upsert=True)
-                    return {"studentId": student_id, "name": name_part, "total": total, "ok": True}
+                    return {"studentId": student_id, "name": student_name, "total": total, "ok": True}
 
                 results = await asyncio.gather(*[process_one(p) for p in sheet_paths], return_exceptions=True)
                 results = [r for r in results if isinstance(r, dict)]
@@ -567,7 +568,7 @@ async def _run_ocr_pipeline(
                 processor.process,
                 image_paths=student_paths,
                 student_id=student_id,
-                use_ollama=False,
+                use_ollama=True,
             )
 
             # Save extracted evaluations to MongoDB
@@ -595,20 +596,6 @@ async def _run_ocr_pipeline(
             {"_id": assessment_id},
             {"$set": {"processingStatus": "step_qp"}}
         )
-
-        # If no parsed questions, copy seed questions for this assessment
-        if not parsed_questions:
-            seed_questions = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
-            for q in seed_questions:
-                # Copy fields
-                q_copy = dict(q)
-                q_copy["_id"] = f"{q_copy['_id']}-{assessment_id}"
-                q_copy["assessmentId"] = assessment_id
-                await db.questions.update_one(
-                    {"_id": q_copy["_id"]},
-                    {"$set": q_copy},
-                    upsert=True,
-                )
 
         await asyncio.sleep(2.0)
 
@@ -662,18 +649,6 @@ async def _run_ocr_pipeline(
             await db.students.update_one(
                 {"_id": student_id},
                 {"$set": student_doc},
-                upsert=True,
-            )
-
-        # Copy interventions
-        seed_interventions = await db.interventions.find({"assessmentId": "asm-001"}).to_list(100)
-        for i in seed_interventions:
-            i_copy = dict(i)
-            i_copy["_id"] = f"{i_copy['_id']}-{assessment_id}"
-            i_copy["assessmentId"] = assessment_id
-            await db.interventions.update_one(
-                {"_id": i_copy["_id"]},
-                {"$set": i_copy},
                 upsert=True,
             )
 

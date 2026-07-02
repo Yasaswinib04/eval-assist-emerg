@@ -13,12 +13,8 @@ router = APIRouter()
 # ── Helpers ──────────────────────────────────────────────────────────
 
 async def _get_assessment_questions(db, assessment_id: str):
-    """Get questions for this assessment (parsed, seed, or any)."""
+    """Get questions for this assessment."""
     questions = await db.questions.find({"assessmentId": assessment_id}).to_list(100)
-    if not questions:
-        questions = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
-    if not questions:
-        questions = await db.questions.find().to_list(100)
     return questions
 
 
@@ -30,11 +26,20 @@ async def _get_evaluations(db, assessment_id: str):
     return await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
 
 
-async def _get_curriculum(db):
-    curriculum = await db.curricula.find_one({"_id": "ap-class8-bio-v1"})
-    if not curriculum:
-        return {"chapters": []}
-    return curriculum
+async def _get_curriculum(db, assessment_id: str = None, subject: str = ""):
+    """Get curriculum for the assessment's subject. If no matching curriculum, return empty."""
+    if assessment_id:
+        assessment = await db.assessments.find_one({"_id": assessment_id})
+        if assessment:
+            subject = assessment.get("subject", "")
+            klass = (assessment.get("class", "Class 8") or "Class 8").replace("Class ", "")
+    else:
+        klass = "8"
+    subj_map = {"biology": "bio", "biological science": "bio", "physics": "phy",
+                 "physical science": "phy", "chemistry": "chem", "mathematics": "mat"}
+    subj_code = subj_map.get(subject.lower() if subject else "", "bio")
+    curriculum = await db.curricula.find_one({"_id": f"ap-class{klass}-{subj_code}-v1"})
+    return curriculum if curriculum else {"chapters": []}
 
 
 def _build_qmap(questions):
@@ -81,7 +86,7 @@ async def get_root_cause(id: str, db=Depends(get_db)):
     """Real Root Cause Analysis: low-mastery concepts with prerequisite gaps."""
     questions = await _get_assessment_questions(db, id)
     evaluations = await _get_evaluations(db, id)
-    curriculum = await _get_curriculum(db)
+    curriculum = await _get_curriculum(db, assessment_id=id)
 
     if not evaluations or not questions:
         return [{"id": "rc1", "insight": "Not enough data for root cause analysis.", "linkedConcepts": [], "severity": "low"}]
@@ -204,7 +209,7 @@ async def get_concept_mastery(id: str, db=Depends(get_db)):
 async def get_chapter_performance(id: str, db=Depends(get_db)):
     """Real chapter performance from concept mastery aggregation."""
     concept_mastery = await get_concept_mastery(id, db)
-    curriculum = await _get_curriculum(db)
+    curriculum = await _get_curriculum(db, assessment_id=id)
 
     chapter_data = {}
     for ch in curriculum.get("chapters", []):

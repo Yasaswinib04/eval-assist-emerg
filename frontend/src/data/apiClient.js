@@ -1,5 +1,5 @@
 const API_BASE = '/api';
-const FETCH_TIMEOUT = 3000;
+const FETCH_TIMEOUT = 15000;
 
 function getToken() {
     return localStorage.getItem('evalassist-token');
@@ -41,7 +41,7 @@ async function fetchWithFallback(url, options = {}) {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return await res.json();
     } catch (error) {
-        console.warn(`API call to ${url} failed, falling back to mock data...`, error.message);
+        console.warn(`API call to ${url} failed`, error.message);
         return null;
     }
 }
@@ -156,57 +156,86 @@ export const apiClient = {
 
     async getAssessments() {
         const data = await fetchWithFallback('/assessments');
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.ASSESSMENTS;
+        return data || [];
     },
     
     async getAssessment(id) {
         const data = await fetchWithFallback(`/assessments/${id}`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.getAssessment(id);
+        return data || null;
     },
 
     async getAssessmentStatus(id) {
         const data = await fetchWithFallback(`/assessments/${id}/status`);
-        if (data) return data;
-        return { status: "review", processingStatus: "complete" };
+        return data || { status: "error", processingStatus: "complete" };
     },
 
     async getQuestions(id) {
         const data = await fetchWithFallback(`/assessments/${id}/questions`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.QUESTIONS;
+        return data || [];
     },
 
     async getChapters(id) {
         const data = await fetchWithFallback(`/assessments/${id}/chapters`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.CHAPTERS;
+        return data || [];
     },
 
     async getConcepts(id) {
         const data = await fetchWithFallback(`/assessments/${id}/concepts`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.CONCEPT_MAP;
+        return data || [];
+    },
+
+    async generateAnswerKey(id) {
+        const token = getToken();
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 90000);
+        try {
+            const res = await fetch(`${API_BASE}/assessments/${id}/generate-answer-key`, {
+                method: 'POST',
+                headers: token ? {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                } : { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(normalizeErrorDetail(data, res.status));
+            return data;
+        } catch (err) {
+            console.warn('Generate answer key error:', err.message);
+            return { status: "error", message: err.message };
+        }
+    },
+
+    async getAnswerKey(id) {
+        const data = await fetchWithFallback(`/assessments/${id}/answer-key`);
+        return data || { status: "none", answerKey: [] };
+    },
+
+    async updateAnswerKey(id, answerKey) {
+        const token = getToken();
+        const res = await fetchWithTimeout(`${API_BASE}/assessments/${id}/answer-key`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ answerKey }),
+        }, 15000);
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({ detail: 'Failed to save answer key' }));
+            throw new Error(normalizeErrorDetail(data, res.status));
+        }
+        return await res.json();
     },
 
     async getStudents(id) {
         const data = await fetchWithFallback(`/assessments/${id}/students`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.STUDENTS;
+        return data || [];
     },
 
     async getEvaluations(id, studentId) {
         const data = await fetchWithFallback(`/assessments/${id}/students/${studentId}/evaluations`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.getEvaluationForStudent(studentId);
+        return data || [];
     },
 
     async updateEvaluationOverride(id, studentId, qid, teacherMark) {
@@ -214,92 +243,52 @@ export const apiClient = {
             method: 'PUT',
             body: JSON.stringify({ teacherMark })
         });
-        if (data) return data;
-        return { success: true, mocked: true };
+        return data || null;
     },
 
     async approveAllHigh(id) {
         const data = await fetchWithFallback(`/assessments/${id}/approve-high`, { method: 'POST' });
-        if (data) return data;
-        return { success: true, mocked: true };
+        return data || null;
     },
 
     async getInsightsKpis(id) {
         const data = await fetchWithFallback(`/assessments/${id}/insights/kpi`);
-        if (data) return data;
-        return { classAverage: "68%", highestScore: 35, lowestScore: 18, passRate: "85%" };
-    },
-
-    async getRootCauseInsights(id) {
-        const data = await fetchWithFallback(`/assessments/${id}/insights/root-cause`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.ROOT_CAUSE_INSIGHTS;
+        return data || { classAverage: "N/A", highestScore: 0, lowestScore: 0, passRate: "N/A" };
     },
 
     async getConceptMastery(id) {
         const data = await fetchWithFallback(`/assessments/${id}/insights/concept-mastery`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.CONCEPT_MASTERY;
+        return data || [];
     },
 
     async getChapterPerformance(id) {
         const data = await fetchWithFallback(`/assessments/${id}/insights/chapter-performance`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.CHAPTER_PERFORMANCE;
+        return data || [];
     },
 
     async getScoreDistribution(id) {
         const data = await fetchWithFallback(`/assessments/${id}/insights/score-distribution`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.SCORE_DISTRIBUTION;
+        return data || [];
     },
 
     async getLearningGaps(id) {
         const data = await fetchWithFallback(`/assessments/${id}/insights/learning-gaps`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.LEARNING_GAPS;
+        return data || [];
     },
 
-    async getInterventions(id) {
-        const data = await fetchWithFallback(`/assessments/${id}/interventions`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.INTERVENTION_ACTIONS;
-    },
-
-    async planIntervention(id, actId, planned) {
-        const data = await fetchWithFallback(`/assessments/${id}/interventions/${actId}/plan`, {
-            method: 'PUT',
-            body: JSON.stringify({ planned })
-        });
-        if (data) return data;
-        return { success: true, mocked: true };
-    },
-    
     async getStudentProfile(id, studentId) {
         const data = await fetchWithFallback(`/assessments/${id}/students/${studentId}/profile`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.getStudentProfile(studentId);
+        return data || null;
     },
 
     async getTermTrends(id, studentId) {
         const data = await fetchWithFallback(`/assessments/${id}/students/${studentId}/term-trends`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.getStudentTermTrend(studentId);
+        return data || null;
     },
 
     async getConceptTrends(id, studentId) {
         const data = await fetchWithFallback(`/assessments/${id}/students/${studentId}/concept-trends`);
-        if (data) return data;
-        const mock = await import('./mockData.mjs');
-        return mock.getStudentConceptTrend(studentId);
+        return data || null;
     },
 
     async createScoreEntry(payload) {

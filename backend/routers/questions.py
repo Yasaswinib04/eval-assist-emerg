@@ -39,15 +39,6 @@ async def get_questions(id: str, db=Depends(get_db)):
         if questions:
             return questions
 
-        # 5. Fallback — copy seed from asm-001
-        seed_qs = await db.questions.find({"assessmentId": "asm-001"}).to_list(100)
-        if seed_qs:
-            for q in seed_qs:
-                q_copy = dict(q)
-                q_copy["_id"] = f"{q['_id']}-{id}"
-                q_copy["assessmentId"] = id
-                await db.questions.update_one({"_id": q_copy["_id"]}, {"$set": q_copy}, upsert=True)
-            return await db.questions.find({"assessmentId": id}).to_list(100)
         return []
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Questions error v2: {e.__class__.__name__}: {str(e)[:300]}")
@@ -61,16 +52,20 @@ async def update_question(id: str, qid: str, updates: dict, db=Depends(get_db), 
 
 @router.get("/{id}/chapters")
 async def get_chapters(id: str, db=Depends(get_db)):
-    curriculum = await db.curricula.find_one({"_id": "ap-class8-bio-v1"})
-    if not curriculum:
-        raise HTTPException(status_code=404, detail="Curriculum not found")
-    return curriculum.get("chapters", [])
+    return []
 
 @router.get("/{id}/concepts")
 async def get_concepts(id: str, db=Depends(get_db)):
-    curriculum = await db.curricula.find_one({"_id": "ap-class8-bio-v1"})
-    concepts = []
-    if curriculum:
-        for ch in curriculum.get("chapters", []):
-            concepts.extend(ch.get("concepts", []))
-    return concepts
+    assessment = await db.assessments.find_one({"_id": id})
+    parsed = assessment.get("parsedQuestions") if assessment else None
+
+    if parsed:
+        concepts = []
+        seen = set()
+        for q in parsed:
+            c = q.get("concept", "").strip()
+            if c and c not in seen:
+                seen.add(c)
+                concepts.append({"concept": c, "leadsTo": q.get("prerequisites", [])})
+        return concepts
+    return []
