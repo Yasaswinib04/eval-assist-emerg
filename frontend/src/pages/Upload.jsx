@@ -97,15 +97,6 @@ const Upload = () => {
     }
   }, [assessmentId]);
 
-  // Persist text fields so users don't lose work on forced re-login
-  useEffect(() => {
-    if (assessmentId) return;
-    sessionStorage.setItem('evalassist-upload-form', JSON.stringify({
-      n: name, s: subject, cs: customSubject, k: klass, t: type, m: marks,
-      qt: qText, at: aText, ct: cText,
-    }));
-  }, [assessmentId, name, subject, customSubject, klass, type, marks, qText, aText, cText]);
-
   // Questions section
   const [qMode, setQMode] = useState("images");
   const [qImages, setQImages] = useState([]);
@@ -122,6 +113,15 @@ const Upload = () => {
   const [aMode, setAMode] = useState("text");
   const [aImages, setAImages] = useState([]);
   const [aText, setAText] = useState(saved.aText || "");
+
+  // Persist text fields so users don't lose work on forced re-login
+  useEffect(() => {
+    if (assessmentId) return;
+    sessionStorage.setItem('evalassist-upload-form', JSON.stringify({
+      n: name, s: subject, cs: customSubject, k: klass, t: type, m: marks,
+      qt: qText, at: aText, ct: cText,
+    }));
+  }, [assessmentId, name, subject, customSubject, klass, type, marks, qText, aText, cText]);
 
   const [showSampleAnimation, setShowSampleAnimation] = useState(false);
   const [animStep, setAnimStep] = useState(0);
