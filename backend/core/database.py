@@ -1,12 +1,17 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from backend.core.config import settings
+import certifi
 
 _client = None
 
 def get_client():
     global _client
     if _client is None:
-        _client = AsyncIOMotorClient(settings.MONGO_URL, serverSelectionTimeoutMS=2000)
+        _client = AsyncIOMotorClient(
+            settings.MONGO_URL,
+            serverSelectionTimeoutMS=2000,
+            tlsCAFile=certifi.where(),
+        )
     return _client
 
 def get_db():
