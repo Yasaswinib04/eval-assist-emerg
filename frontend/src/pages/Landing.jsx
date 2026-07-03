@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -11,12 +11,26 @@ const Landing = () => {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const clientIdRef = useRef("");
 
   useEffect(() => {
     if (user) return;
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const idToken = params.get("id_token");
+      if (idToken) {
+        window.location.hash = "";
+        googleLogin(idToken, "").then(() => navigate("/loading")).catch((err) => {
+          setError(err.message || "Google sign-in failed.");
+        });
+        return;
+      }
+    }
     let check = null;
     apiClient.getGoogleConfig().then((cfg) => {
       if (!cfg.clientId) return;
+      clientIdRef.current = cfg.clientId;
       let attempts = 0;
       check = setInterval(() => {
         attempts++;
@@ -54,11 +68,14 @@ const Landing = () => {
       setGoogleLoading(true);
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-          if (notification.isNotDisplayed()) {
-            setError(`Google sign-in unavailable: ${notification.getNotDisplayedReason()}.`);
-          }
-          setGoogleLoading(false);
+          const reason = notification.isNotDisplayed() ? notification.getNotDisplayedReason() : "skipped";
+          console.warn("[Google] One Tap not shown, falling back to redirect. Reason:", reason);
+          const redirectUri = window.location.origin;
+          const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientIdRef.current}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token id_token&scope=email profile openid&nonce=${Date.now()}&prompt=select_account`;
+          window.location.href = oauthUrl;
+          return;
         }
+        setGoogleLoading(false);
       });
     }
   };

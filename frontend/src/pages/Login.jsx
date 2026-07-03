@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -11,6 +11,7 @@ const Login = () => {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const clientIdRef = useRef("");
 
   useEffect(() => {
     let check = null;
@@ -19,6 +20,7 @@ const Login = () => {
         setError("Google sign-in is not configured. Please contact your administrator.");
         return;
       }
+      clientIdRef.current = cfg.clientId;
       let attempts = 0;
       const maxAttempts = 40;
       check = setInterval(() => {
@@ -53,6 +55,20 @@ const Login = () => {
     return () => { if (check) clearInterval(check); };
   }, []);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const idToken = params.get("id_token");
+      if (idToken) {
+        window.location.hash = "";
+        googleLogin(idToken, "").then(() => navigate("/dashboard")).catch((err) => {
+          setError(err.message || "Google sign-in failed.");
+        });
+      }
+    }
+  }, []);
+
   const handleGoogle = () => {
     if (window.google?.accounts?.id) {
       setError("");
@@ -60,11 +76,12 @@ const Login = () => {
       window.google.accounts.id.prompt((notification) => {
         console.log("[Google] Prompt notification:", notification.getMomentType(), notification.isNotDisplayed(), notification.isSkippedMoment(), notification.isDismissedMoment());
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          if (notification.isNotDisplayed()) {
-            const reason = notification.getNotDisplayedReason();
-            console.error("[Google] One Tap not displayed. Reason:", reason);
-            setError(`Google sign-in unavailable: ${reason}.`);
-          }
+          const reason = notification.isNotDisplayed() ? notification.getNotDisplayedReason() : "skipped";
+          console.warn("[Google] One Tap not shown, falling back to redirect. Reason:", reason);
+          const redirectUri = window.location.origin;
+          const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientIdRef.current}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token id_token&scope=email profile openid&nonce=${Date.now()}&prompt=select_account`;
+          window.location.href = oauthUrl;
+          return;
         }
         setGoogleLoading(false);
       });

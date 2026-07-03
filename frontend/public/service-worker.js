@@ -1,21 +1,14 @@
-const CACHE_NAME = "evalassist-v1";
-const APP_SHELL = ["/", "/index.html"];
+const CACHE_VERSION = "3";
+const CACHE_NAME = `evalassist-v${CACHE_VERSION}`;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    })
-  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) => {
-      return Promise.all(
-        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
-      );
+      return Promise.all(names.map((n) => caches.delete(n)));
     })
   );
   self.clients.claim();
@@ -25,11 +18,11 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (url.pathname.startsWith("/api/")) {
+  if (url.pathname.startsWith("/api/") || url.protocol === "chrome-extension:") {
     return;
   }
 
-  if (url.pathname.startsWith("/static/") || url.pathname.endsWith(".js") || url.pathname.endsWith(".css")) {
+  if (url.pathname.startsWith("/static/") || url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$/i)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         const fetchPromise = fetch(request).then((response) => {
@@ -46,6 +39,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request))
+    fetch(request).then((response) => {
+      if (response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(request))
   );
 });
