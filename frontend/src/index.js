@@ -8,6 +8,15 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/service-worker.js").catch(() => {});
   });
+
+  // When a new service worker takes control (new deploy), reload once to
+  // pick up the fresh JS/CSS instead of leaving the old bundle running.
+  let refreshingAfterSwUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshingAfterSwUpdate) return;
+    refreshingAfterSwUpdate = true;
+    window.location.reload();
+  });
 }
 
 const queryClient = new QueryClient({
