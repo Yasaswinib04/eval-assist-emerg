@@ -213,7 +213,12 @@ def grade_answers(
         List of evaluation dicts ready for MongoDB
     """
     q_by_num = {q["number"]: q for q in questions}
-    key_by_num = {k["questionNumber"]: k for k in (answer_key or [])}
+    # Answer key may use "questionNumber" (our format) or "q" (generated format)
+    key_by_num = {
+        (k.get("questionNumber") or k.get("q")): k
+        for k in (answer_key or [])
+        if k.get("questionNumber") or k.get("q")
+    }
 
     evaluations = []
     subjective_pending = []  # collect subjective answers for batch LLM grading
