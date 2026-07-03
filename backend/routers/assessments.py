@@ -479,7 +479,18 @@ async def _run_ocr_pipeline(
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
                 # Validate that resolved paths exist on disk
+                sheet_paths_recorded = len(sheet_paths)
                 sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
+
+                if not sheet_paths and sheet_paths_recorded:
+                    # Paths were recorded (uploaded earlier) but are gone from disk — most likely
+                    # the backend was redeployed since upload and the ephemeral filesystem was wiped.
+                    print(f"[Qwen] {sheet_paths_recorded} sheet path(s) recorded for {assessment_id} but none exist on disk anymore.")
+                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {
+                        "status": "error",
+                        "processingStatus": "no_sheets_found",
+                    }})
+                    return
 
                 qwen = QwenVisionOCR(openrouter_key, settings.QWEN_MODEL, questions=parsed_questions, answer_key=answer_key)
 

@@ -18,6 +18,11 @@ const STEPS = [
 const STEP_DURATION = 1300;
 const TOTAL_DURATION = STEPS.length * STEP_DURATION;
 
+const ERROR_MESSAGES = {
+  no_sheets_found: "Your uploaded answer sheets could not be found on the server. Please go back and re-upload them, then run evaluation again.",
+  error_no_evals: "AI evaluation didn't return results for any answer sheet. This is usually temporary — try again in a moment.",
+};
+
 const Processing = () => {
   const { t } = useApp();
   const navigate = useNavigate();
@@ -48,7 +53,7 @@ const Processing = () => {
     const b_status = statusData.processingStatus || "pending";
     const status = statusData.status || "draft";
 
-    if (status === "error") { setErrorMsg(b_status || "Processing failed"); return; }
+    if (status === "error") { setErrorMsg(ERROR_MESSAGES[b_status] || b_status || "Processing failed"); return; }
 
     // If status is immediately "review" or "complete", start simulation
     if (status === "review" || b_status === "complete") {
