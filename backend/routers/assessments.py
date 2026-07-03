@@ -35,7 +35,7 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
             dest = os.path.join(target, safe_name)
             with open(dest, "wb") as buf:
                 shutil.copyfileobj(f.file, buf)
-            saved.append(f"media/uploads/{assessment_id}/{subdir}/{safe_name}")
+            saved.append(f"/media/uploads/{assessment_id}/{subdir}/{safe_name}")
         except Exception as e:
             print(f"[Upload] Failed to save {f.filename}: {e}")
     return saved
@@ -557,7 +557,7 @@ async def _run_ocr_pipeline(
                         "_id": student_id, "name": student_name,
                         "roll": student_roll,
                         "total": total, "status": "review",
-                        "imageUrls": [os.path.join("media", "uploads", assessment_id, "sheets", os.path.basename(path))],
+                        "imageUrls": [f"/media/uploads/{assessment_id}/sheets/{os.path.basename(path)}"],
                         "assessmentId": assessment_id,
                     }}, upsert=True)
                     return {"studentId": student_id, "name": student_name, "total": total, "ok": True}
@@ -807,7 +807,7 @@ async def _run_ocr_pipeline(
                 "total": student_total,
                 "status": "review",
                 "imageUrls": [
-                    img.split("media/")[-1] if "media/" in img else img
+                    img if img.startswith("/") else f"/{img}"
                     for img in student_paths
                 ],
                 "assessmentId": assessment_id,

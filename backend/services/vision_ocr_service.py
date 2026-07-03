@@ -259,7 +259,7 @@ def grade_answers(
             continue
 
         key = key_by_num.get(q_num)
-        is_mcq = "options" in q
+        is_mcq = bool(q.get("options"))
 
         if is_mcq:
             ev["aiMark"], ev["confidenceScore"], ev["reasoning"] = _grade_mcq(entry, q, key)
