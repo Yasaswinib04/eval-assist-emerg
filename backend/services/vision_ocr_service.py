@@ -277,6 +277,11 @@ def grade_answers(
             expected = ""
             if key and key.get("expectedText"):
                 expected = key["expectedText"]
+            elif key and key.get("correctAnswer"):
+                expected = key["correctAnswer"]
+                kp = key.get("keyPoints") or []
+                if kp:
+                    expected += " Key points: " + "; ".join(kp)
             elif q.get("expected"):
                 expected = q["expected"]
 
