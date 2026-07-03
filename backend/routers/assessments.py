@@ -536,9 +536,6 @@ async def _run_ocr_pipeline(
                 sem = asyncio.Semaphore(3)
 
                 async def process_one(name_key, pages):
-                    name_part = name_key.capitalize()
-                    student_id = f"stu-{assessment_id}-{name_key}"
-
                     try:
                         async with sem:
                             structured = await asyncio.to_thread(
@@ -546,8 +543,17 @@ async def _run_ocr_pipeline(
                             )
                             evaluations = grade_answers(structured, questions, parsed_answer_key, openrouter_key, vision_model)
                     except Exception as e:
-                        print(f"[Vision] Error {name_part}: {e}")
-                        return {"error": str(e), "studentId": student_id, "name": name_part}
+                        print(f"[Vision] Error {name_key}: {e}")
+                        return {"error": str(e), "name": name_key}
+
+                    # Pull name/roll extracted by LLM from sheet header; fall back to filename prefix
+                    ocr_name = (structured[0].get("_studentName") if structured else None)
+                    ocr_roll = (structured[0].get("_studentRoll") if structured else None)
+                    student_name = (ocr_name or name_key).strip().capitalize()
+                    student_roll = (ocr_roll or f"08-{list(student_pages.keys()).index(name_key) + 1}").strip()
+                    student_id = f"stu-{assessment_id}-{student_name.lower().replace(' ', '-')}"
+
+                    print(f"  [OCR] Identified: {student_name} (roll {student_roll})")
 
                     for ev in evaluations:
                         ev["_id"] = f"{assessment_id}-{student_id}-{ev['qId']}"
@@ -557,17 +563,16 @@ async def _run_ocr_pipeline(
                         await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
 
                     total = sum(float(ev.get("aiMark", 0) or 0) for ev in evaluations)
-                    student_roll = f"08-{list(student_pages.keys()).index(name_key) + 1}"
                     image_urls = [f"/media/uploads/{assessment_id}/sheets/{os.path.basename(p)}" for p in pages]
 
                     await db.students.update_one({"_id": student_id}, {"$set": {
-                        "_id": student_id, "name": name_part,
+                        "_id": student_id, "name": student_name,
                         "roll": student_roll,
                         "total": total, "status": "review",
                         "imageUrls": image_urls,
                         "assessmentId": assessment_id,
                     }}, upsert=True)
-                    return {"studentId": student_id, "name": name_part, "total": total, "ok": True}
+                    return {"studentId": student_id, "name": student_name, "total": total, "ok": True}
 
                 results = await asyncio.gather(*[process_one(k, v) for k, v in student_pages.items()], return_exceptions=True)
                 results = [r for r in results if isinstance(r, dict)]

@@ -44,25 +44,31 @@ def _build_extraction_prompt(questions: List[Dict]) -> str:
 The question paper has these questions:
 {questions_text}
 
-Look at the handwritten answer sheet image carefully and extract what the student has written for each question.
+Look at the handwritten answer sheet image(s) carefully.
 
-Return ONLY a valid JSON array, no markdown, no explanation. Format:
-[
-  {{
-    "questionNumber": 1,
-    "mcqChoice": "A",
-    "extractedAnswer": "the student's written answer or chosen option",
-    "isEmpty": false,
-    "isDiagram": false
-  }}
-]
+Return ONLY a valid JSON object (not an array), no markdown, no explanation:
+{{
+  "studentName": "the student's name as written on the sheet, or null if not visible",
+  "studentRoll": "roll number or class/section as written, or null if not visible",
+  "answers": [
+    {{
+      "questionNumber": 1,
+      "mcqChoice": "A",
+      "extractedAnswer": "the student's written answer or chosen option",
+      "isEmpty": false,
+      "isDiagram": false
+    }}
+  ]
+}}
 
 Rules:
-- For MCQ (Q1-Q10): set mcqChoice to "A"/"B"/"C"/"D" if you can identify it, else null
-- For subjective (Q11+): set mcqChoice to null, put full written text in extractedAnswer
+- studentName: read from the top of the sheet (usually labelled "Name:" or "नाम:")
+- studentRoll: read roll number, class, or section from the sheet header
+- For MCQ questions (those with options listed above): set mcqChoice to "A"/"B"/"C"/"D", set extractedAnswer to the chosen option letter
+- For subjective questions (no options listed): set mcqChoice to null, put full written text in extractedAnswer
 - If student left it blank: set isEmpty to true, extractedAnswer to ""
 - If student drew a diagram: set isDiagram to true
-- Include ALL {len(questions)} questions in the array even if blank
+- Include ALL {len(questions)} questions in the answers array even if blank
 - Do not guess or hallucinate — only write what is clearly visible"""
 
 
@@ -167,13 +173,29 @@ def extract_answers_from_image(
     print(f"  [Step 1/2] Extracting answers via {model}...")
     response_text = _call_llm(client, model, [{"role": "user", "content": content}])
 
-    # Extract JSON from response
-    json_start = response_text.find("[")
-    json_end = response_text.rfind("]")
-    if json_start == -1 or json_end == -1:
-        raise ValueError(f"No JSON array in response: {response_text[:200]}")
+    # Parse response — expect {studentName, studentRoll, answers:[...]}
+    student_name = None
+    student_roll = None
 
-    structured = json.loads(response_text[json_start:json_end + 1])
+    # Try object format first
+    obj_start = response_text.find("{")
+    obj_end = response_text.rfind("}")
+    if obj_start != -1 and obj_end != -1:
+        try:
+            parsed = json.loads(response_text[obj_start:obj_end + 1])
+            student_name = parsed.get("studentName")
+            student_roll = parsed.get("studentRoll")
+            structured = parsed.get("answers", [])
+        except json.JSONDecodeError:
+            structured = []
+
+    # Fallback: bare array
+    if not structured:
+        arr_start = response_text.find("[")
+        arr_end = response_text.rfind("]")
+        if arr_start == -1 or arr_end == -1:
+            raise ValueError(f"No JSON in response: {response_text[:200]}")
+        structured = json.loads(response_text[arr_start:arr_end + 1])
 
     # Validate — ensure all questions present
     found_nums = {e.get("questionNumber") for e in structured}
@@ -188,6 +210,12 @@ def extract_answers_from_image(
             })
 
     structured.sort(key=lambda x: x.get("questionNumber", 999))
+
+    # Attach student identity to first entry for caller to pick up
+    if structured:
+        structured[0]["_studentName"] = student_name
+        structured[0]["_studentRoll"] = student_roll
+
     return structured
 
 
