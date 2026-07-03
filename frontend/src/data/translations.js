@@ -195,6 +195,8 @@ export const translations = {
     pasteScores: "Paste",
     uploadExcel: "Upload Excel",
     saveViewInsights: "Save & View Insights",
+    subQuestions: "Sub-questions",
+    subTotal: "Sub-total",
   },
   hi: {
     appName: "EvalAssist",
@@ -302,6 +304,8 @@ export const translations = {
     // Insights headline
     conceptsNeedReteaching: "अवधारणाओं को दोबारा पढ़ाने की आवश्यकता है",
     noMarksNeedReview: "अभी किसी अंक की समीक्षा आवश्यक नहीं है",
+    subQuestions: "उप-प्रश्न",
+    subTotal: "उप-योग",
   },
   te: {
     appName: "EvalAssist",
@@ -409,5 +413,7 @@ export const translations = {
     // Insights headline
     conceptsNeedReteaching: "భావనలను మళ్లీ బోధించాలి",
     noMarksNeedReview: "ప్రస్తుతం మార్కులు సమీక్షించాల్సిన అవసరం లేదు",
+    subQuestions: "ఉప-ప్రశ్నలు",
+    subTotal: "ఉప-మొత్తం",
   },
 };

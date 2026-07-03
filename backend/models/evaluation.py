@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 class EvaluationBase(BaseModel):
@@ -6,11 +6,11 @@ class EvaluationBase(BaseModel):
     studentId: str
     qId: str
     studentAnswer: Optional[str] = ""
-    aiMark: float
-    confidence: str # "high", "medium", "low"
-    confidenceScore: int
-    needsReview: bool
-    reasoning: str
+    aiMark: Optional[float] = None
+    confidence: str = "" # "high", "medium", "low"
+    confidenceScore: int = 0
+    needsReview: bool = False
+    reasoning: str = ""
     teacherMark: Optional[float] = None
     approved: bool = False
     subMarks: Optional[dict] = {}
@@ -18,6 +18,4 @@ class EvaluationBase(BaseModel):
 
 class Evaluation(EvaluationBase):
     id: str = Field(alias="_id")
-    
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True, extra="allow")

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { apiClient } from "@/data/apiClient";
@@ -154,6 +154,7 @@ const ScoreEntry = () => {
   const [studentCount, setStudentCount] = useState(30);
   const [scores, setScores] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [subExpanded, setSubExpanded] = useState({});
 
   const [qImages, setQImages] = useState([]);
   const [qTextInput, setQTextInput] = useState("");
@@ -266,7 +267,7 @@ const ScoreEntry = () => {
     const startNum = questions.length + 1;
     const newQs = [];
     for (let i = 0; i < qCount; i++) {
-      newQs.push({ number: startNum + i, section: qSection, maxMarks: qMarks, chapter: qChapter, concept: qConcept || selectedChapterConcepts[0] || "" });
+      newQs.push({ number: startNum + i, section: qSection, maxMarks: qMarks, chapter: qChapter, concept: qConcept || selectedChapterConcepts[0] || "", subQuestions: [] });
     }
     setQuestions((prev) => [...prev, ...newQs]);
   }, [questions.length, qCount, qSection, qMarks, qChapter, qConcept, selectedChapterConcepts]);
@@ -290,6 +291,59 @@ const ScoreEntry = () => {
     });
   }, []);
 
+  const addSubQuestion = useCallback((qIdx) => {
+    setQuestions((prev) => {
+      const updated = [...prev];
+      const q = { ...updated[qIdx] };
+      const subs = [...(q.subQuestions || [])];
+      const subNum = subs.length + 1;
+      const letter = String.fromCharCode(96 + subNum);
+      subs.push({ number: `${q.number}${letter}`, text: "", maxMarks: 0 });
+      q.subQuestions = subs;
+      updated[qIdx] = q;
+      return updated;
+    });
+  }, []);
+
+  const updateSubQuestion = useCallback((qIdx, subIdx, field, value) => {
+    setQuestions((prev) => {
+      const updated = [...prev];
+      const q = { ...updated[qIdx] };
+      const subs = [...(q.subQuestions || [])];
+      subs[subIdx] = { ...subs[subIdx], [field]: value };
+      q.subQuestions = subs;
+      updated[qIdx] = q;
+      return updated;
+    });
+  }, []);
+
+  const removeSubQuestion = useCallback((qIdx, subIdx) => {
+    setQuestions((prev) => {
+      const updated = [...prev];
+      const q = { ...updated[qIdx] };
+      const subs = (q.subQuestions || []).filter((_, i) => i !== subIdx)
+        .map((sq, i) => ({ ...sq, number: `${q.number}${String.fromCharCode(97 + i)}` }));
+      q.subQuestions = subs;
+      updated[qIdx] = q;
+      return updated;
+    });
+  }, []);
+
+  const toggleSubExpand = useCallback((qIdx) => {
+    setSubExpanded((p) => ({ ...p, [qIdx]: !p[qIdx] }));
+  }, []);
+
+  const scoreColumns = useMemo(() => {
+    const cols = [];
+    questions.forEach((q) => {
+      cols.push(String(q.number));
+      if (q.subQuestions && q.subQuestions.length > 0) {
+        q.subQuestions.forEach((sq) => cols.push(`${q.number}-${sq.number}`));
+      }
+    });
+    return cols;
+  }, [questions]);
+
   const handlePasteFromClipboard = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -303,9 +357,9 @@ const ScoreEntry = () => {
         const rollNum = parseInt(rollCell, 10);
         if (isNaN(rollNum) || rollNum < 1 || rollNum > studentCount) continue;
         const studentScores = {};
-        for (let j = 1; j < cells.length && j <= questions.length + 1; j++) {
+        for (let j = 1; j < cells.length && j <= scoreColumns.length + 1; j++) {
           const val = parseFloat(cells[j]?.trim());
-          if (!isNaN(val)) studentScores[String(j)] = val;
+          if (!isNaN(val)) studentScores[scoreColumns[j - 1]] = val;
         }
         if (Object.keys(studentScores).length > 0) {
           newScores[rollNum - 1] = studentScores;
@@ -321,7 +375,7 @@ const ScoreEntry = () => {
     } catch (err) {
       toast.error("Clipboard access denied.");
     }
-  }, [scores, studentCount, questions.length]);
+  }, [scores, studentCount, scoreColumns]);
 
   const handleExcelUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
@@ -343,9 +397,9 @@ const ScoreEntry = () => {
         const rollNum = parseInt(rollCell, 10);
         if (isNaN(rollNum) || rollNum < 1 || rollNum > studentCount) continue;
         const studentScores = {};
-        for (let j = 1; j < row.length && j <= questions.length + 1; j++) {
+        for (let j = 1; j < row.length && j <= scoreColumns.length + 1; j++) {
           const val = parseFloat(row[j]);
-          if (!isNaN(val)) studentScores[String(j)] = val;
+          if (!isNaN(val)) studentScores[scoreColumns[j - 1]] = val;
         }
         if (Object.keys(studentScores).length > 0) {
           newScores[rollNum - 1] = studentScores;
@@ -361,7 +415,7 @@ const ScoreEntry = () => {
     } catch (err) {
       toast.error("Could not parse Excel file. Try a .xlsx file with columns: Roll, Q1, Q2...");
     }
-  }, [scores, studentCount, questions.length]);
+  }, [scores, studentCount, scoreColumns]);
 
   const updateScore = useCallback((studentIdx, qNum, value) => {
     setScores((prev) => {
@@ -373,7 +427,13 @@ const ScoreEntry = () => {
 
   const getStudentTotal = useCallback((studentIdx) => {
     const studentScores = scores[studentIdx] || {};
-    return questions.reduce((sum, q) => sum + (studentScores[String(q.number)] || 0), 0);
+    return questions.reduce((sum, q) => {
+      let qSum = studentScores[String(q.number)] || 0;
+      if (q.subQuestions && q.subQuestions.length > 0) {
+        qSum = q.subQuestions.reduce((s, sq) => s + (studentScores[`${q.number}-${sq.number}`] || 0), 0);
+      }
+      return sum + qSum;
+    }, 0);
   }, [scores, questions]);
 
   const getStudentGradeLabel = useCallback((studentIdx) => {
@@ -382,7 +442,7 @@ const ScoreEntry = () => {
 
   const hasScore = useCallback((studentIdx) => {
     const studentScores = scores[studentIdx] || {};
-    return Object.values(studentScores).some((v) => v > 0);
+    return Object.values(studentScores).some((v) => v > 0) || Object.keys(studentScores).some((k) => k.includes("-") && studentScores[k] > 0);
   }, [scores]);
 
   const classStats = useMemo(() => {
@@ -405,14 +465,30 @@ const ScoreEntry = () => {
     setSubmitting(true);
     const payload = {
       name, class: klass, subject: subject === "__custom__" ? subjects[0] : subject, type, totalMarks,
-      questions: questions.map((q) => ({ number: q.number, section: q.section, maxMarks: q.maxMarks, chapter: q.chapter, concept: q.concept })),
+      questions: questions.map((q) => ({
+        number: q.number, section: q.section, maxMarks: q.maxMarks, chapter: q.chapter, concept: q.concept,
+        subQuestions: q.subQuestions && q.subQuestions.length > 0 ? q.subQuestions.map((sq) => ({
+          number: sq.number, text: sq.text, maxMarks: sq.maxMarks,
+        })) : [],
+      })),
       students: [],
     };
     for (let i = 0; i < studentCount; i++) {
       if (!hasScore(i)) continue;
       const studentScores = scores[i] || {};
       const scoreMap = {};
-      questions.forEach((q) => { scoreMap[String(q.number)] = studentScores[String(q.number)] || 0; });
+      questions.forEach((q) => {
+        const qKey = String(q.number);
+        if (q.subQuestions && q.subQuestions.length > 0) {
+          const subTotal = q.subQuestions.reduce((s, sq) => s + (studentScores[`${q.number}-${sq.number}`] || 0), 0);
+          scoreMap[qKey] = subTotal;
+          q.subQuestions.forEach((sq) => {
+            scoreMap[`${q.number}-${sq.number}`] = studentScores[`${q.number}-${sq.number}`] || 0;
+          });
+        } else {
+          scoreMap[qKey] = studentScores[qKey] || 0;
+        }
+      });
       payload.students.push({ name: `Roll ${String(i + 1).padStart(2, "0")}`, roll: String(i + 1).padStart(2, "0"), scores: scoreMap });
     }
     try {
@@ -581,20 +657,66 @@ const ScoreEntry = () => {
                 const ch = chapters.find((c) => c.id === q.chapter);
                 const concepts = ch ? ch.concepts : [];
                 return (
-                  <div key={i} className="grid grid-cols-[44px_64px_64px_1fr_1fr_44px] gap-1 px-3 py-1.5 items-center hover:bg-stone-50/50">
-                    <div className="text-sm font-mono text-stone-600">{q.number}</div>
-                    <select value={q.section} onChange={(e) => updateQuestion(i, "section", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                      {SECTIONS.map((s) => <option key={s}>{s}</option>)}
-                    </select>
-                    <input type="number" min="0.5" step="0.5" value={q.maxMarks} onChange={(e) => updateQuestion(i, "maxMarks", parseFloat(e.target.value || "1"))} className="h-8 w-full px-1 rounded border border-stone-200 bg-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-emerald-500" />
-                    <select value={q.chapter} onChange={(e) => updateQuestion(i, "chapter", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                      {chapters.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
-                    </select>
-                    <select value={q.concept} onChange={(e) => updateQuestion(i, "concept", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                      {concepts.map((c) => <option key={c} value={c}>{c}</option>)}
-                      {!concepts.includes(q.concept) && q.concept && <option value={q.concept}>{q.concept}</option>}
-                    </select>
-                    <button onClick={() => removeQuestion(i)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center"><Trash2 size={14} /></button>
+                  <div key={i}>
+                    <div className="grid grid-cols-[44px_64px_64px_1fr_1fr_64px] gap-1 px-3 py-1.5 items-center hover:bg-stone-50/50">
+                      <div className="text-sm font-mono text-stone-600">{q.number}</div>
+                      <select value={q.section} onChange={(e) => updateQuestion(i, "section", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        {SECTIONS.map((s) => <option key={s}>{s}</option>)}
+                      </select>
+                      <input type="number" min="0.5" step="0.5" value={q.maxMarks} onChange={(e) => updateQuestion(i, "maxMarks", parseFloat(e.target.value || "1"))} className="h-8 w-full px-1 rounded border border-stone-200 bg-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                      <select value={q.chapter} onChange={(e) => updateQuestion(i, "chapter", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        {chapters.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
+                      </select>
+                      <select value={q.concept} onChange={(e) => updateQuestion(i, "concept", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        {concepts.map((c) => <option key={c} value={c}>{c}</option>)}
+                        {!concepts.includes(q.concept) && q.concept && <option value={q.concept}>{q.concept}</option>}
+                      </select>
+                      <div className="flex items-center gap-0.5 justify-end">
+                        <button onClick={() => toggleSubExpand(i)} className={`h-7 w-7 rounded flex items-center justify-center ${subExpanded[i] ? "bg-blue-50 text-blue-700" : "text-stone-400 hover:text-stone-600 hover:bg-stone-100"}`} title="Sub-questions">
+                          <Plus size={13} />
+                        </button>
+                        <button onClick={() => removeQuestion(i)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center"><Trash2 size={14} /></button>
+                      </div>
+                    </div>
+                    {subExpanded[i] && (
+                      <div className="ml-11 mr-2 mb-2 border border-blue-200 rounded-lg bg-blue-50/20 overflow-hidden">
+                        <div className="px-3 py-1.5 bg-blue-50/50 border-b border-blue-100 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-blue-800">Sub-questions for Q{q.number}</span>
+                          <button onClick={() => addSubQuestion(i)} className="inline-flex items-center gap-1 h-6 px-2 rounded text-[11px] font-medium bg-blue-800 text-white hover:bg-blue-900"><Plus size={10} /> Add Part</button>
+                        </div>
+                        {(q.subQuestions || []).length === 0 ? (
+                          <div className="px-3 py-2 text-[11px] text-stone-500">No sub-parts added yet. Click "Add Part" to define sub-questions.</div>
+                        ) : (
+                          <div className="divide-y divide-blue-100">
+                            {(q.subQuestions || []).map((sq, sIdx) => (
+                              <div key={sIdx} className="grid grid-cols-[56px_1fr_72px_32px] gap-1 px-3 py-1 items-center">
+                                <input
+                                  value={sq.number}
+                                  onChange={(e) => updateSubQuestion(i, sIdx, "number", e.target.value)}
+                                  className="h-7 px-1 rounded border border-stone-200 bg-white text-[11px] font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                />
+                                <input
+                                  value={sq.text}
+                                  onChange={(e) => updateSubQuestion(i, sIdx, "text", e.target.value)}
+                                  placeholder={`Part ${sq.number} text…`}
+                                  className="h-7 px-2 rounded border border-stone-200 bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                />
+                                <div className="flex items-center gap-0.5">
+                                  <input
+                                    type="number" min="0.5" step="0.5"
+                                    value={sq.maxMarks}
+                                    onChange={(e) => updateSubQuestion(i, sIdx, "maxMarks", parseFloat(e.target.value || "0"))}
+                                    className="h-7 w-full px-1 rounded border border-stone-200 bg-white text-[11px] text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                  />
+                                  <span className="text-[10px] text-stone-400">m</span>
+                                </div>
+                                <button onClick={() => removeSubQuestion(i, sIdx)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center"><X size={12} /></button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -649,15 +771,43 @@ const ScoreEntry = () => {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 z-10 bg-stone-50 border-b border-r border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[52px]">#</th>
-                    {questions.map((q) => (
-                      <th key={q.number} className="bg-stone-50 border-b border-r border-stone-100 px-2 py-2 text-center text-xs font-semibold text-stone-600 min-w-[60px]" title={`${q.concept} (${q.maxMarks} marks)`}>
-                        <div>Q{q.number}</div><div className="text-[10px] text-stone-400 font-normal">{q.maxMarks}</div>
-                      </th>
-                    ))}
-                    <th className="bg-stone-50 border-b border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[72px]">Total</th>
-                    <th className="bg-stone-50 border-b border-stone-200 px-3 py-2 text-center text-xs font-semibold text-stone-600 min-w-[56px]">Grade</th>
+                    <th className="sticky left-0 z-10 bg-stone-50 border-b border-r border-stone-200 px-3 py-1 text-center text-xs font-semibold text-stone-600 min-w-[52px]">#</th>
+                    {questions.map((q) => {
+                      const hasSubs = q.subQuestions && q.subQuestions.length > 0;
+                      const colSpan = hasSubs ? q.subQuestions.length + 1 : 1;
+                      return (
+                        <th key={q.number} colSpan={colSpan} className="bg-stone-50 border-b border-r border-stone-100 px-2 py-1 text-center text-xs font-semibold text-stone-600" title={`${q.concept} (${q.maxMarks} marks)`}>
+                          <div>Q{q.number}</div>
+                          <div className="text-[10px] text-stone-400 font-normal">{q.maxMarks}m</div>
+                        </th>
+                      );
+                    })}
+                    <th className="bg-stone-50 border-b border-stone-200 px-3 py-1 text-center text-xs font-semibold text-stone-600 min-w-[72px]">Total</th>
+                    <th className="bg-stone-50 border-b border-stone-200 px-3 py-1 text-center text-xs font-semibold text-stone-600 min-w-[56px]">Grade</th>
                   </tr>
+                  {questions.some((q) => q.subQuestions && q.subQuestions.length > 0) && (
+                    <tr>
+                      <th className="sticky left-0 z-10 bg-stone-50/80 border-b border-r border-stone-200 px-3 py-1"></th>
+                      {questions.map((q) => {
+                        const hasSubs = q.subQuestions && q.subQuestions.length > 0;
+                        if (hasSubs) {
+                          return (
+                            <Fragment key={q.number}>
+                              <th className="bg-stone-50/80 border-b border-r border-stone-100 px-1 py-1 text-center text-[10px] font-medium text-stone-400">total</th>
+                              {q.subQuestions.map((sq) => (
+                                <th key={sq.number} className="bg-stone-50/80 border-b border-r border-stone-100 px-1 py-1 text-center text-[10px] font-medium text-stone-500 min-w-[48px]" title={sq.text || sq.number}>
+                                  {sq.number}
+                                </th>
+                              ))}
+                            </Fragment>
+                          );
+                        }
+                        return <th key={q.number} className="bg-stone-50/80 border-b border-r border-stone-100 px-1 py-1"></th>;
+                      })}
+                      <th className="bg-stone-50/80 border-b border-stone-200 px-3 py-1"></th>
+                      <th className="bg-stone-50/80 border-b border-stone-200 px-3 py-1"></th>
+                    </tr>
+                  )}
                 </thead>
                 <tbody>
                   {Array.from({ length: studentCount }, (_, i) => {
@@ -672,12 +822,25 @@ const ScoreEntry = () => {
                         </td>
                         {questions.map((q) => {
                           const cellValue = (scores[i] || {})[String(q.number)];
+                          const hasSubs = q.subQuestions && q.subQuestions.length > 0;
                           return (
-                            <td key={q.number} className="border-r border-stone-50 px-0 py-0 text-center">
-                              <div data-cell={`${i}-${q.number}`}>
-                                <EditableCell value={cellValue} onChange={(val) => updateScore(i, q.number, val)} onKeyDown={handleCellKey(i, q.number)} />
-                              </div>
-                            </td>
+                            <Fragment key={q.number}>
+                              <td className="border-r border-stone-50 px-0 py-0 text-center">
+                                <div data-cell={`${i}-${q.number}`}>
+                                  <EditableCell value={cellValue} onChange={(val) => updateScore(i, q.number, val)} onKeyDown={handleCellKey(i, q.number)} />
+                                </div>
+                              </td>
+                              {hasSubs && q.subQuestions.map((sq) => {
+                                const subVal = (scores[i] || {})[`${q.number}-${sq.number}`];
+                                return (
+                                  <td key={sq.number} className="border-r border-stone-50 px-0 py-0 text-center bg-stone-50/20">
+                                    <div data-cell={`${i}-${q.number}-${sq.number}`}>
+                                      <EditableCell value={subVal} onChange={(val) => updateScore(i, `${q.number}-${sq.number}`, val)} onKeyDown={handleCellKey(i, `${q.number}-${sq.number}`)} />
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </Fragment>
                           );
                         })}
                         <td className="border-r border-stone-100 px-3 py-1.5 text-center">

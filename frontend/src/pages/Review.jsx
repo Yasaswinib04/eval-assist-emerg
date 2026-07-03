@@ -12,7 +12,7 @@ import {
   AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import {
-  Search, X, Check, Sparkles, ChevronRight, ChevronLeft,
+  Search, X, Check, Sparkles, ChevronRight, ChevronLeft, ChevronDown,
   Wand2, Keyboard, Save, ArrowRight, Maximize2, Minimize2, ListChecks, LayoutGrid, User, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -43,13 +43,17 @@ const HeatmapCell = ({ ev, q, density, onClick, approved, dimmed, highlighted })
   const size = density === "compact" ? "h-11 w-11 sm:h-7 sm:w-7" : "h-11 w-11 sm:h-10 sm:w-10";
   const status = getMarkStatus(q, ev, ev ? (ev.teacherMark ?? ev.aiMark) : null);
   const meta = status ? STATUS_META[status] : null;
+  const hasSubs = q.subQuestions && q.subQuestions.length > 0;
   return (
     <button
       onClick={onClick}
       data-testid={`cell-${q.id}`}
       className={`${size} rounded-md border flex items-center justify-center transition-all relative ${meta ? `${meta.bg} ${meta.border} hover:brightness-95` : "bg-stone-100 border-stone-200"} ${dimmed ? "opacity-30" : ""} ${highlighted ? "ring-2 ring-blue-700 ring-offset-1" : ""}`}
-      title={`Q${q.number} · ${ev?.aiMark}/${q.maxMarks} · ${ev?.confidenceScore}% AI confidence`}
+      title={`Q${q.number} · ${ev?.aiMark}/${q.maxMarks} · ${ev?.confidenceScore}% AI confidence${hasSubs ? ` · ${q.subQuestions.length} sub-questions` : ""}`}
     >
+      {hasSubs && (
+        <span className="absolute -top-0.5 -left-0.5 h-3 w-3 rounded-full bg-stone-400 text-white text-[7px] font-bold flex items-center justify-center leading-none">+</span>
+      )}
       {status && <StatusIcon status={status} size={11} />}
       {approved && (
         <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-600 border-2 border-white flex items-center justify-center">
@@ -116,6 +120,9 @@ const ExpandedPaper = ({ student, evals, totals, onPillClick, onWalkAi, t, CHAPT
               className={`group inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all hover:-translate-y-0.5 ${meta.bg} ${meta.border} ${meta.text}`}
             >
               <span className="font-mono">Q{q.number}</span>
+              {q.subQuestions && q.subQuestions.length > 0 && (
+                <span className="text-[9px] opacity-60">+{q.subQuestions.length}</span>
+              )}
               <span className="opacity-70">{ev.teacherMark ?? ev.aiMark}/{q.maxMarks}</span>
               <StatusIcon status={status} size={11} />
               {isApproved && <Check size={11} className="text-emerald-700" />}
@@ -169,8 +176,9 @@ let QUESTIONS = [];
 // Review Drawer (Grid mode — focused single question)
 // ════════════════════════════════════════════════════════════════════════
 
-const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange, onApprove, onNav, onClose, evals, CHAPTERS, t }) => {
+const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange, onApprove, onNav, onClose, evals, CHAPTERS, t, subMarks, onSubMarkChange }) => {
   const inputRef = useRef(null);
+  const [subExpanded, setSubExpanded] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -313,6 +321,60 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
               </div>
             )}
           </div>
+
+          {q.subQuestions && q.subQuestions.length > 0 && (
+            <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setSubExpanded((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-stone-50 transition-colors"
+              >
+                <span className="text-[11px] font-bold tracking-wider uppercase text-stone-600">
+                  Sub-questions ({q.subQuestions.length})
+                </span>
+                <ChevronDown size={14} className={`text-stone-500 transition-transform ${subExpanded ? "rotate-180" : ""}`} />
+              </button>
+              {subExpanded && (
+                <div className="px-3 pb-3 space-y-2.5 border-t border-stone-200 pt-3">
+                  {q.subQuestions.map((subQ) => {
+                    const subKey = `${subQ.number}`;
+                    const aiSubMark = (ev.subMarks && ev.subMarks[subKey]) ?? 0;
+                    const teacherSubMark = (ev.subTeacherMarks && ev.subTeacherMarks[subKey]) ?? null;
+                    const currentSubMark = subMarks[subKey] ?? teacherSubMark ?? aiSubMark;
+                    const subOverridden = currentSubMark !== aiSubMark;
+                    return (
+                      <div key={subQ.number} className="flex items-center gap-3">
+                        <span className="text-xs font-mono font-semibold text-stone-700 w-9 shrink-0">{subQ.number}</span>
+                        <span className="flex-1 text-xs text-stone-600 truncate">{subQ.text || `Part ${subQ.number}`}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <input
+                            type="number" min={0} max={subQ.maxMarks} step={0.5}
+                            value={currentSubMark}
+                            onChange={(e) => onSubMarkChange(subQ.number, parseFloat(e.target.value || 0))}
+                            className={`h-9 w-16 px-1.5 rounded border text-sm font-semibold text-center focus:outline-none focus:ring-1 focus:ring-blue-800 ${subOverridden ? "border-blue-300 bg-blue-50 text-blue-900" : "border-stone-300 bg-white text-stone-700"}`}
+                          />
+                          <span className="text-[11px] text-stone-400">/ {subQ.maxMarks}</span>
+                          {subOverridden && (
+                            <span className="text-[10px] text-blue-700">AI {aiSubMark}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="flex items-center justify-end gap-3 pt-1.5 border-t border-stone-200">
+                    <span className="text-[10px] uppercase tracking-wider text-stone-500">Sub-total</span>
+                    <span className="text-sm font-bold text-stone-800 tabular-nums">
+                      {q.subQuestions.reduce((sum, sq) => {
+                        const sk = sq.number;
+                        const tsm = (ev.subTeacherMarks && ev.subTeacherMarks[sk]) ?? null;
+                        const asm = (ev.subMarks && ev.subMarks[sk]) ?? 0;
+                        return sum + (subMarks[sk] ?? tsm ?? asm);
+                      }, 0).toFixed(1)} / {q.subQuestions.reduce((s, sq) => s + sq.maxMarks, 0)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="border-t border-stone-200 bg-stone-50 px-5 py-3 space-y-2">
@@ -345,10 +407,11 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
 // Queue Card (Queue mode — the trust moment)
 // ════════════════════════════════════════════════════════════════════════
 
-const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, onApprove, onSkip, cardRef, CHAPTERS }) => {
+const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, onApprove, onSkip, cardRef, CHAPTERS, subMarks, onSubMarkChange, subExpanded, onToggleSubExpand }) => {
   const { student, q, ev } = item;
   const overridden = mark !== ev.aiMark;
   const steps = q.maxMarks <= 2 ? markSteps(q.maxMarks) : null;
+  const hasSubs = q.subQuestions && q.subQuestions.length > 0;
 
   return (
     <div
@@ -395,6 +458,57 @@ const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, o
         </div>
         <div className="text-sm text-stone-700 leading-relaxed">"{ev.reasoning}"</div>
       </div>
+
+      {hasSubs && (
+        <div className="mb-4 rounded-lg border border-stone-200 bg-stone-50/50 overflow-hidden">
+          <button
+            onClick={onToggleSubExpand}
+            className="w-full flex items-center justify-between px-3 py-2 hover:bg-stone-100 transition-colors"
+          >
+            <span className="text-[10px] font-bold tracking-wider uppercase text-stone-600">
+              Sub-questions ({q.subQuestions.length})
+            </span>
+            <ChevronDown size={14} className={`text-stone-500 transition-transform ${subExpanded ? "rotate-180" : ""}`} />
+          </button>
+          {subExpanded && (
+            <div className="px-3 pb-3 space-y-2.5 border-t border-stone-200 pt-3">
+              {q.subQuestions.map((subQ) => {
+                const subKey = `${subQ.number}`;
+                const aiSubMark = (ev.subMarks && ev.subMarks[subKey]) ?? 0;
+                const teacherSubMark = (ev.subTeacherMarks && ev.subTeacherMarks[subKey]) ?? null;
+                const currentSubMark = subMarks[subKey] ?? teacherSubMark ?? aiSubMark;
+                const subOverridden = currentSubMark !== aiSubMark;
+                return (
+                  <div key={subQ.number} className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-semibold text-stone-700 w-8 shrink-0">{subQ.number}</span>
+                    <span className="flex-1 text-[11px] text-stone-600 truncate">{subQ.text}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <input
+                        type="number" min={0} max={subQ.maxMarks} step={0.5}
+                        value={currentSubMark}
+                        onChange={(e) => onSubMarkChange(subQ.number, parseFloat(e.target.value || 0))}
+                        className={`h-8 w-16 px-1.5 rounded border text-xs font-semibold text-center focus:outline-none focus:ring-1 focus:ring-blue-800 ${subOverridden ? "border-blue-300 bg-blue-50 text-blue-900" : "border-stone-300 bg-white text-stone-700"}`}
+                      />
+                      <span className="text-[10px] text-stone-400">/ {subQ.maxMarks}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-stone-200">
+                <span className="text-[10px] uppercase tracking-wider text-stone-500">Sub-total</span>
+                <span className="text-xs font-bold text-stone-800 tabular-nums">
+                  {q.subQuestions.reduce((sum, sq) => {
+                    const sk = sq.number;
+                    const tsm = (ev.subTeacherMarks && ev.subTeacherMarks[sk]) ?? null;
+                    const asm = (ev.subMarks && ev.subMarks[sk]) ?? 0;
+                    return sum + (subMarks[sk] ?? tsm ?? asm);
+                  }, 0).toFixed(1)} / {q.subQuestions.reduce((s, sq) => s + sq.maxMarks, 0)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
@@ -448,6 +562,9 @@ const ReviewPage = () => {
   const { data: ASSESSMENTS = [] } = useQuery({ queryKey: ['assessments'], queryFn: apiClient.getAssessments });
   const assessment = ASSESSMENTS.find((a) => a.id === id) || ASSESSMENTS[0] || { name: "", class: "", subject: "" };
 
+  const { data: assessmentStatus } = useQuery({ queryKey: ['assessmentStatus', id], queryFn: () => apiClient.getAssessmentStatus(id), refetchInterval: 5000 });
+  const processingStatus = assessmentStatus?.processingStatus || assessment?.processingStatus || "";
+
   const { data: allQuestions = [], isLoading: loadingQ } = useQuery({ queryKey: ['questions', id], queryFn: () => apiClient.getQuestions(id) });
   const { data: CHAPTERS = {} } = useQuery({ queryKey: ['chapters', id], queryFn: () => apiClient.getChapters(id) });
   const { data: STUDENTS = [], isLoading: loadingS } = useQuery({ queryKey: ['students', id], queryFn: () => apiClient.getStudents(id) });
@@ -486,6 +603,8 @@ const ReviewPage = () => {
   const [density, setDensity] = useState("compact");
   const [expanded, setExpanded] = useState({});
   const [marks, setMarks] = useState({});
+  const [subMarks, setSubMarks] = useState({});
+  const [subExpanded, setSubExpanded] = useState({});
   const [approved, setApproved] = useState({});
   const [confirmApproveAll, setConfirmApproveAll] = useState(false);
 
@@ -499,7 +618,7 @@ const ReviewPage = () => {
 
   // Mutations
   const updateOverrideMutation = useMutation({
-    mutationFn: ({ studentId, qid, mark }) => apiClient.updateEvaluationOverride(id, studentId, qid, mark),
+    mutationFn: ({ studentId, qid, mark, subTeacherMarks }) => apiClient.updateEvaluationOverride(id, studentId, qid, mark, subTeacherMarks),
     onSuccess: (_data, vars) => queryClient.invalidateQueries(['evaluations', id, vars.studentId])
   });
 
@@ -513,16 +632,56 @@ const ReviewPage = () => {
   const setApprovedKey = useCallback((sid, qid, val = true) => setApproved((p) => ({ ...p, [`${sid}-${qid}`]: val })), []);
   const getMark = useCallback((sid, qid, fallback) => marks[`${sid}-${qid}`] ?? fallback, [marks]);
 
+  const getSubMarkKey = useCallback((sid, qid, subNum) => `${sid}-${qid}-${subNum}`, []);
+  const getSubMark = useCallback((sid, qid, subNum, fallback) => subMarks[getSubMarkKey(sid, qid, subNum)] ?? fallback, [subMarks, getSubMarkKey]);
+  const setSubMark = useCallback((sid, qid, subNum, val) => {
+    setSubMarks((p) => ({ ...p, [getSubMarkKey(sid, qid, subNum)]: val }));
+  }, [getSubMarkKey]);
+
+  const getSubTeacherMarks = useCallback((sid, qid) => {
+    const q = QUESTIONS.find((x) => x.id === qid);
+    if (!q || !q.subQuestions || !q.subQuestions.length) return null;
+    const result = {};
+    const ev = (allEvals[sid] || []).find((e) => e.qId === qid);
+    q.subQuestions.forEach((sq) => {
+      const key = getSubMarkKey(sid, qid, sq.number);
+      const localVal = subMarks[key];
+      if (localVal != null) {
+        result[sq.number] = localVal;
+      } else if (ev && ev.subTeacherMarks && ev.subTeacherMarks[sq.number] != null) {
+        result[sq.number] = ev.subTeacherMarks[sq.number];
+      }
+    });
+    return Object.keys(result).length > 0 ? result : null;
+  }, [subMarks, allEvals, getSubMarkKey]);
+
+  const computeQuestionTotal = useCallback((sid, qid, ev) => {
+    const q = QUESTIONS.find((x) => x.id === qid);
+    if (!q || !q.subQuestions || !q.subQuestions.length) {
+      return getMark(sid, qid, ev?.teacherMark ?? ev?.aiMark);
+    }
+    return q.subQuestions.reduce((sum, sq) => {
+      const sk = sq.number;
+      const localVal = subMarks[getSubMarkKey(sid, qid, sk)];
+      if (localVal != null) return sum + localVal;
+      if (ev?.subTeacherMarks && ev.subTeacherMarks[sk] != null) return sum + ev.subTeacherMarks[sk];
+      if (ev?.subMarks && ev.subMarks[sk] != null) return sum + ev.subMarks[sk];
+      const overrideMark = marks[`${sid}-${qid}`];
+      if (overrideMark != null) return sum + sq.maxMarks * (overrideMark / q.maxMarks);
+      return sum + (ev?.aiMark ?? 0) * (sq.maxMarks / q.maxMarks);
+    }, 0);
+  }, [getMark, marks, subMarks, getSubMarkKey]);
+
   // Derived: totals + grade context per student
   const totalMax = allQuestions.reduce((s, q) => s + q.maxMarks, 0);
   const studentTotals = useMemo(() => {
     return STUDENTS.reduce((acc, s) => {
       const evals = allEvals[s.id] || [];
-      const total = evals.reduce((sum, e) => sum + getMark(s.id, e.qId, e.teacherMark ?? e.aiMark), 0);
+      const total = evals.reduce((sum, e) => sum + computeQuestionTotal(s.id, e.qId, e), 0);
       acc[s.id] = { total, totalMax, ctx: getGradeContext(total) };
       return acc;
     }, {});
-  }, [STUDENTS, allEvals, totalMax, getMark]);
+  }, [STUDENTS, allEvals, totalMax, computeQuestionTotal]);
 
   // Filtering (Grid mode student list)
   const filtered = useMemo(() => {
@@ -616,10 +775,25 @@ const ReviewPage = () => {
     setMarks((m) => ({ ...m, [`${item.student.id}-${item.q.id}`]: val }));
   };
 
+  const queueSubMarkChange = (item, subNum, val) => {
+    const key = getSubMarkKey(item.student.id, item.q.id, subNum);
+    setSubMarks((m) => ({ ...m, [key]: val }));
+    const q = item.q;
+    const currentSubs = { ...subMarks };
+    currentSubs[key] = val;
+    const newTotal = q.subQuestions.reduce((sum, sq) => {
+      const sk = sq.number;
+      const skey = getSubMarkKey(item.student.id, item.q.id, sk);
+      return sum + (currentSubs[skey] ?? item.ev.subTeacherMarks?.[sk] ?? item.ev.subMarks?.[sk] ?? 0);
+    }, 0);
+    setMarks((m) => ({ ...m, [`${item.student.id}-${item.q.id}`]: newTotal }));
+  };
+
   const queueApprove = (item, idx) => {
     const mark = getMark(item.student.id, item.q.id, item.ev.teacherMark ?? item.ev.aiMark);
+    const sTm = getSubTeacherMarks(item.student.id, item.q.id);
     setApprovedKey(item.student.id, item.q.id, true);
-    updateOverrideMutation.mutate({ studentId: item.student.id, qid: item.q.id, mark });
+    updateOverrideMutation.mutate({ studentId: item.student.id, qid: item.q.id, mark, subTeacherMarks: sTm });
     toast.success("Approved", { duration: 700 });
     advanceQueue(idx);
   };
@@ -661,8 +835,9 @@ const ReviewPage = () => {
   const drawerApprove = () => {
     if (!drawer) return;
     const mark = marks[`${drawer.studentId}-${drawer.qId}`];
+    const sTm = getSubTeacherMarks(drawer.studentId, drawer.qId);
     setApprovedKey(drawer.studentId, drawer.qId, true);
-    updateOverrideMutation.mutate({ studentId: drawer.studentId, qid: drawer.qId, mark });
+    updateOverrideMutation.mutate({ studentId: drawer.studentId, qid: drawer.qId, mark, subTeacherMarks: sTm });
     toast.success("Approved", { duration: 700 });
     if (drawer.queue && drawer.queueIdx !== null && drawer.queueIdx < drawer.queue.length - 1) {
       const nextIdx = drawer.queueIdx + 1;
@@ -683,6 +858,22 @@ const ReviewPage = () => {
   const drawerMarkChange = (val) => {
     if (!drawer) return;
     setMarks((m) => ({ ...m, [`${drawer.studentId}-${drawer.qId}`]: val }));
+  };
+
+  const drawerSubMarkChange = (subNum, val) => {
+    if (!drawer) return;
+    const key = getSubMarkKey(drawer.studentId, drawer.qId, subNum);
+    setSubMarks((m) => ({ ...m, [key]: val }));
+    const q = QUESTIONS.find((x) => x.id === drawer.qId);
+    if (!q || !q.subQuestions) return;
+    const currentSubs = { ...subMarks, [key]: val };
+    const ev = (allEvals[drawer.studentId] || []).find((e) => e.qId === drawer.qId);
+    const newTotal = q.subQuestions.reduce((sum, sq) => {
+      const sk = sq.number;
+      const skey = getSubMarkKey(drawer.studentId, drawer.qId, sk);
+      return sum + (currentSubs[skey] ?? ev?.subTeacherMarks?.[sk] ?? ev?.subMarks?.[sk] ?? 0);
+    }, 0);
+    setMarks((m) => ({ ...m, [`${drawer.studentId}-${drawer.qId}`]: newTotal }));
   };
 
   // ── Bulk approve high-confidence ──
@@ -720,8 +911,34 @@ const ReviewPage = () => {
   // Drawer student object
   const drawerStudent = drawer ? STUDENTS.find((s) => s.id === drawer.studentId) : null;
 
+  const hasEvals = STUDENTS.length > 0 && Object.values(allEvals).some((arr) => arr.length > 0);
+  const isProcessing = ["pending", "ocr", "step_ocr", "step_qp", "step_concept", "step_eval", "step_gap", "step_insights"].includes(processingStatus) || (!loadingQ && !loadingS && !loadingEvals && STUDENTS.length > 0 && !hasEvals);
+
   if (loadingQ || loadingS) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
+  }
+
+  if (isProcessing && !loadingEvals) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-6" data-testid="review-page">
+        <Breadcrumbs items={[
+          { label: t("assessments"), to: `/analysis/${id}` },
+          { label: assessment.name, to: `/insights/${id}` },
+          { label: t("reviewOverride") },
+        ]} />
+        <div className="bg-white border border-stone-200 rounded-xl p-12 text-center mt-8">
+          <Loader2 className="animate-spin text-blue-800 mx-auto mb-4" size={36} />
+          <div className="font-display text-xl font-semibold text-stone-900 mb-2">{t("evaluationsProcessing") || "Processing answer sheets..."}</div>
+          <div className="text-sm text-stone-500 mb-6">
+            {processingStatus ? `Status: ${processingStatus.replace(/_/g, " ")}` : "AI is analyzing student handwriting and grading answers. This may take a few minutes."}
+          </div>
+          <div className="text-xs text-stone-400">{STUDENTS.length} student sheet(s) found. Evaluations will appear once processing completes.</div>
+          <button onClick={() => navigate(`/analysis/${id}`)} className="mt-6 inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium">
+            <ArrowRight size={14} /> Back to analysis
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const allCaughtUp = stats.reviewItems === 0;
@@ -810,6 +1027,14 @@ const ReviewPage = () => {
               const key = `${item.student.id}-${item.q.id}`;
               const isDone = getApproved(item.student.id, item.q.id);
               const mark = getMark(item.student.id, item.q.id, item.ev.teacherMark ?? item.ev.aiMark);
+              const qSubMarks = {};
+              const qSubExpanded = !!subExpanded[key];
+              if (item.q.subQuestions) {
+                item.q.subQuestions.forEach((sq) => {
+                  const skey = getSubMarkKey(item.student.id, item.q.id, sq.number);
+                  qSubMarks[sq.number] = subMarks[skey];
+                });
+              }
               return (
                 <QueueCard
                   key={key}
@@ -824,6 +1049,10 @@ const ReviewPage = () => {
                   onSkip={() => queueSkip(idx)}
                   cardRef={(el) => { cardRefs.current[key] = el; }}
                   CHAPTERS={CHAPTERS}
+                  subMarks={qSubMarks}
+                  onSubMarkChange={(subNum, val) => queueSubMarkChange(item, subNum, val)}
+                  subExpanded={qSubExpanded}
+                  onToggleSubExpand={() => setSubExpanded((p) => ({ ...p, [key]: !p[key] }))}
                 />
               );
             })}
@@ -994,12 +1223,15 @@ const ReviewPage = () => {
           <div className="flex items-center gap-2">
             <button onClick={() => {
               const entries = Object.entries(marks);
-              if (!entries.length) { toast.info("No changes to save"); return; }
+              if (!entries.length && !Object.keys(subMarks).length) { toast.info("No changes to save"); return; }
               Promise.all(
                 entries.map(([key, mark]) => {
                   const idx = key.lastIndexOf('-q');
                   if (idx === -1) return Promise.resolve();
-                  return updateOverrideMutation.mutateAsync({ studentId: key.slice(0, idx), qid: key.slice(idx + 1), mark });
+                  const studentId = key.slice(0, idx);
+                  const qid = key.slice(idx + 1);
+                  const sTm = getSubTeacherMarks(studentId, qid);
+                  return updateOverrideMutation.mutateAsync({ studentId, qid, mark, subTeacherMarks: sTm });
                 })
               ).then(() => {
                 queryClient.invalidateQueries(['evaluations', id]);
@@ -1028,6 +1260,19 @@ const ReviewPage = () => {
         evals={allEvals}
         CHAPTERS={CHAPTERS}
         t={t}
+        subMarks={(() => {
+          const result = {};
+          if (drawer?.qId) {
+            const q = QUESTIONS.find((x) => x.id === drawer.qId);
+            if (q && q.subQuestions) {
+              q.subQuestions.forEach((sq) => {
+                result[sq.number] = subMarks[getSubMarkKey(drawer.studentId, drawer.qId, sq.number)];
+              });
+            }
+          }
+          return result;
+        })()}
+        onSubMarkChange={drawerSubMarkChange}
       />
 
       {/* Approve-all confirm sheet */}

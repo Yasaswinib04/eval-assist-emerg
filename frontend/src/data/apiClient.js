@@ -59,10 +59,14 @@ async function fetchWithFallback(url, options = {}) {
         if (res.status === 401) {
             clearAuth();
         }
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            console.warn(`API ${res.status} on ${url}:`, errBody.slice(0, 500));
+            throw new Error(`HTTP ${res.status}`);
+        }
         return await res.json();
     } catch (error) {
-        console.warn(`API call to ${url} failed`, error.message);
+        console.warn(`API call to ${url} failed:`, error.message);
         return null;
     }
 }
