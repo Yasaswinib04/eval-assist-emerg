@@ -1,19 +1,25 @@
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { BookCheck, LogOut, LayoutDashboard, FileText, ClipboardCheck, BarChart3, ChevronLeft, Menu, X, Zap } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+
+const ASSESSMENT_PATH_RE = /^\/(analysis|processing|review|insights|student)\/([^/]+)/;
 
 const isAssessmentPage = (pathname) => {
-  return /^\/(analysis|processing|review|insights|student)\//.test(pathname);
+  return ASSESSMENT_PATH_RE.test(pathname);
+};
+
+const extractAssessmentId = (pathname) => {
+  const match = pathname.match(ASSESSMENT_PATH_RE);
+  return match ? match[2] : null;
 };
 
 export const Sidebar = () => {
   const { t, user, logout, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const { id: routeAssessmentId } = useParams();
-  const aid = routeAssessmentId;
+  const aid = useMemo(() => extractAssessmentId(location.pathname), [location.pathname]);
   const [collapsed, setCollapsed] = useState(false);
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
@@ -163,8 +169,7 @@ export const MobileNav = () => {
   const { t, user, logout, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const { id: routeAssessmentId } = useParams();
-  const aid = routeAssessmentId;
+  const aid = useMemo(() => extractAssessmentId(location.pathname), [location.pathname]);
   const [open, setOpen] = useState(false);
   const onAssessment = isAssessmentPage(location.pathname);
 

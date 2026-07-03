@@ -256,15 +256,22 @@ const Analysis = () => {
     }
   }, [QUESTIONS]);
 
+  const [analysisAttempted, setAnalysisAttempted] = useState(() => {
+    try { return sessionStorage.getItem(`ea-an-${id}`) === "1"; } catch { return false; }
+  });
+
   useEffect(() => {
-    if (hasPendingOCR && !analyzing) {
+    if (hasPendingOCR && !analyzing && !analysisAttempted) {
+      setAnalysisAttempted(true);
+      try { sessionStorage.setItem(`ea-an-${id}`, "1"); } catch {}
       handleAnalyzeQPaper();
     }
   }, [hasPendingOCR]);
 
-  // Guard against retry storm: once we've attempted answer-key generation for this
-  // assessment, don't auto-retry on the same page mount even if it failed.
-  const [answerKeyAttempted, setAnswerKeyAttempted] = useState(false);
+  // Track attempted operations for this assessment to prevent retry storms on revisit
+  const [answerKeyAttempted, setAnswerKeyAttempted] = useState(() => {
+    try { return sessionStorage.getItem(`ea-ak-${id}`) === "1"; } catch { return false; }
+  });
   useEffect(() => {
     if (
       QUESTIONS.length > 0 &&
@@ -276,6 +283,7 @@ const Analysis = () => {
       !answerKeyAttempted
     ) {
       setAnswerKeyAttempted(true);
+      try { sessionStorage.setItem(`ea-ak-${id}`, "1"); } catch {}
       handleGenerateAnswerKey();
     }
   }, [QUESTIONS.length, hasPendingOCR, hasAnswerKey, generatingKey, analysisError, keyError, answerKeyAttempted]);

@@ -189,10 +189,6 @@ const Upload = () => {
         }
         sessionStorage.removeItem('evalassist-upload-form');
         const id = result._id || result.id;
-        // Fire-and-forget, but surface failures to console so we can debug.
-        apiClient.processAssessment(id).catch((err) => {
-          console.warn('[Upload] processAssessment failed (background):', err?.message || err);
-        });
         navigate(`/analysis/${id}`);
       }
     } catch (err) {
