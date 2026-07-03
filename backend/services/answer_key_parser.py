@@ -55,12 +55,14 @@ def _heuristic_parse(text: str) -> List[Dict[str, Any]]:
 
         # Pattern: "1. A" or "1) B" or "1. A) Human" or "Q1. Human"
         # MCQ first: match number then letter
-        mcq = re.match(r'^Q?\s*(\d{1,2})\s*[.)\s]\s*([A-Da-d])\b', line)
+        mcq = re.match(r'^Q?\s*(\d{1,2})\s*[.):\s-]\s*([A-Da-d])\b', line)
         if mcq:
             q_num = int(mcq.group(1))
             letter = mcq.group(2).upper()
             # Extract the answer text after the letter if present
             rest = line[mcq.end():].strip()
+            # Strip leading punctuation like ") " or " - "
+            rest = re.sub(r'^[)\]-]\s*', '', rest)
             answer_text = rest if rest and len(rest) > 1 else f"Option {letter}"
             results.append({
                 "questionNumber": q_num,
@@ -71,7 +73,7 @@ def _heuristic_parse(text: str) -> List[Dict[str, Any]]:
             continue
 
         # Subjective: "11. Weeds are unwanted plants..." (no letter after number)
-        subj = re.match(r'^Q?\s*(\d{1,2})\s*[.)]\s+(.+)$', line)
+        subj = re.match(r'^Q?\s*(\d{1,2})\s*[.):-]\s+(.+)$', line)
         if subj:
             q_num = int(subj.group(1))
             answer_text = subj.group(2).strip()
@@ -184,34 +186,69 @@ def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
     questions = []
     q_num = 1
     current_section = "A"
+    current_section_marks = 1
+
+    def is_section_header(line):
+        lower = line.lower()
+        if not lower.startswith("section"):
+            return False
+        # "Section A (MCQ - 1 mark each):" — has no question content
+        # "Section B (Short Answer - 2 marks each):" — has no question content
+        has_answer_keywords = any(kw in lower for kw in ("answer", "multiple", "questions", "booklet", "choice", "mcq", "short", "long", "essay", "mark"))
+        return len(line) < 50 or has_answer_keywords
 
     def is_valid_question_line(line):
         lower = line.lower()
-        if "section" in lower and ("answer" in lower or "multiple" in lower or "questions" in lower or "booklet" in lower):
+        if is_section_header(line):
+            return False
+        if lower.startswith("section"):
             return False
         if "self assessment" in lower or "udise" in lower:
             return False
-        if len(line) < 15:
+        if len(line) < 10:
             return False
+        # Filter lines that are just option lists (e.g., "A) X  B) Y  C) Z  D) W")
+        opts_only = re.findall(r'\b[A-D]\)', line)
+        if opts_only and len(opts_only) >= 2:
+            remaining = line
+            for m in re.finditer(r'\b[A-D]\)\s*[^A-D\n]+', line):
+                remaining = remaining.replace(m.group(), '', 1)
+            remaining = re.sub(r'\s+', ' ', remaining).strip()
+            if len(remaining) < 5:
+                return False
         return True
 
-    for line in lines:
+    i = 0
+    while i < len(lines):
+        line = lines[i]
         lower_line = line.lower()
-        if "section b" in lower_line:
+        if lower_line.startswith("section b") or (lower_line.startswith("section") and " b" in lower_line):
             current_section = "B"
+            current_section_marks = 2
+            i += 1
             continue
-        elif "section c" in lower_line:
+        elif lower_line.startswith("section c") or (lower_line.startswith("section") and " c" in lower_line):
             current_section = "C"
+            current_section_marks = 3
+            i += 1
             continue
-        elif "section d" in lower_line:
+        elif lower_line.startswith("section d") or (lower_line.startswith("section") and " d" in lower_line):
             current_section = "D"
+            current_section_marks = 4
+            i += 1
+            continue
+        elif lower_line.startswith("section a") or (lower_line.startswith("section") and " a" in lower_line):
+            current_section = "A"
+            current_section_marks = 1
+            i += 1
             continue
 
         if not is_valid_question_line(line):
+            i += 1
             continue
 
-        # Pattern for "16. A)" or "1." or "16)"
-        num_match = re.match(r'^(?:Q|q)?(\d{1,2})\s*[\.?)\s-]*\s*([A-Ba-b])?[\.?)\s-]*\s*(.+)$', line)
+        # Pattern for "16. A)" or "1." or "16)" or "1. Question text"
+        num_match = re.match(r'^(?:Q|q)?(\d{1,2})\s*[.):\-?\s-]*\s*([A-Ba-b])?[.):\-?\s-]*\s*(.+)$', line)
 
         q_text = line
         custom_num = None
@@ -223,33 +260,35 @@ def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
                 q_text = f"{suffix}) {q_text}"
 
         options = []
-        if current_section == "A" or "A)" in q_text:
-            opts_match = re.findall(r'([A-D])\s*\)\s*([^A-D\n]+)', q_text)
-            if len(opts_match) >= 2:
-                options = [f"{o[0]}) {o[1].strip()}" for o in opts_match]
-                q_text = re.split(r'\b[A-D]\s*\)', q_text)[0].strip()
+        # Extract MCQ options from current line
+        def extract_options(text):
+            opts = re.findall(r'([A-D])\s*\)\s*([^A-D\n]+)', text)
+            if len(opts) >= 2:
+                return [f"{o[0]}) {o[1].strip()}" for o in opts]
+            return []
+
+        options = extract_options(q_text)
+        if options:
+            first_opt = re.search(r'\b([A-D])\s*\)', q_text)
+            if first_opt:
+                q_text = q_text[:first_opt.start()].strip()
+
+        # Also check the next line for options (multi-line questions)
+        if not options and i + 1 < len(lines):
+            next_line = lines[i + 1]
+            next_opts = extract_options(next_line)
+            if next_opts:
+                options = next_opts
+                i += 1  # Consume the options line
 
         actual_num = custom_num if custom_num else q_num
-
-        if actual_num <= 10:
-            sect = "A"
-            marks = 1
-        elif actual_num <= 13:
-            sect = "B"
-            marks = 2
-        elif actual_num <= 15:
-            sect = "C"
-            marks = 4
-        else:
-            sect = "D"
-            marks = 8
 
         questions.append({
             "id": f"q{actual_num}",
             "_id": f"q{actual_num}",
             "number": actual_num,
-            "section": sect,
-            "maxMarks": marks,
+            "section": current_section,
+            "maxMarks": current_section_marks,
             "text": q_text,
             "options": options,
             "correctAnswer": None,
@@ -258,6 +297,7 @@ def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
         })
 
         q_num = actual_num + 1
+        i += 1
 
     return questions
 

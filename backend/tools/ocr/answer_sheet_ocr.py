@@ -351,9 +351,9 @@ RAW OCR TEXTS (in page order, one per region):
 Return JSON array only, no markdown, no explanation."""
 
         print("  Sending to Ollama for structuring...")
-        return self._call_ollama(prompt)
+        return self._call_ollama(prompt, raw_texts)
 
-    def _call_ollama(self, prompt: str) -> List[Dict]:
+    def _call_ollama(self, prompt: str, raw_texts: Optional[List[str]] = None) -> List[Dict]:
         import requests
         payload = {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.1}
         try:
@@ -366,7 +366,7 @@ Return JSON array only, no markdown, no explanation."""
                 return json.loads(resp_text[json_start:json_end + 1])
         except Exception as e:
             print(f"  Ollama error: {e}")
-        return self._fallback_postprocess([])
+        return self._fallback_postprocess(raw_texts or [])
 
     def _fallback_postprocess(self, raw_texts: List[str]) -> List[Dict[str, Any]]:
         """Heuristic post-processing when Ollama is unavailable."""
@@ -522,6 +522,10 @@ Return JSON array only, no markdown, no explanation."""
     def compute_review_flags(text: str, mcq_choice: Optional[str], is_mcq: bool, q_id: str = "") -> Dict[str, Any]:
         """Post-OCR review flagging (I4): Ollama-independent checks."""
         flags = {"needsReview": False, "problems": []}
+        if text is None:
+            flags["needsReview"] = True
+            flags["problems"].append("empty_text")
+            return flags
         if "<unk>" in text:
             flags["needsReview"] = True
             flags["problems"].append("unk_tokens")

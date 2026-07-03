@@ -9,8 +9,12 @@ import uuid
 import os
 import shutil
 import asyncio
+import httpx
 
 router = APIRouter()
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "llama3.2:3b"
 
 UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads")
 
@@ -103,6 +107,7 @@ async def create_assessment(
             "processingStatus": "pending",
             "parsedQuestions": None,
             "parsedAnswerKey": None,
+            "gradingMode": "formative" if totalMarks == 0 else "scored",
         }
 
         print(f"[Upload] Step 6: inserting into MongoDB (id={assessment_id})")
@@ -146,7 +151,13 @@ async def create_assessment(
                 from backend.services.answer_key_parser import parse_questions_text
                 parsed_qs = parse_questions_text(questionsText)
                 if parsed_qs:
-                    await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedQuestions": parsed_qs}})
+                    computed_total = _compute_total_marks(parsed_qs)
+                    update_fields = {"parsedQuestions": parsed_qs}
+                    # Don't override totalMarks when teacher explicitly chose formative (0 marks)
+                    if computed_total > 0 and totalMarks != 0 and totalMarks < computed_total:
+                        update_fields["totalMarks"] = computed_total
+                        doc["totalMarks"] = computed_total
+                    await db.assessments.update_one({"_id": assessment_id}, {"$set": update_fields})
                     doc["parsedQuestions"] = parsed_qs
             except Exception as e:
                 print(f"[Upload] Questions parse skip: {e}")
@@ -215,6 +226,7 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
         result = analyze_question_paper(openrouter_key, settings.QWEN_MODEL, image_paths, subject=subject)
         questions = result.get("questions", [])
         if questions:
+            computed_total = _compute_total_marks(questions)
             for i, q in enumerate(questions):
                 q["id"] = f"q{i+1}"
                 q["number"] = q.get("number", i+1)
@@ -226,7 +238,10 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
                 q["skill"] = q.get("skill", "Recall")
                 q["difficulty"] = q.get("difficulty", "Medium")
                 q["prerequisites"] = q.get("prerequisites", [])
-            await db.assessments.update_one({"_id": id}, {"$set": {"parsedQuestions": questions, "processingStatus": "qpaper_done"}})
+            update_fields = {"parsedQuestions": questions, "processingStatus": "qpaper_done"}
+            if computed_total > 0:
+                update_fields["totalMarks"] = computed_total
+            await db.assessments.update_one({"_id": id}, {"$set": update_fields})
             print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted")
             return {"status": "ok", "questions": len(questions)}
         else:
@@ -297,6 +312,13 @@ async def update_answer_key(id: str, body: dict, db=Depends(get_db), current_use
     return {"status": "ok", "answers": len(answer_key)}
 
 
+def _compute_total_marks(questions: list) -> int:
+    """Compute total assessment marks from parsed questions' maxMarks."""
+    if not questions:
+        return 0
+    return sum(q.get("maxMarks", 0) for q in questions)
+
+
 async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: str, model: str, subject: str = ""):
     """Background: analyze question paper images with Qwen, save results."""
     from backend.core.database import get_db as _get_db
@@ -306,6 +328,7 @@ async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: s
         result = analyze_question_paper(api_key, model, image_paths, subject=subject)
         questions = result.get("questions", [])
         if questions:
+            computed_total = _compute_total_marks(questions)
             for i, q in enumerate(questions):
                 q["id"] = f"q{i+1}"
                 q["number"] = q.get("number", i+1)
@@ -317,7 +340,10 @@ async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: s
                 q["skill"] = q.get("skill", "Recall")
                 q["difficulty"] = q.get("difficulty", "Medium")
                 q["prerequisites"] = q.get("prerequisites", [])
-            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedQuestions": questions, "processingStatus": "qpaper_done"}})
+            update_fields = {"parsedQuestions": questions, "processingStatus": "qpaper_done"}
+            if computed_total > 0:
+                update_fields["totalMarks"] = computed_total
+            await db.assessments.update_one({"_id": assessment_id}, {"$set": update_fields})
             print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted for {assessment_id}")
         else:
             await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "qpaper_error"}})
@@ -453,6 +479,9 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
+                # Validate that resolved paths exist on disk
+                sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
+
                 qwen = QwenVisionOCR(openrouter_key, settings.QWEN_MODEL, questions=parsed_questions, answer_key=answer_key)
 
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
@@ -497,16 +526,72 @@ async def _run_ocr_pipeline(
                 failed = sum(1 for r in results if not r.get("ok"))
                 print(f"[Qwen] Parallel done: {successful} ok, {failed} failed of {total_sheets}")
 
+                # Formative mode: nullify marks, add isCorrect/mistakeType
+                grading_mode = assessment.get("gradingMode", "scored")
+                if grading_mode == "formative":
+                    all_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
+                    for ev in all_evals:
+                        student_answer = ev.get("studentAnswer", "") or ""
+                        ai_mark = ev.get("aiMark", 0) or 0
+                        q_num = int(ev.get("qId", "q0")[1:]) if ev.get("qId", "").startswith("q") else 0
+                        max_mark = 1 if q_num <= 10 else 2
+                        is_correct = ai_mark >= max_mark
+                        mistake = None if is_correct else ("wrong_option" if q_num <= 10 else "incorrect_answer")
+                        if not student_answer or student_answer in ("[unreadable]", "the student's text"):
+                            mistake = "unreadable"
+                        await db.evaluations.update_one(
+                            {"_id": ev["_id"]},
+                            {"$set": {
+                                "aiMark": None,
+                                "isCorrect": is_correct,
+                                "mistakeType": mistake,
+                            }},
+                        )
+
+                # LLM-native evaluation for formative mode
+                if grading_mode == "formative" and parsed_questions and parsed_answer_key:
+                    current_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
+                    await _llm_evaluate_answers(db, assessment_id, parsed_questions, parsed_answer_key, current_evals)
+
                 distinct_students = await db.evaluations.distinct("studentId", {"assessmentId": assessment_id})
                 final_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
                 num_students = len(distinct_students) if distinct_students else successful
                 pending = len([e for e in final_evals if e.get("needsReview")])
 
-                await db.assessments.update_one({"_id": assessment_id}, {"$set": {
-                    "status": "review", "processingStatus": "complete",
-                    "totalPapers": num_students, "pendingReview": pending,
-                    "avgScore": round(sum(float(e.get("aiMark",0) or 0) for e in final_evals) / max(num_students, 1), 1),
-                }})
+                qwen_total_marks = _compute_total_marks(parsed_questions) if parsed_questions else assessment.get("totalMarks", 40)
+                if grading_mode == "formative":
+                    total_incorrect = len([e for e in final_evals if e.get("isCorrect") is False])
+                    total_correct = len([e for e in final_evals if e.get("isCorrect") is True])
+                    mistake_types = {}
+                    for e in final_evals:
+                        mt = e.get("mistakeType")
+                        if mt:
+                            mistake_types[mt] = mistake_types.get(mt, 0) + 1
+                    final_update = {
+                        "status": "error" if (num_students == 0 and len(final_evals) == 0) else "review",
+                        "processingStatus": "error_no_evals" if (num_students == 0 and len(final_evals) == 0) else "complete",
+                        "totalPapers": num_students,
+                        "pendingReview": pending,
+                        "avgScore": 0,
+                        "totalMarks": 0,
+                        "studentIds": list(distinct_students) if distinct_students else [],
+                        "mistakeSummary": {
+                            "totalCorrect": total_correct,
+                            "totalIncorrect": total_incorrect,
+                            "byType": mistake_types,
+                        },
+                    }
+                else:
+                    final_update = {
+                        "status": "error" if (num_students == 0 and len(final_evals) == 0) else "review",
+                        "processingStatus": "error_no_evals" if (num_students == 0 and len(final_evals) == 0) else "complete",
+                        "totalPapers": num_students, "pendingReview": pending,
+                        "avgScore": round(sum(float(e.get("aiMark",0) or 0) for e in final_evals) / max(num_students, 1), 1),
+                        "studentIds": list(distinct_students) if distinct_students else [],
+                    }
+                    if qwen_total_marks > 0:
+                        final_update["totalMarks"] = qwen_total_marks
+                await db.assessments.update_one({"_id": assessment_id}, {"$set": final_update})
                 print(f"[Qwen] Pipeline complete: {num_students} students, {len(final_evals)} evals")
                 return
 
@@ -529,6 +614,9 @@ async def _run_ocr_pipeline(
                 os.path.join(os.path.dirname(__file__), "..", "..", img)
                 for img in assessment.get("sheetImages", [])
             ]
+
+        # Keep only paths that actually exist on disk
+        sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
         if not sheet_paths:
             await db.assessments.update_one(
@@ -565,9 +653,13 @@ async def _run_ocr_pipeline(
                 )
 
         # [Step 1/6] Scanning handwriting (OCR)
+        step1_update = {"processingStatus": "step_ocr"}
+        local_total_marks = _compute_total_marks(parsed_questions) if parsed_questions else 0
+        if local_total_marks > 0:
+            step1_update["totalMarks"] = local_total_marks
         await db.assessments.update_one(
             {"_id": assessment_id},
-            {"$set": {"processingStatus": "step_ocr"}}
+            {"$set": step1_update}
         )
 
         # Group sheet paths by student name
@@ -636,7 +728,13 @@ async def _run_ocr_pipeline(
         )
         # If parsed answer key exists, apply it to grading
         if parsed_key:
-            await _apply_answer_key_grading(db, assessment_id, parsed_key, all_student_evaluations)
+            grading_mode = assessment.get("gradingMode", "scored")
+            await _apply_answer_key_grading(db, assessment_id, parsed_key, all_student_evaluations, parsed_questions, grading_mode)
+            
+            # LLM-native evaluation for formative mode
+            if grading_mode == "formative":
+                current_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
+                await _llm_evaluate_answers(db, assessment_id, parsed_questions, parsed_key, current_evals)
         else:
             # Re-read evaluations in case they changed during answer key grading
             all_student_evaluations = await db.evaluations.find({"assessmentId": assessment_id}).to_list(100)
@@ -650,8 +748,10 @@ async def _run_ocr_pipeline(
         )
 
         # Create/update student records for all processed students
+        student_ids = []
         for student_name, student_paths in student_groups.items():
             student_id = f"stu-{assessment_id}-{student_name.lower()}"
+            student_ids.append(student_id)
             
             # Fetch final evaluations for this specific student
             student_evals = await db.evaluations.find({"assessmentId": assessment_id, "studentId": student_id}).to_list(100)
@@ -675,6 +775,13 @@ async def _run_ocr_pipeline(
                 upsert=True,
             )
 
+        # Link student IDs to assessment
+        if student_ids:
+            await db.assessments.update_one(
+                {"_id": assessment_id},
+                {"$set": {"studentIds": student_ids}}
+            )
+
         await asyncio.sleep(2.0)
 
         # [Step 6/6] Generating classroom insights
@@ -686,26 +793,68 @@ async def _run_ocr_pipeline(
 
         # Recompute assessment aggregates
         final_evals = await db.evaluations.find({"assessmentId": assessment_id}).to_list(1000)
+        
+        if len(final_evals) == 0:
+            # No evaluations were produced — mark as error, not complete
+            error_update = {
+                "status": "error",
+                "processingStatus": "error_no_evaluations_produced",
+                "totalPapers": 0,
+                "avgScore": 0,
+                "pendingReview": 0,
+            }
+            await db.assessments.update_one(
+                {"_id": assessment_id},
+                {"$set": error_update}
+            )
+            print(f"[Pipeline] Error: No evaluations produced for {assessment_id}")
+            return
+
         total_eval_marks = sum(float(ev.get("aiMark", 0.0) or 0.0) for ev in final_evals)
-        total_marks_limit = assessment.get("totalMarks", 40) or 40
+        computed_total = _compute_total_marks(parsed_questions)
         
         distinct_students = await db.evaluations.distinct("studentId", {"assessmentId": assessment_id})
         num_students = len(distinct_students) if distinct_students else 1
         
-        avg_score_percent = round(((total_eval_marks / num_students) / total_marks_limit) * 100, 1)
+        grading_mode = assessment.get("gradingMode", "scored")
 
-        # Update assessment status as complete with real averages
+        if grading_mode == "formative":
+            total_correct = len([e for e in final_evals if e.get("isCorrect") is True])
+            total_incorrect = len([e for e in final_evals if e.get("isCorrect") is False])
+            mistake_types = {}
+            for e in final_evals:
+                mt = e.get("mistakeType")
+                if mt:
+                    mistake_types[mt] = mistake_types.get(mt, 0) + 1
+            final_update = {
+                "status": "review",
+                "processingStatus": "complete",
+                "totalPapers": num_students,
+                "avgScore": 0,
+                "totalMarks": 0,
+                "pendingReview": len([e for e in final_evals if e.get("needsReview")]),
+                "mistakeSummary": {
+                    "totalCorrect": total_correct,
+                    "totalIncorrect": total_incorrect,
+                    "byType": mistake_types,
+                },
+            }
+        else:
+            total_marks_limit = computed_total if computed_total > 0 else (assessment.get("totalMarks", 40) or 40)
+            avg_score_percent = round(((total_eval_marks / num_students) / total_marks_limit) * 100, 1)
+            final_update = {
+                "status": "review",
+                "processingStatus": "complete",
+                "totalPapers": num_students,
+                "avgScore": avg_score_percent,
+                "pendingReview": len([e for e in final_evals if e.get("needsReview")]),
+            }
+            if computed_total > 0:
+                final_update["totalMarks"] = computed_total
+
         await db.assessments.update_one(
             {"_id": assessment_id},
-            {
-                "$set": {
-                    "status": "review",
-                    "processingStatus": "complete",
-                    "totalPapers": num_students,
-                    "avgScore": avg_score_percent,
-                    "pendingReview": len([e for e in final_evals if e.get("needsReview")]),
-                }
-            }
+            {"$set": final_update}
         )
 
     except Exception as e:
@@ -719,12 +868,134 @@ async def _run_ocr_pipeline(
             pass
 
 
-async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, evaluations: list):
-    """Apply parsed answer key to re-grade evaluations."""
+async def _llm_evaluate_answers(db, assessment_id: str, parsed_questions: list, parsed_key: list, student_evaluations: list):
+    """Use Ollama LLM to evaluate each student answer against the answer key.
+    
+    Produces: isCorrect (correct/partial/incorrect), missingConcepts, 
+    presentConcepts, suggestion, mistakeSummary.
+    """
+    import json as json_mod
+    import re as re_mod
+    
+    # Build lookup maps
+    key_by_q = {}
+    for entry in (parsed_key or []):
+        q_num = entry.get("questionNumber") or entry.get("q", 0)
+        if q_num:
+            key_by_q[q_num] = entry
+    
+    q_by_num = {}
+    for q in (parsed_questions or []):
+        q_by_num[q.get("number", 0)] = q
+    
+    # Check Ollama availability
+    try:
+        r = httpx.get("http://localhost:11434/api/tags", timeout=5)
+        ollama_ok = r.status_code == 200
+    except Exception:
+        print("[LLM Eval] Ollama not available, skipping LLM evaluation")
+        return
+    
+    print(f"[LLM Eval] Starting LLM-native evaluation for {len(student_evaluations)} answers...")
+    evaluated = 0
+    
+    for ev in student_evaluations:
+        q_id = ev.get("qId", "")
+        q_num = int(q_id[1:]) if q_id.startswith("q") else 0
+        extracted = (ev.get("studentAnswer") or "").strip()
+        
+        if not extracted or extracted.lower() in ("the student's text", "[unreadable]", "", "none"):
+            continue
+        
+        key_entry = key_by_q.get(q_num)
+        question = q_by_num.get(q_num, {})
+        if not key_entry or not question:
+            continue
+        
+        q_text = question.get("text", "")
+        options = question.get("options", [])
+        expected = key_entry.get("expectedText") or key_entry.get("correctAnswer", "")
+        correct_option = key_entry.get("correctOption")
+        is_mcq = bool(options)
+        
+        # Build evaluation prompt
+        if is_mcq:
+            prompt = f"""Evaluate this student's MCQ answer. Return ONLY a JSON object.
+
+QUESTION: {q_text}
+OPTIONS: {', '.join(options)}
+CORRECT OPTION: {correct_option} ({expected})
+STUDENT ANSWER: {extracted}
+
+Return JSON:
+{{"isCorrect": "correct"|"incorrect",
+ "mistakeSummary": "brief description of what went wrong if incorrect",
+ "missingConcepts": [],
+ "presentConcepts": [],
+ "suggestion": "helpful hint if incorrect"}}"""
+        else:
+            prompt = f"""Evaluate this student's written answer against the expected answer. Return ONLY a JSON object.
+
+QUESTION: {q_text}
+EXPECTED ANSWER: {expected}
+STUDENT ANSWER: {extracted}
+
+Judge the answer as "correct", "partial", or "incorrect". For partial/incorrect:
+- List concepts the student MISSED (missingConcepts)
+- List concepts the student GOT RIGHT (presentConcepts)
+- Give a helpful suggestion for improvement
+
+Return JSON:
+{{"isCorrect": "correct"|"partial"|"incorrect",
+ "mistakeSummary": "one-line description of what's wrong",
+ "missingConcepts": ["concept1", "concept2"],
+ "presentConcepts": ["concept1"],
+ "suggestion": "specific, helpful feedback for the student"}}"""
+        
+        try:
+            r = httpx.post(
+                OLLAMA_URL,
+                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.1},
+                timeout=60,
+            )
+            if r.status_code == 200:
+                resp_text = r.json().get("response", "").strip()
+                json_start = resp_text.find("{")
+                json_end = resp_text.rfind("}")
+                if json_start >= 0 and json_end > json_start:
+                    result = json_mod.loads(resp_text[json_start:json_end + 1])
+                    
+                    update_fields = {
+                        "isCorrect": result.get("isCorrect"),
+                        "mistakeSummary": result.get("mistakeSummary"),
+                        "missingConcepts": result.get("missingConcepts", []),
+                        "presentConcepts": result.get("presentConcepts", []),
+                        "suggestion": result.get("suggestion"),
+                        "aiMark": None,
+                        "evaluatedBy": "llm",
+                    }
+                    await db.evaluations.update_one(
+                        {"_id": ev["_id"]},
+                        {"$set": update_fields},
+                    )
+                    evaluated += 1
+        except Exception as e:
+            print(f"[LLM Eval] Error on {q_id}: {e}")
+    
+    print(f"[LLM Eval] Done: {evaluated} answers evaluated by LLM")
+
+
+async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, evaluations: list, parsed_questions: list = None, grading_mode: str = "scored"):
+    """Apply parsed answer key to re-grade evaluations.
+    
+    grading_mode: "scored" = assign numeric aiMark, "formative" = correct/incorrect flags only
+    """
     import re
+    is_formative = grading_mode == "formative"
+    
     key_by_q = {}
     for entry in parsed_key:
-        q_num = entry.get("questionNumber", 0)
+        q_num = entry.get("questionNumber") or entry.get("q", 0)
         if q_num:
             key_by_q[q_num] = entry
 
@@ -741,39 +1012,74 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
         if q_num <= 10:
             correct_option = key_entry.get("correctOption")
             if not correct_option:
-                # Fallback: extract from correctAnswer text
                 correct_ans = key_entry.get("correctAnswer", "")
-                m_correct = re.search(r"\b([A-Da-d])\b", correct_and_clean_text := correct_ans.strip()[:5])
+                m_correct = re.search(r"\b([A-Da-d])\b", (correct_ans or "").strip()[:5])
                 correct_option = m_correct.group(1).upper() if m_correct else None
 
-            # Extract student's selection
             m_stud = re.search(r"\b([A-Da-d])\b", extracted)
             student_option = m_stud.group(1).upper() if m_stud else None
 
-            if correct_option and student_option == correct_option:
-                ev["aiMark"] = 1.0
-                ev["confidence"] = "high"
-                ev["confidenceScore"] = 95
-                ev["reasoning"] = f"MCQ match. Student chose correct option {student_option}."
-                ev["needsReview"] = False
-            else:
-                ev["aiMark"] = 0.0
-                ev["confidence"] = "high"
-                ev["confidenceScore"] = 95
-                ev["reasoning"] = f"MCQ mismatch. Student chose {student_option or 'None'}; correct is {correct_option}."
-                ev["needsReview"] = False
+            if not student_option and extracted and extracted.lower() not in ("the student's text", "none", ""):
+                question_opts = {}
+                for q in (parsed_questions or []):
+                    if q.get("number") == q_num and q.get("options"):
+                        for opt in q["options"]:
+                            m_opt = re.match(r'([A-D])\s*\)\s*(.+)', opt)
+                            if m_opt:
+                                question_opts[m_opt.group(1)] = m_opt.group(2).strip().lower()
+                extracted_lower = extracted.lower().strip(",.")
+                for letter, opt_text in question_opts.items():
+                    opt_clean = opt_text.lower().strip(",.")
+                    if extracted_lower == opt_clean or extracted_lower in opt_clean or opt_clean in extracted_lower:
+                        student_option = letter
+                        break
 
-            # Update in DB
-            await db.evaluations.update_one(
-                {"_id": ev["_id"]},
-                {"$set": {
-                    "aiMark": ev["aiMark"],
-                    "confidence": ev["confidence"],
-                    "confidenceScore": ev.get("confidenceScore", 95),
-                    "reasoning": ev["reasoning"],
-                    "needsReview": ev["needsReview"],
-                }},
-            )
+            is_correct = correct_option and student_option == correct_option
+
+            if is_formative:
+                ev["isCorrect"] = is_correct
+                if not is_correct:
+                    ev["mistakeType"] = "wrong_option" if student_option else "unrecognized_answer"
+                    ev["correctOption"] = correct_option
+                    ev["studentOption"] = student_option
+                ev["aiMark"] = None
+                ev["confidence"] = "high"
+                ev["confidenceScore"] = 95
+                ev["reasoning"] = (
+                    f"MCQ {'correct' if is_correct else 'incorrect'}. "
+                    f"Student chose {student_option or 'None'}; correct is {correct_option}."
+                )
+                ev["needsReview"] = False
+                await db.evaluations.update_one(
+                    {"_id": ev["_id"]},
+                    {"$set": {
+                        "aiMark": None,
+                        "isCorrect": ev["isCorrect"],
+                        "mistakeType": ev.get("mistakeType"),
+                        "correctOption": ev.get("correctOption"),
+                        "studentOption": ev.get("studentOption"),
+                        "confidence": ev["confidence"],
+                        "confidenceScore": ev["confidenceScore"],
+                        "reasoning": ev["reasoning"],
+                        "needsReview": ev["needsReview"],
+                    }},
+                )
+            else:
+                ev["aiMark"] = 1.0 if is_correct else 0.0
+                ev["confidence"] = "high"
+                ev["confidenceScore"] = 95
+                ev["reasoning"] = f"MCQ {'match' if is_correct else 'mismatch'}. Student chose {student_option or 'None'}; correct is {correct_option}."
+                ev["needsReview"] = False
+                await db.evaluations.update_one(
+                    {"_id": ev["_id"]},
+                    {"$set": {
+                        "aiMark": ev["aiMark"],
+                        "confidence": ev["confidence"],
+                        "confidenceScore": ev.get("confidenceScore", 95),
+                        "reasoning": ev["reasoning"],
+                        "needsReview": ev["needsReview"],
+                    }},
+                )
             continue
 
         # Subjective (Q11-Q17)
@@ -781,41 +1087,71 @@ async def _apply_answer_key_grading(db, assessment_id: str, parsed_key: list, ev
         if not expected:
             continue
 
-        # Simple keyword overlap grading
         expected_words = set(expected.lower().split())
         extracted_words = set(extracted.lower().split())
         if expected_words:
             overlap = len(expected_words & extracted_words) / len(expected_words)
-            if overlap >= 0.6:
-                ev["aiMark"] = float(ev.get("aiMark", 0) or 2)
-                ev["confidence"] = "high"
-                ev["confidenceScore"] = 85
-                ev["reasoning"] = "Answer key match (keyword overlap)."
-                ev["needsReview"] = False
-            elif overlap >= 0.3:
-                ev["aiMark"] = round(float(ev.get("aiMark", 1) or 1), 1)
-                ev["confidence"] = "medium"
-                ev["confidenceScore"] = 60
-                ev["reasoning"] = "Partial answer key match."
-                ev["needsReview"] = True
+            if is_formative:
+                if overlap >= 0.6:
+                    ev["isCorrect"] = True
+                    ev["mistakeType"] = None
+                elif overlap >= 0.3:
+                    ev["isCorrect"] = False
+                    ev["mistakeType"] = "partial_answer"
+                else:
+                    ev["isCorrect"] = False
+                    ev["mistakeType"] = "incorrect_answer" if extracted else "no_answer"
+                ev["aiMark"] = None
+                ev["keywordOverlap"] = round(overlap, 2)
+                ev["confidence"] = "high" if overlap >= 0.6 else ("medium" if overlap >= 0.3 else "low")
+                ev["confidenceScore"] = 85 if overlap >= 0.6 else (60 if overlap >= 0.3 else 30)
+                ev["reasoning"] = (
+                    f"Keyword overlap: {overlap:.0%}. "
+                    f"{'Matches expected answer.' if overlap >= 0.6 else ('Partial match.' if overlap >= 0.3 else 'Does not match expected answer.')}"
+                )
+                ev["needsReview"] = overlap < 0.6
+                await db.evaluations.update_one(
+                    {"_id": ev["_id"]},
+                    {"$set": {
+                        "aiMark": None,
+                        "isCorrect": ev["isCorrect"],
+                        "mistakeType": ev.get("mistakeType"),
+                        "keywordOverlap": ev.get("keywordOverlap"),
+                        "confidence": ev["confidence"],
+                        "confidenceScore": ev["confidenceScore"],
+                        "reasoning": ev["reasoning"],
+                        "needsReview": ev["needsReview"],
+                    }},
+                )
             else:
-                ev["aiMark"] = 0.0
-                ev["confidence"] = "low"
-                ev["confidenceScore"] = 30
-                ev["reasoning"] = "Incorrect or no matching keywords."
-                ev["needsReview"] = True
-
-        # Update in DB
-        await db.evaluations.update_one(
-            {"_id": ev["_id"]},
-            {"$set": {
-                "aiMark": ev["aiMark"],
-                "confidence": ev["confidence"],
-                "confidenceScore": ev.get("confidenceScore", 50),
-                "reasoning": ev["reasoning"],
-                "needsReview": ev.get("needsReview", True),
-            }},
-        )
+                if overlap >= 0.6:
+                    ev["aiMark"] = float(ev.get("aiMark", 0) or 2)
+                    ev["confidence"] = "high"
+                    ev["confidenceScore"] = 85
+                    ev["reasoning"] = "Answer key match (keyword overlap)."
+                    ev["needsReview"] = False
+                elif overlap >= 0.3:
+                    ev["aiMark"] = round(float(ev.get("aiMark", 1) or 1), 1)
+                    ev["confidence"] = "medium"
+                    ev["confidenceScore"] = 60
+                    ev["reasoning"] = "Partial answer key match."
+                    ev["needsReview"] = True
+                else:
+                    ev["aiMark"] = 0.0
+                    ev["confidence"] = "low"
+                    ev["confidenceScore"] = 30
+                    ev["reasoning"] = "Incorrect or no matching keywords."
+                    ev["needsReview"] = True
+                await db.evaluations.update_one(
+                    {"_id": ev["_id"]},
+                    {"$set": {
+                        "aiMark": ev["aiMark"],
+                        "confidence": ev["confidence"],
+                        "confidenceScore": ev.get("confidenceScore", 50),
+                        "reasoning": ev["reasoning"],
+                        "needsReview": ev.get("needsReview", True),
+                    }},
+                )
 
 
 @router.patch("/{id}", response_model=Assessment)
@@ -828,10 +1164,19 @@ async def update_assessment(id: str, updates: dict, db=Depends(get_db), current_
 
 @router.get("/{id}/status")
 async def get_assessment_status(id: str, db=Depends(get_db)):
-    assessment = await db.assessments.find_one({"_id": id}, {"status": 1, "processingStatus": 1})
+    assessment = await db.assessments.find_one({"_id": id}, {
+        "status": 1, "processingStatus": 1, "totalPapers": 1, 
+        "totalMarks": 1, "avgScore": 1, "pendingReview": 1,
+        "studentIds": 1,
+    })
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
     return {
         "status": assessment.get("status", "draft"),
         "processingStatus": assessment.get("processingStatus", "pending"),
+        "totalPapers": assessment.get("totalPapers", 0),
+        "totalMarks": assessment.get("totalMarks", 0),
+        "avgScore": assessment.get("avgScore", 0),
+        "pendingReview": assessment.get("pendingReview", 0),
+        "studentIds": assessment.get("studentIds", []),
     }

@@ -271,21 +271,6 @@ const ScoreEntry = () => {
     setQuestions((prev) => [...prev, ...newQs]);
   }, [questions.length, qCount, qSection, qMarks, qChapter, qConcept, selectedChapterConcepts]);
 
-  const applyTemplate = useCallback((template) => {
-    const chs = chapters;
-    const chLen = chs.length || 1;
-    const templates = {
-      "10-mcq": Array.from({ length: 10 }, (_, i) => { const ch = chs[i % chLen]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
-      "17-standard": [
-        ...Array.from({ length: 10 }, (_, i) => { const ch = chs[i % chLen]; return { number: i + 1, section: "A", maxMarks: 1, chapter: ch.id, concept: ch.concepts[i % ch.concepts.length] }; }),
-        ...Array.from({ length: 3 }, (_, i) => { const ch = chs[i % chLen]; return { number: 11 + i, section: "B", maxMarks: 2, chapter: ch.id, concept: ch.concepts[(i + 2) % ch.concepts.length] }; }),
-        ...Array.from({ length: 2 }, (_, i) => { const ch = chs[i % chLen]; return { number: 14 + i, section: "C", maxMarks: 4, chapter: ch.id, concept: ch.concepts[(i + 4) % ch.concepts.length] }; }),
-        ...Array.from({ length: 2 }, (_, i) => { const ch = chs[i % chLen]; return { number: 16 + i, section: "D", maxMarks: 8, chapter: ch.id, concept: ch.concepts[(i + 6) % ch.concepts.length] }; }),
-      ],
-    };
-    if (templates[template]) setQuestions(templates[template]);
-  }, [chapters]);
-
   const updateQuestion = useCallback((idx, field, value) => {
     setQuestions((prev) => {
       const updated = [...prev];
@@ -468,7 +453,7 @@ const ScoreEntry = () => {
           <div>
             <div className="text-sm font-semibold tracking-[0.08em] uppercase text-emerald-800">Quick Score Entry</div>
             <h1 className="mt-0.5 font-display text-3xl font-semibold text-stone-900">Enter Marks Directly</h1>
-            <p className="text-sm text-stone-600 mt-1">Upload Q paper images for AI extraction, or use quick templates. Enter scores manually or import from Excel.</p>
+            <p className="text-sm text-stone-600 mt-1">Upload Q paper images for AI extraction, or build the question structure by hand. Enter scores manually or import from Excel.</p>
           </div>
         </div>
       </div>
@@ -549,15 +534,6 @@ const ScoreEntry = () => {
           )}
         </div>
 
-        {/* Templates */}
-        <div className="mb-4">
-          <div className="text-xs font-semibold text-stone-500 mb-2">Quick templates {questions.length > 0 ? "(will replace)" : ""}:</div>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => applyTemplate("10-mcq")} className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 border border-stone-200 hover:border-emerald-200 text-sm font-medium transition-colors">10 MCQs (1 mark each)</button>
-            <button onClick={() => applyTemplate("17-standard")} className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 border border-stone-200 hover:border-emerald-200 text-sm font-medium transition-colors">17 Qs Standard</button>
-          </div>
-        </div>
-
         {/* Manual builder */}
         <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-stone-50 rounded-lg border border-stone-200">
           <div>
@@ -588,6 +564,12 @@ const ScoreEntry = () => {
           </div>
           <button onClick={addQuestions} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-1.5"><Plus size={14} /> Add</button>
         </div>
+
+        {questions.length === 0 && (
+          <div className="mb-4 p-4 rounded-lg border border-dashed border-stone-300 bg-stone-50 text-sm text-stone-500 text-center">
+            No questions yet. Use the row above to add questions — pick section, marks, chapter and concept, then hit <span className="font-medium text-stone-700">Add</span>.
+          </div>
+        )}
 
         {questions.length > 0 && (
           <div className="border border-stone-200 rounded-lg overflow-hidden">

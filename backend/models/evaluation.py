@@ -13,6 +13,8 @@ class EvaluationBase(BaseModel):
     reasoning: str
     teacherMark: Optional[float] = None
     approved: bool = False
+    subMarks: Optional[dict] = {}
+    subTeacherMarks: Optional[dict] = {}
 
 class Evaluation(EvaluationBase):
     id: str = Field(alias="_id")

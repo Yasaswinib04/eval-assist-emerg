@@ -259,10 +259,14 @@ export const apiClient = {
         return data || [];
     },
 
-    async updateEvaluationOverride(id, studentId, qid, teacherMark) {
+    async updateEvaluationOverride(id, studentId, qid, teacherMark, subTeacherMarks) {
+        const body = { teacherMark };
+        if (subTeacherMarks != null) {
+            body.subTeacherMarks = subTeacherMarks;
+        }
         const data = await fetchWithFallback(`/assessments/${id}/students/${studentId}/evaluations/${qid}/override`, {
             method: 'PUT',
-            body: JSON.stringify({ teacherMark })
+            body: JSON.stringify(body)
         });
         return data || null;
     },

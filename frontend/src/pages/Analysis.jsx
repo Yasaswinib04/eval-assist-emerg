@@ -1,11 +1,108 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2, ChevronDown, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2, ChevronDown, CheckCircle2, ScanLine, ListChecks, BookOpen, Tags, Brain, ClipboardCheck, PenLine } from "lucide-react";
+
+const ANALYZE_MIN_MS = 16000;
+const GENERATE_MIN_MS = 13000;
+
+const ANALYZE_STEPS = [
+  { label: "Reading the question paper", detail: "Going through each page you uploaded", icon: ScanLine, minMs: 3000 },
+  { label: "Finding all questions", detail: "Picking out question numbers, sections, and marks", icon: ListChecks, minMs: 4000 },
+  { label: "Matching to your syllabus", detail: "Linking each question to topics and chapters", icon: BookOpen, minMs: 4000 },
+  { label: "Understanding what is tested", detail: "Identifying concepts, skills, and difficulty levels", icon: Tags, minMs: 5000 },
+];
+
+const GENERATE_STEPS = [
+  { label: "Reading each question", detail: "Understanding what students need to answer", icon: Brain, minMs: 3000 },
+  { label: "Finding correct answers", detail: "Solving each question accurately", icon: ClipboardCheck, minMs: 5000 },
+  { label: "Setting grading guidelines", detail: "Preparing how marks will be awarded", icon: PenLine, minMs: 5000 },
+];
+
+const ProgressPanel = ({ title, subtitle, steps, onSkip }) => {
+  const [current, setCurrent] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(0);
+
+  useEffect(() => {
+    setCurrent(0);
+    setElapsedSec(0);
+    const startedAt = Date.now();
+    const tick = setInterval(() => setElapsedSec(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+
+    const timers = [];
+    let accumulated = 0;
+    for (let i = 0; i < steps.length - 1; i++) {
+      accumulated += steps[i].minMs;
+      timers.push(setTimeout(() => setCurrent((c) => Math.max(c, i + 1)), accumulated));
+    }
+    return () => {
+      clearInterval(tick);
+      timers.forEach(clearTimeout);
+    };
+  }, [steps]);
+
+  return (
+    <div className="max-w-2xl mx-auto py-12 px-4">
+      <div className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 md:p-8">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
+            <Sparkles size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-display text-xl md:text-2xl font-semibold text-stone-900">{title}</h2>
+            <p className="text-sm text-stone-500 mt-0.5">{subtitle}</p>
+          </div>
+          <div className="text-xs font-mono text-stone-400 shrink-0 pt-1">{elapsedSec}s</div>
+        </div>
+
+        <ol className="space-y-3">
+          {steps.map((step, i) => {
+            const isDone = i < current;
+            const isActive = i === current;
+            const Icon = step.icon;
+            return (
+              <li
+                key={i}
+                className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
+                  isDone ? "bg-emerald-50/60 border-emerald-200" :
+                  isActive ? "bg-blue-50 border-blue-200" :
+                  "bg-stone-50 border-stone-200 opacity-60"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                  isDone ? "bg-emerald-100 text-emerald-700" :
+                  isActive ? "bg-blue-100 text-blue-800" :
+                  "bg-stone-200 text-stone-400"
+                }`}>
+                  {isDone ? <Check size={16} /> : isActive ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium ${isDone ? "text-emerald-900" : isActive ? "text-blue-900" : "text-stone-600"}`}>
+                    {step.label}
+                  </div>
+                  <div className={`text-xs mt-0.5 ${isDone ? "text-emerald-700" : isActive ? "text-blue-700" : "text-stone-400"}`}>
+                    {step.detail}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-xs text-stone-400">This usually takes 15–30 seconds.</p>
+          <button onClick={onSkip} className="text-xs text-stone-500 underline hover:text-stone-700">
+            Skip
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const difficultyChip = (d) => {
   const map = {
@@ -30,7 +127,6 @@ const Analysis = () => {
   const { data: ASSESSMENT, isLoading: loadingA } = useQuery({
     queryKey: ['assessment', id],
     queryFn: () => apiClient.getAssessment(id),
-    enabled: id !== "asm-001",
   });
 
   const { data: CONCEPT_MAP = [] } = useQuery({
@@ -45,7 +141,10 @@ const Analysis = () => {
 
   const answerKey = ANSWER_KEY_DATA?.answerKey || [];
 
-  const uniqueConcepts = [...new Set(QUESTIONS.map((q) => q.concept || "Unmapped"))];
+  const uniqueConcepts = useMemo(() => [...new Set(QUESTIONS.map((q) => q.concept).filter(Boolean))], [QUESTIONS]);
+  const conceptCount = uniqueConcepts.length;
+  const totalMarks = useMemo(() => QUESTIONS.reduce((s, q) => s + (q.maxMarks || 1), 0), [QUESTIONS]);
+  const skillCount = useMemo(() => [...new Set(QUESTIONS.map(q => q.skill).filter(Boolean))].length, [QUESTIONS]);
   const [concepts, setConcepts] = useState([]);
   const [newConcept, setNewConcept] = useState("");
   const [editingQ, setEditingQ] = useState(null);
@@ -58,55 +157,76 @@ const Analysis = () => {
   const [approvedAnswers, setApprovedAnswers] = useState({});
   const [expandedAnswers, setExpandedAnswers] = useState({});
 
-  const isSeedData = QUESTIONS.length > 0 && id !== "asm-001" && QUESTIONS[0]?._id?.includes(id);
   const hasPendingOCR = QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING";
 
   const hasAnswerKey = answerKey.length > 0;
   const totalApproved = Object.values(approvedAnswers).filter(Boolean).length;
   const allApproved = hasAnswerKey && totalApproved >= answerKey.length;
 
+  const progressTimerRef = useRef(null);
+
   const handleAnalyzeQPaper = async () => {
     setAnalyzing(true);
     setAnalysisError("");
+    const startedAt = Date.now();
     try {
       const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
       const data = await r.json();
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, ANALYZE_MIN_MS - elapsed);
       if (data.status === "ok") {
-        setTimeout(async () => {
+        progressTimerRef.current = setTimeout(async () => {
           setAnalyzing(false);
           await refetchQuestions();
           await queryClient.invalidateQueries(['concepts', id]);
-        }, 1000);
+        }, remaining);
       } else {
-        setAnalyzing(false);
-        setAnalysisError(data.message || "Analysis failed. Your images are saved — try again.");
-        await refetchQuestions();
+        progressTimerRef.current = setTimeout(() => {
+          setAnalyzing(false);
+          setAnalysisError(data.message || "Analysis failed. Your images are saved — try again.");
+          refetchQuestions();
+        }, remaining);
       }
     } catch (err) {
-      setAnalyzing(false);
-      setAnalysisError("Network error. Check your connection and try again.");
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, ANALYZE_MIN_MS - elapsed);
+      progressTimerRef.current = setTimeout(() => {
+        setAnalyzing(false);
+        setAnalysisError("Network error. Check your connection and try again.");
+      }, remaining);
     }
   };
 
   const handleGenerateAnswerKey = async () => {
     setGeneratingKey(true);
     setKeyError("");
+    const startedAt = Date.now();
     try {
       const result = await apiClient.generateAnswerKey(id);
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, GENERATE_MIN_MS - elapsed);
       if (result.status === "ok") {
-        setGeneratingKey(false);
-        await refetchAnswerKey();
-        const ak = result.answerKey || [];
-        const initial = {};
-        ak.forEach((a) => { initial[a.q] = true; });
-        setApprovedAnswers(initial);
+        progressTimerRef.current = setTimeout(async () => {
+          setGeneratingKey(false);
+          await refetchAnswerKey();
+          const ak = result.answerKey || [];
+          const initial = {};
+          ak.forEach((a) => { initial[a.q] = true; });
+          setApprovedAnswers(initial);
+        }, remaining);
       } else {
-        setGeneratingKey(false);
-        setKeyError(result.message || "Answer key generation failed. Try again.");
+        progressTimerRef.current = setTimeout(() => {
+          setGeneratingKey(false);
+          setKeyError(result.message || "Answer key generation failed. Try again.");
+        }, remaining);
       }
     } catch (err) {
-      setGeneratingKey(false);
-      setKeyError("Network error generating answer key.");
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, GENERATE_MIN_MS - elapsed);
+      progressTimerRef.current = setTimeout(() => {
+        setGeneratingKey(false);
+        setKeyError("Network error generating answer key.");
+      }, remaining);
     }
   };
 
@@ -126,13 +246,13 @@ const Analysis = () => {
   };
 
   useEffect(() => {
-    const t = setTimeout(() => { setAnalyzing(false); setAnalysisError("Analysis timed out. Try again."); }, 60000);
+    const t = setTimeout(() => { setAnalyzing(false); setAnalysisError("Analysis timed out. Try again."); }, 45000);
     return () => clearTimeout(t);
   }, [analyzing]);
 
   useEffect(() => {
     if (QUESTIONS.length > 0 && concepts.length === 0) {
-      setConcepts([...new Set(QUESTIONS.map((q) => q.concept || "Unmapped"))]);
+      setConcepts([...new Set(QUESTIONS.map((q) => q.concept).filter(Boolean))]);
     }
   }, [QUESTIONS]);
 
@@ -151,7 +271,6 @@ const Analysis = () => {
       !hasPendingOCR &&
       !hasAnswerKey &&
       !generatingKey &&
-      !isSeedData &&
       !analysisError &&
       !keyError &&
       !answerKeyAttempted
@@ -159,22 +278,20 @@ const Analysis = () => {
       setAnswerKeyAttempted(true);
       handleGenerateAnswerKey();
     }
-  }, [QUESTIONS.length, hasPendingOCR, hasAnswerKey, generatingKey, isSeedData, analysisError, keyError, answerKeyAttempted]);
+  }, [QUESTIONS.length, hasPendingOCR, hasAnswerKey, generatingKey, analysisError, keyError, answerKeyAttempted]);
 
   if (analyzing || generatingKey) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="animate-spin text-blue-800" size={32} />
-        <p className="text-sm text-stone-600">
-          {analyzing ? "Analyzing your question paper with AI..." : "Generating answer key with AI..."}
-        </p>
-        <p className="text-xs text-stone-400">
-          {analyzing ? "Extracting questions, concepts, and skills" : "DeepSeek is determining correct answers"}
-        </p>
-        <button onClick={() => { setAnalyzing(false); setGeneratingKey(false); }} className="text-xs text-stone-500 underline hover:text-stone-700">
-          Skip
-        </button>
-      </div>
+      <ProgressPanel
+        title={analyzing ? "Analyzing your question paper" : "Generating answer key"}
+        subtitle={analyzing ? "Let me go through each page you shared and understand the questions" : "Working through each question to prepare the best answers"}
+        steps={analyzing ? ANALYZE_STEPS : GENERATE_STEPS}
+        onSkip={() => {
+          if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+          setAnalyzing(false);
+          setGeneratingKey(false);
+        }}
+      />
     );
   }
 
@@ -209,94 +326,56 @@ const Analysis = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-12" data-testid="analysis-page">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 md:py-6" data-testid="analysis-page">
       <Breadcrumbs items={[
         { label: t("assessments"), to: "/dashboard" },
         { label: t("analysisTitle") },
       ]} />
-      {isSeedData && (
-        <div className="mb-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700 italic">
-          Showing sample data for preview. Your question paper images have been uploaded.
-          {ASSESSMENT?.questionsImages?.length > 0 && (
-            <div className="flex gap-2 mt-2 flex-wrap items-center">
-              <span className="text-[10px] text-amber-600 font-medium not-italic block mb-1">Your uploaded images:</span>
-              {ASSESSMENT.questionsImages.map((img, i) => (
-                <img key={i} src={`/${img}`} alt={`Uploaded Q paper page ${i+1}`} className="h-16 rounded border border-amber-300 object-cover" />
-              ))}
-            </div>
-          )}
-          {hasPendingOCR && (
-            <button onClick={handleAnalyzeQPaper} disabled={analyzing} className="mt-3 not-italic inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-blue-800 text-white text-xs font-medium hover:bg-blue-900 disabled:opacity-50">
-              {analyzing ? <><Loader2 size={12} className="animate-spin" /> Analyzing with AI...</> : <>Analyze Question Paper</>}
-            </button>
-          )}
-        </div>
-      )}
-      <button onClick={() => navigate("/upload")} data-testid="btn-back-upload" className="mb-3 inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900">
+      <button onClick={() => navigate("/upload")} data-testid="btn-back-upload" className="mb-2 inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900">
         <ArrowLeft size={14} /> Back to Upload
       </button>
 
-      <div className="bg-white border border-stone-200 rounded-2xl p-8 md:p-10 mb-6 text-center">
-        <div className="flex items-center justify-center gap-2 text-sm font-semibold tracking-[0.08em] uppercase text-blue-800">
-          <Sparkles size={14} /> {t("aiExtracted")}
+      {/* Compact header — stats & actions */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] uppercase text-blue-800">
+            <Sparkles size={12} /> {t("aiExtracted")}
+          </div>
+          <h1 className="font-display text-xl md:text-2xl font-semibold text-stone-900">
+            {t("analysisTitle")}
+          </h1>
+          <p className="text-sm text-stone-500 mt-0.5">
+            {QUESTIONS.length} questions · {totalMarks} marks · {conceptCount} concepts · {skillCount} skills
+          </p>
         </div>
-        <h1 className="mt-2 font-display text-2xl md:text-3xl font-semibold text-stone-900">
-          {t("analysisTitle")} {isSeedData && <span className="text-amber-600 text-base font-normal italic">(Sample Data)</span>}
-        </h1>
-        <p className="mt-2 text-stone-600 text-lg">
-          {QUESTIONS.length} questions · {QUESTIONS.reduce((s, q) => s + (q.maxMarks || 1), 0)} marks · {uniqueConcepts.filter(c => c && c !== "Unmapped").length} concepts detected
-        </p>
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button onClick={() => setDetailsOpen((v) => !v)} data-testid="btn-view-details" className="inline-flex items-center gap-1.5 h-12 px-5 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 font-medium">
-            {t("viewDetails")} <ChevronDown size={16} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={() => setDetailsOpen((v) => !v)} data-testid="btn-view-details" className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 text-sm font-medium">
+            {t("viewDetails")} <ChevronDown size={14} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
           </button>
-          <button onClick={handleRunEvaluation} disabled={!allApproved} data-testid="btn-run-evaluation" className={`inline-flex items-center gap-2 h-12 px-6 rounded-lg font-medium shadow-sm transition-colors ${allApproved ? "bg-blue-800 hover:bg-blue-900 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}>
-            {t("runEvaluation")} <ArrowRight size={18} />
+          <button onClick={handleRunEvaluation} disabled={!allApproved} data-testid="btn-run-evaluation" className={`inline-flex items-center gap-2 h-10 px-5 rounded-lg font-medium shadow-sm transition-colors text-sm ${allApproved ? "bg-blue-800 hover:bg-blue-900 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}>
+            {t("runEvaluation")} <ArrowRight size={16} />
           </button>
         </div>
       </div>
 
-      {/* Concepts & Prerequisites Detected — always visible */}
-      {uniqueConcepts.filter(c => c && c !== "Unmapped").length > 0 && (
-        <div className="bg-white border border-stone-200 rounded-2xl p-6 mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={18} className="text-blue-800" />
-            <h2 className="font-display text-xl font-semibold text-stone-900">Concepts &amp; Prerequisites Detected</h2>
+      {/* Compact stat cards — always visible at top */}
+      <div className="grid grid-cols-4 gap-3 mb-5">
+        {[
+          { label: "Questions", value: QUESTIONS.length },
+          { label: "Marks", value: totalMarks },
+          { label: "Skills", value: skillCount },
+          { label: "Concepts", value: conceptCount },
+        ].map((s) => (
+          <div key={s.label} className="bg-white border border-stone-200 rounded-lg px-3 py-2.5 text-center">
+            <div className="text-[10px] font-semibold tracking-[0.05em] uppercase text-stone-400">{s.label}</div>
+            <div className="font-display text-lg font-semibold text-stone-900">{s.value}</div>
           </div>
-          <p className="text-sm text-stone-500 mb-5">AI has identified the following concepts from your question paper, along with prerequisite knowledge requirements.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {uniqueConcepts.filter(c => c && c !== "Unmapped").map((concept, idx) => {
-              const qsWithConcept = QUESTIONS.filter(q => (q.concept || "") === concept);
-              const prereqs = [...new Set(qsWithConcept.flatMap(q => q.prerequisites || []))];
-              return (
-                <div key={concept} className="rounded-xl border border-stone-200 p-4 hover:border-blue-200 transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-7 w-7 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold">{idx + 1}</div>
-                    <div className="font-semibold text-stone-900 text-sm">{concept}</div>
-                    <span className="text-xs text-stone-400 ml-auto">{qsWithConcept.length} Q</span>
-                  </div>
-                  {prereqs.length > 0 && (
-                    <div className="ml-3 pl-3 border-l-2 border-blue-200">
-                      <div className="text-[11px] font-semibold text-stone-500 mb-1.5 uppercase tracking-wider">Prerequisites</div>
-                      <div className="flex flex-wrap gap-1">
-                        {prereqs.map(p => (
-                          <span key={p} className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] border border-amber-100">{p}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div className="mt-2 text-xs text-stone-400">
-                    Questions: {qsWithConcept.map(q => `Q${q.number}`).join(", ")}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {(uniqueConcepts.length === 0 || uniqueConcepts.every(c => !c || c === "Unmapped")) && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-700">
+      {/* No concepts warning */}
+      {conceptCount === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 text-sm text-amber-700">
           <strong>No concepts detected yet.</strong> Upload a question paper and run AI analysis to extract concepts, skills, and prerequisites.
           {QUESTIONS.length > 0 && !hasPendingOCR && (
             <div className="mt-2 text-xs text-amber-600">Your question paper has been analyzed but concept tagging may not have completed. Try running analysis again.</div>
@@ -306,11 +385,11 @@ const Analysis = () => {
 
       {/* Answer Key */}
       {hasAnswerKey && (
-        <div className="bg-white border border-stone-200 rounded-2xl p-6 mb-6">
+        <div className="bg-white border border-stone-200 rounded-2xl p-6 mb-5">
           <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={18} className="text-emerald-700" />
-              <h2 className="font-display text-xl font-semibold text-stone-900">Answer Key (AI Generated)</h2>
+              <h2 className="font-display text-lg font-semibold text-stone-900">Answer Key (AI Generated)</h2>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-stone-500">{totalApproved}/{answerKey.length} approved</span>
@@ -320,10 +399,10 @@ const Analysis = () => {
               </button>
             </div>
           </div>
-          <p className="text-sm text-stone-500 mb-5">Review the AI-generated answers. Tap any answer to approve or reject before running evaluation.</p>
+          <p className="text-sm text-stone-500 mb-4">Review the AI-generated answers. Tap any answer to approve or reject before running evaluation.</p>
 
           {mcqs.length > 0 && (
-            <div className="mb-5">
+            <div className="mb-4">
               <div className="text-xs font-semibold text-stone-500 mb-2 uppercase tracking-wider">Multiple Choice ({mcqs.length} questions, 1 mark each)</div>
               <div className="flex flex-wrap gap-2">
                 {mcqs.map((ak) => {
@@ -400,8 +479,8 @@ const Analysis = () => {
         </div>
       )}
 
-      {!hasAnswerKey && QUESTIONS.length > 0 && !hasPendingOCR && !generatingKey && !isSeedData && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6 mb-6 text-center">
+      {!hasAnswerKey && QUESTIONS.length > 0 && !hasPendingOCR && !generatingKey && (
+        <div className="bg-white border border-stone-200 rounded-xl p-6 mb-5 text-center">
           {keyError ? (
             <>
               <div className="flex items-center justify-center gap-2 text-rose-700 mb-3">
@@ -424,31 +503,90 @@ const Analysis = () => {
         </div>
       )}
 
+      {/* Question breakdown — always visible, before concepts */}
+      {QUESTIONS.length > 0 && (
+        <div className="bg-white border border-stone-200 rounded-xl mb-5 overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-stone-200 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-stone-900">Questions Detected</h2>
+            <span className="text-xs text-stone-500">Click any row to edit tags</span>
+          </div>
+          <div className="divide-y divide-stone-100">
+            {QUESTIONS.map((qRaw) => {
+              const q = getQ(qRaw);
+              const isEditing = editingQ === q.id;
+              return (
+                <div key={q.id} data-testid={`analysis-row-${q.id}`} className="px-5 py-3.5 hover:bg-stone-50/60">
+                  <div className="flex items-start gap-3 flex-wrap">
+                    <div className="shrink-0 h-8 w-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center text-sm font-bold">Q{q.number}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-stone-800 line-clamp-2">{q.text}</div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">{(q.maxMarks || 1)} mark{(q.maxMarks || 1) > 1 ? "s" : ""}</span>
+                        <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-semibold">{q.concept || "Unknown"}</span>
+                        <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[11px]">{q.skill}</span>
+                        {difficultyChip(q.difficulty)}
+                      </div>
+                    </div>
+                    <button onClick={() => setEditingQ(isEditing ? null : q.id)} data-testid={`btn-edit-${q.id}`} className="text-stone-500 hover:text-blue-800 h-11 w-11 rounded-lg hover:bg-blue-50 flex items-center justify-center shrink-0">
+                      {isEditing ? <Check size={16} /> : <Pencil size={14} />}
+                    </button>
+                  </div>
+
+                  {isEditing && (
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-blue-50/40 border border-blue-100">
+                      <div>
+                        <label className="block text-[11px] font-semibold tracking-wider uppercase text-stone-600 mb-1">{t("concept")}</label>
+                        <input
+                          defaultValue={q.concept}
+                          onChange={(e) => updateQuestion(q.id, "concept", e.target.value)}
+                          data-testid={`edit-concept-${q.id}`}
+                          className="w-full h-9 px-2.5 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold tracking-wider uppercase text-stone-600 mb-1">{t("skill")}</label>
+                        <input
+                          defaultValue={q.skill}
+                          onChange={(e) => updateQuestion(q.id, "skill", e.target.value)}
+                          data-testid={`edit-skill-${q.id}`}
+                          className="w-full h-9 px-2.5 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold tracking-wider uppercase text-stone-600 mb-1">{t("difficulty")}</label>
+                        <select
+                          defaultValue={q.difficulty}
+                          onChange={(e) => updateQuestion(q.id, "difficulty", e.target.value)}
+                          data-testid={`edit-diff-${q.id}`}
+                          className="w-full h-9 px-2 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"
+                        >
+                          {["Easy","Medium","Hard"].map((d) => <option key={d}>{d}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Collapsible: Concept details + Prerequisites */}
       <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
       <CollapsibleContent>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        {[
-          { label: "Total Questions", value: QUESTIONS.length },
-          { label: "Total Marks", value: QUESTIONS.reduce((s, q) => s + (q.maxMarks || 1), 0) },
-          { label: "Skill Level", value: [...new Set(QUESTIONS.map(q => q.skill).filter(Boolean))].length },
-          { label: "Concepts Tested", value: uniqueConcepts.filter(c => c && c !== "Unmapped").length },
-        ].map((s) => (
-          <div key={s.label} className="bg-white border border-stone-200 rounded-xl p-4">
-            <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-stone-500">{s.label}</div>
-            <div className="mt-1 font-display text-2xl font-semibold text-stone-900">{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Concept coverage (editable chips) */}
-      <div className="bg-white border border-stone-200 rounded-xl p-6 mb-6">
+      {/* Merged: Editable Concept Coverage + Prerequisites */}
+      <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-xl font-semibold text-stone-900">{t("conceptCoverage")}</h2>
+          <div className="flex items-center gap-2">
+            <Tags size={16} className="text-blue-800" />
+            <h2 className="font-display text-lg font-semibold text-stone-900">{t("conceptCoverage")}</h2>
+          </div>
           <span className="text-xs text-stone-500">{concepts.length} concepts</span>
         </div>
         <p className="text-sm text-stone-500 mb-4">Add, remove, or rename concepts before AI starts evaluating.</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-4">
           {concepts.map((c) => (
             <div key={c} data-testid={`concept-chip-${c}`} className="group inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-full bg-blue-50 text-blue-900 border border-blue-100 text-sm">
               {c}
@@ -468,110 +606,61 @@ const Analysis = () => {
             />
           </div>
         </div>
-      </div>
 
-      {/* Question breakdown table */}
-      <div className="bg-white border border-stone-200 rounded-xl mb-6 overflow-hidden">
-        <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold text-stone-900">{t("questionBreakdown")}</h2>
-          <span className="text-xs text-stone-500">Click any row to edit tags</span>
-        </div>
-        <div className="divide-y divide-stone-100">
-          {QUESTIONS.map((qRaw) => {
-            const q = getQ(qRaw);
-            const isEditing = editingQ === q.id;
-            return (
-              <div key={q.id} data-testid={`analysis-row-${q.id}`} className={`px-6 py-4 hover:bg-stone-50/60 ${isSeedData ? "opacity-70 italic" : ""}`}>
-                <div className="flex items-start gap-3 flex-wrap">
-                  <div className="shrink-0 h-8 w-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center text-sm font-bold">Q{q.number}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-stone-800 line-clamp-2">{q.text}</div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">{(q.maxMarks || 1)} mark{(q.maxMarks || 1) > 1 ? "s" : ""}</span>
-                      <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-semibold">{q.concept || "Unknown"}</span>
-                      <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[11px]">{q.skill}</span>
-                      {difficultyChip(q.difficulty)}
+        {/* Inline prerequisites per concept */}
+        {concepts.length > 0 && (
+          <div className="border-t border-stone-100 pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Network size={14} className="text-blue-800" />
+              <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Prerequisites</span>
+            </div>
+            <div className="space-y-2">
+              {concepts.map((concept) => {
+                const qsWithConcept = QUESTIONS.filter(q => (q.concept || "") === concept);
+                const prereqs = [...new Set(qsWithConcept.flatMap(q => q.prerequisites || []))];
+                if (prereqs.length === 0) return null;
+                return (
+                  <div key={concept} className="flex items-start gap-2 text-sm">
+                    <span className="font-medium text-stone-800 shrink-0">{concept}:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {prereqs.map(p => (
+                        <span key={p} className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] border border-amber-100">{p}</span>
+                      ))}
                     </div>
                   </div>
-                  <button onClick={() => setEditingQ(isEditing ? null : q.id)} data-testid={`btn-edit-${q.id}`} className="text-stone-500 hover:text-blue-800 h-11 w-11 rounded-lg hover:bg-blue-50 flex items-center justify-center shrink-0">
-                    {isEditing ? <Check size={16} /> : <Pencil size={14} />}
-                  </button>
-                </div>
-
-                {isEditing && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-blue-50/40 border border-blue-100">
-                    <div>
-                      <label className="block text-[11px] font-semibold tracking-wider uppercase text-stone-600 mb-1">{t("concept")}</label>
-                      <input
-                        defaultValue={q.concept}
-                        onChange={(e) => updateQuestion(q.id, "concept", e.target.value)}
-                        data-testid={`edit-concept-${q.id}`}
-                        className="w-full h-9 px-2.5 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold tracking-wider uppercase text-stone-600 mb-1">{t("skill")}</label>
-                      <input
-                        defaultValue={q.skill}
-                        onChange={(e) => updateQuestion(q.id, "skill", e.target.value)}
-                        data-testid={`edit-skill-${q.id}`}
-                        className="w-full h-9 px-2.5 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold tracking-wider uppercase text-stone-600 mb-1">{t("difficulty")}</label>
-                      <select
-                        defaultValue={q.difficulty}
-                        onChange={(e) => updateQuestion(q.id, "difficulty", e.target.value)}
-                        data-testid={`edit-diff-${q.id}`}
-                        className="w-full h-9 px-2 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800"
-                      >
-                        {["Easy","Medium","Hard"].map((d) => <option key={d}>{d}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Prerequisite concept map */}
-      {CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length > 0 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6 mb-8">
-          <div className="flex items-center gap-2 mb-1">
-            <Network size={18} className="text-blue-800" />
-            <h2 className="font-display text-xl font-semibold text-stone-900">{t("prerequisiteMap")}</h2>
+                );
+              })}
+            </div>
           </div>
-          <p className="text-sm text-stone-500 mb-5">Which foundational concepts must students master before these will make sense?</p>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {CONCEPT_MAP.filter((n) => n.leadsTo?.length > 0).map((node, idx) => (
-              <div key={node.concept} data-testid={`prereq-node-${idx}`} className="rounded-xl border border-stone-200 bg-stone-50/60 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="h-7 w-7 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold">{idx + 1}</div>
-                  <div className="font-semibold text-stone-900">{node.concept}</div>
+      {/* Prerequisite concept map from curriculum */}
+      {CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length > 0 && (
+        <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Network size={16} className="text-blue-800" />
+            <h2 className="font-display text-lg font-semibold text-stone-900">{t("prerequisiteMap")}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {CONCEPT_MAP.filter((n) => n.leadsTo?.length > 0).slice(0, 6).map((node, idx) => (
+              <div key={node.concept} data-testid={`prereq-node-${idx}`} className="rounded-lg border border-stone-200 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-6 w-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-[10px] font-bold">{idx + 1}</div>
+                  <div className="font-medium text-stone-900 text-sm">{node.concept}</div>
                 </div>
-                <div className="ml-3 pl-4 border-l-2 border-dashed border-blue-300 space-y-2">
-                  {node.leadsTo.map((child, i) => {
-                    const grand = CONCEPT_MAP.find((n) => n.concept === child)?.leadsTo ?? [];
-                    return (
-                      <div key={child}>
-                        <div className="text-sm text-stone-800 font-medium">↓ {child}</div>
-                        {grand.length > 0 && (
-                          <div className="ml-4 mt-1 space-y-1">
-                            {grand.map((g) => (
-                              <div key={g} className="text-xs text-stone-600">↓ {g}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="ml-2 pl-3 border-l-2 border-dashed border-blue-200 space-y-1.5">
+                  {node.leadsTo.map((child) => (
+                    <div key={child} className="text-xs text-stone-600 font-medium">↓ {child}</div>
+                  ))}
                 </div>
               </div>
             ))}
+            {CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length > 6 && (
+              <div className="text-xs text-stone-400 flex items-center justify-center rounded-lg border border-dashed border-stone-200 p-3">
+                +{CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length - 6} more
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,5 +1,10 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
+
+class SubQuestion(BaseModel):
+    number: str
+    text: str = ""
+    maxMarks: float = 0
 
 class QuestionBase(BaseModel):
     assessmentId: str
@@ -15,6 +20,7 @@ class QuestionBase(BaseModel):
     skill: Optional[str] = None
     difficulty: Optional[str] = None
     prerequisites: List[str] = []
+    subQuestions: Optional[List[SubQuestion]] = []
 
 class Question(QuestionBase):
     id: str = Field(alias="_id")
