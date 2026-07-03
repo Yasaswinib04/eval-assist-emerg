@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, timezone
 from fastapi import UploadFile
@@ -31,8 +31,7 @@ class Assessment(AssessmentBase):
     parsedAnswerKey: Optional[List[dict]] = None
     parsedCurriculum: Optional[List[dict]] = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
 class AssessmentProcessRequest(BaseModel):
     pass  # No body needed — trigger is enough

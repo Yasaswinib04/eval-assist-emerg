@@ -8,7 +8,7 @@ export const GRADE_BOUNDARIES = {
   borderlineWindow: 3,
 };
 
-const GRADES = [
+export const GRADES = [
   { min: 36, grade: "A+", color: "emerald" },
   { min: 32, grade: "A", color: "emerald" },
   { min: 28, grade: "B+", color: "blue" },

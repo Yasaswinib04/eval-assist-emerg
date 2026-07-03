@@ -51,7 +51,7 @@ export const ContextBar = () => {
   if (!subjects.length && !adding) return null;
 
   return (
-    <div className="flex items-center gap-2 px-4 sm:px-6 lg:px-10 py-2 border-b border-stone-200 bg-white sticky top-0 z-20" data-testid="context-bar">
+    <div className="flex items-center gap-2 px-4 sm:px-6 lg:px-10 py-2 border-b border-stone-200 bg-white sticky top-14 lg:top-0 z-25" data-testid="context-bar">
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin flex-1">
         {subjects.map((s) => {
           const active = activeSubject === s;
@@ -60,7 +60,7 @@ export const ContextBar = () => {
               <button
                 onClick={() => setActiveSubject(s)}
                 data-testid={`subject-tab-${s}`}
-                className={`h-7 px-3 rounded-md text-xs font-semibold tracking-wide whitespace-nowrap transition-colors ${
+                className={`h-10 px-3 rounded-md text-sm font-semibold tracking-wide whitespace-nowrap transition-colors ${
                   active
                     ? "bg-blue-800 text-white"
                     : "bg-stone-100 text-stone-600 hover:bg-stone-200"
@@ -71,7 +71,7 @@ export const ContextBar = () => {
               {subjects.length > 1 && (
                 <button
                   onClick={() => removeSubject(s)}
-                  className="h-5 w-5 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center"
+                   className="h-8 w-8 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center"
                   title={`Remove ${s}`}
                 >
                   <X size={10} />
@@ -88,16 +88,16 @@ export const ContextBar = () => {
               onKeyDown={(e) => { if (e.key === "Enter") addSubject(); if (e.key === "Escape") setAdding(false); }}
               placeholder="Subject name"
               autoFocus
-              className="h-7 w-28 px-2 rounded-md border border-stone-300 text-xs outline-none focus:ring-2 focus:ring-blue-800"
+               className="h-10 w-36 px-3 rounded-md border border-stone-300 text-base outline-none focus:ring-2 focus:ring-blue-800"
             />
-            <button onClick={addSubject} className="h-6 w-6 rounded-md bg-blue-800 text-white flex items-center justify-center">
+            <button onClick={addSubject} className="h-9 w-9 rounded-md bg-blue-800 text-white flex items-center justify-center">
               <Plus size={12} />
             </button>
           </span>
         ) : (
           <button
             onClick={() => setAdding(true)}
-            className="h-7 w-7 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center"
+             className="h-10 w-10 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center"
             title="Add subject"
           >
             <Plus size={14} />
@@ -110,7 +110,7 @@ export const ContextBar = () => {
           value={activeClass}
           onChange={(e) => setActiveClass(e.target.value)}
           data-testid="context-class-select"
-          className="h-7 pl-3 pr-7 rounded-md border border-stone-300 bg-white text-xs font-semibold text-stone-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-800"
+          className="h-10 pl-3 pr-7 rounded-md border border-stone-300 bg-white text-sm font-semibold text-stone-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-800"
         >
           {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
         </select>

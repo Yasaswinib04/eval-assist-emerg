@@ -78,6 +78,9 @@ agenthub/agents/youtube/db
 
 memory/test_credentials.md
 
+# Local tooling config (machine-specific paths)
+.claude/
+
 # Mobile development
 android-sdk/
 .env

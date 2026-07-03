@@ -7,40 +7,13 @@ from concept mastery and returns them with real student-affected counts.
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from backend.core.database import get_db
+from backend.routers.auth import get_current_user
 
 router = APIRouter()
 
 
 def _generate_action(concept: str, mastery: float) -> str:
     """Generate a teaching action suggestion for a concept."""
-    actions = {
-        "Asexual Reproduction": "Show short videos of Hydra budding and Amoeba binary fission. Ask students to compare with sexual reproduction.",
-        "Budding": "Demonstrate budding in Hydra using a diagram. Have students sketch and label the stages.",
-        "Binary Fission": "Use Amoeba diagrams to explain binary fission. Compare cell division in unicellular vs multicellular organisms.",
-        "Fertilization": "Use a labelled diagram and short video to review external vs internal fertilization with examples.",
-        "IVF": "Re-teach Fertilization first, then explain IVF as a medical intervention. Show step-by-step process chart.",
-        "Internal Fertilization": "Run a 15-minute recap with worked examples of animals using internal fertilization.",
-        "Metamorphosis": "Show the frog lifecycle chart. Compare complete vs incomplete metamorphosis with butterfly example.",
-        "Female Reproductive System": "Diagram-labelling exercise. Have students draw and label ovaries, oviducts, uterus.",
-        "Male Reproductive System": "Diagram-labelling exercise. Focus on sperm production and delivery.",
-        "Gametes": "Compare egg and sperm cells visually. Highlight size, motility, and function differences.",
-        "Sexual Reproduction": "Compare sexual vs asexual reproduction with a T-chart. Use examples from textbook.",
-        "Communicable Diseases": "Create a disease fact-sheet activity. Students research cause, transmission, prevention.",
-        "Microorganisms": "Microscope observation activity. Classify bacteria, virus, fungi, protozoa with examples.",
-        "Antibiotics & Medicine": "Discuss when antibiotics work vs when they don't. Role-play doctor-patient consultation.",
-        "Food Preservation": "Home investigation: students list 4 methods their family uses. Share in class.",
-        "Crop Production": "Field trip or video walkthrough of farming stages. Create a flowchart.",
-        "Crop Seasons": "Seasonal crop calendar activity. Map kharif, rabi, and zaid crops to calendar months.",
-        "Agricultural Implements": "Hands-on demo or video of plough, hoe, combine. Clarify which tool for which stage.",
-        "Irrigation": "Compare traditional vs modern irrigation methods. Case study: drip irrigation in drought areas.",
-        "Weed Control": "Name-drop activity: students list local weedicides. Discuss safe usage and alternatives.",
-        "Cell Structure": "Build a 3D cell model. Label organelles. Compare plant vs animal cells.",
-        "Unicellular Organisms": "Microscope observation of Amoeba, Paramecium. Draw and label each.",
-    }
-
-    if concept in actions:
-        return actions[concept]
-
     if mastery < 35:
         return f"Re-teach '{concept}' using diagrams, video, and interactive questioning. Consider remedial class."
     elif mastery < 50:
@@ -57,6 +30,7 @@ async def get_interventions(id: str, db=Depends(get_db)):
         _get_assessment_questions,
         _get_evaluations,
         _get_students,
+        _build_qmap,
     )
 
     questions = await _get_assessment_questions(db, id)
@@ -66,12 +40,19 @@ async def get_interventions(id: str, db=Depends(get_db)):
     if not evaluations or not questions:
         return []
 
-    q_map = {q.get("_id", q.get("id", "")): q for q in questions}
+    q_map = _build_qmap(questions)
     concept_scores = {}
     concept_attempts = {}
     concept_chapter = {}
     concept_students = {}
-    curriculum = await db.curricula.find_one({"_id": "ap-class8-bio-v1"})
+
+    assessment = await db.assessments.find_one({"_id": id})
+    subject = assessment.get("subject", "") if assessment else ""
+    klass = (assessment.get("class", "Class 8") if assessment else "Class 8").replace("Class ", "")
+    subj_map = {"biology": "bio", "biological science": "bio", "physics": "phy",
+                 "physical science": "phy", "chemistry": "chem", "mathematics": "mat"}
+    subj_code = subj_map.get(subject.lower() if subject else "", "bio")
+    curriculum = await db.curricula.find_one({"_id": f"ap-class{klass}-{subj_code}-v1"})
 
     for ev in evaluations:
         q_id = ev.get("qId", "")
@@ -131,7 +112,7 @@ async def get_interventions(id: str, db=Depends(get_db)):
 
 
 @router.put("/{id}/interventions/{actId}/plan")
-async def update_intervention_plan(id: str, actId: str, plan: dict, db=Depends(get_db)):
+async def update_intervention_plan(id: str, actId: str, plan: dict, db=Depends(get_db), current_user=Depends(get_current_user)):
     """Mark an intervention as planned / not planned."""
     result = await db.interventions.update_one(
         {"_id": actId, "assessmentId": id},
