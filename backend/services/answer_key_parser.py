@@ -15,7 +15,7 @@ def _call_openrouter(prompt: str, max_tokens: int = 4000) -> str:
     """Call OpenRouter with the text model (no vision needed)."""
     from openai import OpenAI
     client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=settings.OPENROUTER_API_KEY)
-    model = settings.TEXT_MODEL.lstrip("~")
+    model = settings.TEXT_MODEL
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],

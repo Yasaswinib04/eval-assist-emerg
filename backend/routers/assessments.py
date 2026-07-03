@@ -269,7 +269,7 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     if not openrouter_key:
         return {"status": "error", "message": "OPENROUTER_API_KEY not configured"}
 
-    text_model = getattr(settings, "TEXT_MODEL", "~google/gemini-flash-latest").lstrip("~")
+    text_model = getattr(settings, "TEXT_MODEL", "~google/gemini-flash-latest")
     subject = assessment.get("subject", "")
 
     print(f"[AnswerKey] Generating for {id} ({subject}) via {text_model}: {len(questions)} questions")
