@@ -48,7 +48,8 @@ const Upload = () => {
   const [searchParams] = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
 
-  const subjects = user?.subjects?.length ? user.subjects : ["Biology", "Physics", "Chemistry", "Maths", "Social Science", "Hindi", "English", "Telugu"];
+  const CANONICAL_SUBJECTS = ["Mathematics", "Physics", "Chemistry", "Biology", "Social Science", "English", "Hindi", "Telugu", "Kannada"];
+  const subjects = Array.from(new Set([...(user?.subjects || []), ...CANONICAL_SUBJECTS]));
 
   const restoreForm = () => {
     try {
@@ -56,12 +57,12 @@ const Upload = () => {
       if (saved) {
         const d = JSON.parse(saved);
         return {
-          name: d.n || "SA1 — Biological Science",
-          subject: d.s || activeSubject || subjects[0],
+          name: d.n || "",
+          subject: d.s || "",
           customSubject: d.cs || "",
-          klass: d.k || activeClass || "Class 8",
-          type: d.t || "Summative Assessment",
-          marks: d.m || 40,
+          klass: d.k || "",
+          type: d.t || "",
+          marks: typeof d.m === "number" ? d.m : 40,
           qText: d.qt || "",
           aText: d.at || "",
           cText: d.ct || "",
@@ -72,12 +73,12 @@ const Upload = () => {
   };
 
   const saved = restoreForm();
-  const [name, setName] = useState(saved.name || "SA1 — Biological Science");
-  const [subject, setSubject] = useState(saved.subject || activeSubject || subjects[0]);
+  const [name, setName] = useState(saved.name || "");
+  const [subject, setSubject] = useState(saved.subject || "");
   const [customSubject, setCustomSubject] = useState(saved.customSubject || "");
-  const [klass, setKlass] = useState(saved.klass || activeClass || "Class 8");
-  const [type, setType] = useState(saved.type || "Summative Assessment");
-  const [marks, setMarks] = useState(saved.marks || 40);
+  const [klass, setKlass] = useState(saved.klass || "");
+  const [type, setType] = useState(saved.type || "");
+  const [marks, setMarks] = useState(saved.marks ?? 40);
 
   const [submitting, setSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -88,10 +89,10 @@ const Upload = () => {
       apiClient.getAssessment(assessmentId).then((data) => {
         if (data) {
           setName(data.name || "");
-          setKlass(data.class || "Class 8");
-          setSubject(data.subject || "Biology");
-          setType(data.type || "Summative Assessment");
-          setMarks(data.totalMarks || 40);
+          setKlass(data.class || "");
+          setSubject(data.subject || "");
+          setType(data.type || "");
+          setMarks(data.totalMarks ?? 40);
         }
       });
     }
@@ -166,9 +167,10 @@ const Upload = () => {
     });
   };
 
+  const effectiveSubject = subject === "__custom__" ? customSubject.trim() : subject;
   const canContinue = assessmentId
     ? sheetFiles.length > 0
-    : name && (qImages.length > 0 || qText.trim()) && sheetFiles.length > 0;
+    : name.trim() && effectiveSubject && klass && type && (qImages.length > 0 || qText.trim()) && sheetFiles.length > 0;
 
   const handleSubmit = async () => {
     if (!canContinue || submitting) return;
@@ -229,59 +231,73 @@ const Upload = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12" data-testid="upload-page">
-      {/* Demo Mode Banner */}
-      <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 text-lg">🔬</div>
-          <div>
-            <div className="font-medium text-amber-900">Beta Mode</div>
-            <div className="text-sm text-amber-700 mt-1">
-              Powered by Qwen3 VL AI. <strong>Maximum 15 pages per upload.</strong> OCR evaluates handwritten answer sheets against your answer key.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold tracking-[0.08em] uppercase text-blue-800">{assessmentId ? "Student Responses" : t("upload")}</div>
-          <h1 className="mt-1 font-display text-3xl md:text-4xl font-semibold text-stone-900">{assessmentId ? "Add Student Responses" : t("createAssessment")}</h1>
-          <p className="mt-1.5 text-stone-600 text-lg">{assessmentId ? "Scan and add new student answer sheets for this existing assessment." : t("createSub")}</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12" data-testid="upload-page">
+      <div className="mb-6 md:mb-8">
+        <div className="text-xs sm:text-sm font-semibold tracking-[0.08em] uppercase text-blue-800">{assessmentId ? "Student Responses" : t("upload")}</div>
+        <h1 className="mt-1 font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-stone-900">{assessmentId ? "Add Student Responses" : t("createAssessment")}</h1>
+        <p className="mt-1.5 text-stone-600 text-base sm:text-lg">{assessmentId ? "Scan and add new student answer sheets for this existing assessment." : t("createSub")}</p>
+        <div className="mt-3 inline-flex items-center gap-2 text-xs sm:text-sm text-stone-500">
+          <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-800 tracking-wide">BETA</span>
+          <span>Up to 15 pages per upload.</span>
         </div>
       </div>
 
       {/* Metadata */}
-      <div className="bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 flex-wrap">
-          <div className="flex-1 min-w-[180px]">
+      <div className="bg-white border border-stone-200 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
+          <div className="col-span-2 md:col-span-4">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("assessmentName")}</label>
-            <input disabled={!!assessmentId} value={name} onChange={(e) => setName(e.target.value)} data-testid="input-assessment-name" className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800" />
+            <input disabled={!!assessmentId} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("assessmentNamePh")} data-testid="input-assessment-name" className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800" />
           </div>
-          <div className="w-28">
+          <div className="col-span-1 md:col-span-2">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("subject")}</label>
-            <select disabled={!!assessmentId} value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800">
-              {subjects.map((s) => <option key={s}>{s}</option>)}
-              <option value="__custom__">+ Custom</option>
-            </select>
+            {subject === "__custom__" && !assessmentId ? (
+              <div className="relative">
+                <input
+                  value={customSubject}
+                  onChange={(e) => setCustomSubject(e.target.value)}
+                  placeholder="Type subject"
+                  data-testid="input-custom-subject"
+                  autoFocus
+                  className="w-full h-11 pl-3 pr-9 rounded-lg border border-blue-800 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-800"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setSubject(""); setCustomSubject(""); }}
+                  aria-label="Choose from list"
+                  className="absolute inset-y-0 right-2 my-auto h-7 w-7 flex items-center justify-center rounded-md text-stone-500 hover:bg-stone-100"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <select disabled={!!assessmentId} value={subject} onChange={(e) => setSubject(e.target.value)} className={`w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800 ${subject ? "" : "text-stone-400"}`}>
+                <option value="" disabled>Select</option>
+                {subjects.map((s) => <option key={s} value={s} className="text-stone-900">{s}</option>)}
+                <option value="__custom__" className="text-stone-900">+ Custom</option>
+              </select>
+            )}
           </div>
-          <div className="w-24">
+          <div className="col-span-1 md:col-span-2">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("class")}</label>
-            <select disabled={!!assessmentId} value={klass} onChange={(e) => setKlass(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800">
-              {["Class 6","Class 7","Class 8","Class 9","Class 10"].map((c) => <option key={c}>{c}</option>)}
+            <select disabled={!!assessmentId} value={klass} onChange={(e) => setKlass(e.target.value)} className={`w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800 ${klass ? "" : "text-stone-400"}`}>
+              <option value="" disabled>Select</option>
+              {["Class 6","Class 7","Class 8","Class 9","Class 10"].map((c) => <option key={c} value={c} className="text-stone-900">{c}</option>)}
             </select>
           </div>
-          <div className="w-36">
+          <div className="col-span-1 md:col-span-2">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Type</label>
-            <select disabled={!!assessmentId} value={type} onChange={(e) => setType(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800">
-              {["Revision Test","Unit Test","Formative Assessment","Summative Assessment","Practice Quiz"].map((c) => <option key={c}>{c}</option>)}
+            <select disabled={!!assessmentId} value={type} onChange={(e) => setType(e.target.value)} className={`w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800 ${type ? "" : "text-stone-400"}`}>
+              <option value="" disabled>Select</option>
+              {["Revision Test","Unit Test","Formative Assessment","Summative Assessment","Practice Quiz"].map((c) => <option key={c} value={c} className="text-stone-900">{c}</option>)}
             </select>
           </div>
-          <div className="w-20">
+          <div className="col-span-1 md:col-span-2">
             <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">{t("totalMarks")}</label>
             <input disabled={!!assessmentId} type="number" value={marks} onChange={(e) => setMarks(parseInt(e.target.value || 0, 10))} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-stone-100 disabled:opacity-75 disabled:cursor-not-allowed text-base focus:outline-none focus:ring-2 focus:ring-blue-800" />
           </div>
         </div>
+
       </div>
 
       {/* Section 1: Questions */}
