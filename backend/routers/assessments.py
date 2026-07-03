@@ -9,7 +9,6 @@ import uuid
 import os
 import shutil
 import asyncio
-import httpx
 
 router = APIRouter()
 
@@ -876,6 +875,11 @@ async def _llm_evaluate_answers(db, assessment_id: str, parsed_questions: list, 
     """
     import json as json_mod
     import re as re_mod
+    try:
+        import httpx
+    except ImportError:
+        print("[LLM Eval] httpx not available, skipping LLM evaluation")
+        return
     
     # Build lookup maps
     key_by_q = {}
