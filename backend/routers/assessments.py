@@ -449,20 +449,23 @@ async def _run_ocr_pipeline(
 
         db = _get_db()
 
-        # ── Qwen/OpenRouter OCR (if configured) ──
+        # ── Vision LLM OCR via OpenRouter (Gemini Pro with thinking) ──
         openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
         if openrouter_key:
-                from backend.tools.ocr.qwen_ocr import QwenVisionOCR, build_question_paper_from_questions, build_answer_key_from_parsed
+                from backend.services.vision_ocr_service import extract_answers_from_image, grade_answers
 
                 parsed_questions = assessment.get("parsedQuestions")
                 parsed_answer_key = assessment.get("parsedAnswerKey")
 
+                # Load questions — use parsed ones or fall back to seed
                 if parsed_questions:
-                    answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
-                    qpaper = build_question_paper_from_questions(parsed_questions)
+                    questions = parsed_questions
                 else:
-                    qpaper = assessment.get("questionsText", "")
-                    answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
+                    from pathlib import Path as _Path
+                    import json as _json
+                    seed_q_path = str(_Path(__file__).resolve().parents[2] / "backend" / "seed" / "data" / "questions.json")
+                    with open(seed_q_path) as _f:
+                        questions = _json.load(_f)
 
                 # Resolve sheet paths
                 sheet_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads", assessment_id, "sheets")
@@ -478,14 +481,13 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                # Validate that resolved paths exist on disk
                 sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                qwen = QwenVisionOCR(openrouter_key, settings.QWEN_MODEL, questions=parsed_questions, answer_key=answer_key)
+                vision_model = getattr(settings, "VISION_MODEL", "~google/gemini-pro-latest")
 
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
 
-                sem = asyncio.Semaphore(5)
+                sem = asyncio.Semaphore(3)
                 total_sheets = len(sheet_paths)
 
                 async def process_one(path):
@@ -493,21 +495,26 @@ async def _run_ocr_pipeline(
                     name_part = os.path.splitext(base_fname)[0].split("_")[0].capitalize()
                     student_id = f"stu-{assessment_id}-{name_part.lower()}"
 
-                    async with sem:
-                        result = await asyncio.to_thread(qwen.process, path, student_id, assessment_id)
+                    try:
+                        async with sem:
+                            structured = await asyncio.to_thread(
+                                extract_answers_from_image, [path], questions, openrouter_key, vision_model
+                            )
+                            evaluations = grade_answers(structured, questions, parsed_answer_key, openrouter_key, vision_model)
+                    except Exception as e:
+                        print(f"[Vision] Error {name_part}: {e}")
+                        return {"error": str(e), "studentId": student_id, "name": name_part, "path": path}
 
-                    if "error" in result:
-                        print(f"[Qwen] Error {name_part}: {result['error']}")
-                        return {"error": result['error'], "studentId": student_id, "name": name_part, "path": path}
-
-                    for ev in result.get("evaluations", []):
+                    for ev in evaluations:
+                        ev["_id"] = f"{assessment_id}-{student_id}-{ev['qId']}"
+                        ev["assessmentId"] = assessment_id
+                        ev["studentId"] = student_id
+                        ev["approved"] = False
                         await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
 
-                    total = result.get("total", 0)
-                    qwen_name = result.get("studentName")
-                    qwen_roll = result.get("rollNumber")
-                    student_name = qwen_name if qwen_name else name_part
-                    student_roll = qwen_roll if qwen_roll else f"08-{total_sheets}"
+                    total = sum(float(ev.get("aiMark", 0) or 0) for ev in evaluations)
+                    student_name = name_part
+                    student_roll = f"08-{total_sheets}"
 
                     await db.students.update_one({"_id": student_id}, {"$set": {
                         "_id": student_id, "name": student_name,
@@ -523,7 +530,7 @@ async def _run_ocr_pipeline(
 
                 successful = sum(1 for r in results if r.get("ok"))
                 failed = sum(1 for r in results if not r.get("ok"))
-                print(f"[Qwen] Parallel done: {successful} ok, {failed} failed of {total_sheets}")
+                print(f"[Vision] Parallel done: {successful} ok, {failed} failed of {total_sheets}")
 
                 # Formative mode: nullify marks, add isCorrect/mistakeType
                 grading_mode = assessment.get("gradingMode", "scored")
@@ -591,7 +598,7 @@ async def _run_ocr_pipeline(
                     if qwen_total_marks > 0:
                         final_update["totalMarks"] = qwen_total_marks
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": final_update})
-                print(f"[Qwen] Pipeline complete: {num_students} students, {len(final_evals)} evals")
+                print(f"[Vision] Pipeline complete: {num_students} students, {len(final_evals)} evals")
                 return
 
         # ── Local OCR pipeline (fallback) ──
