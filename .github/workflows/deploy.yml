@@ -9,5 +9,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render deploy via webhook
-        run: curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+      - name: Trigger Render deploy
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret is not set. Render Blueprint should handle auto-deploy."
+            exit 0
+          fi
+          echo "Sending deploy hook to Render..."
+          curl -fsS -X POST "$HOOK_URL" || echo "::warning::Render deploy hook returned error — check if Blueprint auto-deploy is active."
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
