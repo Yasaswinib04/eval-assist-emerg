@@ -36,7 +36,7 @@ function App() {
         <WarmUp>
           <BrowserRouter>
             <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Public><Landing /></Public>} />
             <Route path="/welcome" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="/loading" element={<Protected><Loading /></Protected>} />
