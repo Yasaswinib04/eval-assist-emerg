@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2, ChevronDown, CheckCircle2, ScanLine, ListChecks, BookOpen, Tags, Brain, ClipboardCheck, PenLine } from "lucide-react";
 
@@ -112,7 +111,6 @@ const difficultyChip = (d) => {
 const Analysis = () => {
   const { t } = useApp();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { id } = useParams();
 
   const { data: QUESTIONS = [], isLoading: loadingQ, refetch: refetchQuestions } = useQuery({
@@ -123,11 +121,6 @@ const Analysis = () => {
   const { data: ASSESSMENT, isLoading: loadingA } = useQuery({
     queryKey: ['assessment', id],
     queryFn: () => apiClient.getAssessment(id),
-  });
-
-  const { data: CONCEPT_MAP = [] } = useQuery({
-    queryKey: ['concepts', id],
-    queryFn: () => apiClient.getConcepts(id),
   });
 
   const { data: ANSWER_KEY_DATA, refetch: refetchAnswerKey } = useQuery({
@@ -141,6 +134,11 @@ const Analysis = () => {
   const conceptCount = uniqueConcepts.length;
   const totalMarks = useMemo(() => QUESTIONS.reduce((s, q) => s + (q.maxMarks || 1), 0), [QUESTIONS]);
   const skillCount = useMemo(() => [...new Set(QUESTIONS.map(q => q.skill).filter(Boolean))].length, [QUESTIONS]);
+  const conceptByQ = useMemo(() => {
+    const map = {};
+    QUESTIONS.forEach((q) => { map[q.number] = q.concept; });
+    return map;
+  }, [QUESTIONS]);
   const [concepts, setConcepts] = useState([]);
   const [newConcept, setNewConcept] = useState("");
   const [hiddenPrereqs, setHiddenPrereqs] = useState({});
@@ -199,7 +197,6 @@ const Analysis = () => {
         progressTimerRef.current = setTimeout(async () => {
           setRunning(false);
           await refetchQuestions();
-          await queryClient.invalidateQueries(['concepts', id]);
           await refetchAnswerKey();
           const ak = result.answerKey || [];
           const initial = {};
@@ -309,39 +306,35 @@ const Analysis = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 md:py-6" data-testid="analysis-page">
-      <Breadcrumbs items={[
-        { label: t("assessments"), to: "/dashboard" },
-        { label: t("analysisTitle") },
-      ]} />
-      <button onClick={() => navigate("/upload")} data-testid="btn-back-upload" className="mb-2 inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900">
-        <ArrowLeft size={14} /> Back to Upload
-      </button>
-
-      {/* Compact header — title, stats top-right, actions */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] uppercase text-blue-800">
-            <Sparkles size={12} /> {t("aiExtracted")}
+      {/* Compact one-line header: back + subject/name + stats + actions */}
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0 flex-wrap">
+          <button onClick={() => navigate("/upload")} data-testid="btn-back-upload" className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 shrink-0" title="Back to Upload">
+            <ArrowLeft size={16} />
+          </button>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-display text-base md:text-lg font-semibold text-stone-900 truncate">{ASSESSMENT?.name || t("analysisTitle")}</span>
+            {ASSESSMENT?.subject && (
+              <span className="shrink-0 text-xs font-semibold text-blue-800 bg-blue-50 px-2 py-0.5 rounded-full">{ASSESSMENT.subject}</span>
+            )}
           </div>
-          <h1 className="font-display text-xl md:text-2xl font-semibold text-stone-900">
-            {t("analysisTitle")}
-          </h1>
-        </div>
-        <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-          <div className="flex items-center gap-3 text-xs text-stone-500 flex-wrap">
-            <span><b className="text-stone-800 font-semibold">{QUESTIONS.length}</b> questions</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-stone-500 shrink-0">
+            <span><b className="text-stone-800 font-semibold">{QUESTIONS.length}</b> Qs</span>
+            <span className="text-stone-300">·</span>
             <span><b className="text-stone-800 font-semibold">{totalMarks}</b> marks</span>
+            <span className="text-stone-300">·</span>
             <span><b className="text-stone-800 font-semibold">{skillCount}</b> skills</span>
+            <span className="text-stone-300">·</span>
             <span><b className="text-stone-800 font-semibold">{conceptCount}</b> concepts</span>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setDetailsOpen((v) => !v)} data-testid="btn-view-details" className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 text-sm font-medium">
-              {t("viewDetails")} <ChevronDown size={14} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
-            </button>
-            <button onClick={handleRunEvaluation} disabled={!allApproved} data-testid="btn-run-evaluation" className={`inline-flex items-center gap-2 h-10 px-5 rounded-lg font-medium shadow-sm transition-colors text-sm ${allApproved ? "bg-blue-800 hover:bg-blue-900 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}>
-              {t("runEvaluation")} <ArrowRight size={16} />
-            </button>
-          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => setDetailsOpen((v) => !v)} data-testid="btn-view-details" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 text-xs font-medium">
+            {t("viewDetails")} <ChevronDown size={12} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+          </button>
+          <button onClick={handleRunEvaluation} disabled={!allApproved} data-testid="btn-run-evaluation" className={`inline-flex items-center gap-1.5 h-9 px-4 rounded-lg font-medium shadow-sm transition-colors text-xs ${allApproved ? "bg-blue-800 hover:bg-blue-900 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}>
+            {t("runEvaluation")} <ArrowRight size={14} />
+          </button>
         </div>
       </div>
 
@@ -389,6 +382,9 @@ const Analysis = () => {
                       <span className="text-xs font-mono text-stone-500">Q{ak.q}</span>
                       <span className="font-semibold">{ak.correctOption ? `[${ak.correctOption}]` : "—"}</span>
                       {approved ? <Check size={12} className="text-emerald-600" /> : <X size={12} className="text-rose-600" />}
+                      {conceptByQ[ak.q] && (
+                        <span className="text-[9px] font-semibold text-stone-500 bg-white/70 px-1 py-0.5 rounded normal-case">{conceptByQ[ak.q]}</span>
+                      )}
                     </button>
                   );
                 })}
@@ -411,7 +407,12 @@ const Analysis = () => {
                             {approved ? <Check size={16} className="text-emerald-600" /> : <X size={16} className="text-rose-600" />}
                           </button>
                           <div>
-                            <div className="text-xs font-mono text-stone-500">Q{ak.q} ({ak.maxMarks || "?"}M)</div>
+                            <div className="flex items-center gap-1.5 text-xs font-mono text-stone-500">
+                              <span>Q{ak.q} ({ak.maxMarks || "?"}M)</span>
+                              {conceptByQ[ak.q] && (
+                                <span className="font-sans font-semibold text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded normal-case">{conceptByQ[ak.q]}</span>
+                              )}
+                            </div>
                             <div className="text-sm text-stone-800 line-clamp-2">{(ak.correctAnswer || "—").slice(0, 120)}</div>
                           </div>
                         </div>
@@ -612,36 +613,6 @@ const Analysis = () => {
           </div>
         )}
       </div>
-
-      {/* Prerequisite concept map from curriculum */}
-      {CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length > 0 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Network size={16} className="text-blue-800" />
-            <h2 className="font-display text-lg font-semibold text-stone-900">{t("prerequisiteMap")}</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {CONCEPT_MAP.filter((n) => n.leadsTo?.length > 0).slice(0, 6).map((node, idx) => (
-              <div key={node.concept} data-testid={`prereq-node-${idx}`} className="rounded-lg border border-stone-200 p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-6 w-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-[10px] font-bold">{idx + 1}</div>
-                  <div className="font-medium text-stone-900 text-sm">{node.concept}</div>
-                </div>
-                <div className="ml-2 pl-3 border-l-2 border-dashed border-blue-200 space-y-1.5">
-                  {node.leadsTo.map((child) => (
-                    <div key={child} className="text-xs text-stone-600 font-medium">↓ {child}</div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length > 6 && (
-              <div className="text-xs text-stone-400 flex items-center justify-center rounded-lg border border-dashed border-stone-200 p-3">
-                +{CONCEPT_MAP.filter(n => n.leadsTo?.length > 0).length - 6} more
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       </CollapsibleContent>
       </Collapsible>

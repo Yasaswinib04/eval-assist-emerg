@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { Plus, X, ChevronDown } from "lucide-react";
 
@@ -12,6 +13,7 @@ function getPersistedSubjects() {
 }
 
 export const ContextBar = () => {
+  const location = useLocation();
   const { activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS, user } = useApp();
   const [subjects, setSubjects] = useState(() => {
     return user?.subjects?.length ? user.subjects : getPersistedSubjects();
@@ -48,6 +50,7 @@ export const ContextBar = () => {
     }
   };
 
+  if (/^\/analysis\//.test(location.pathname)) return null;
   if (!subjects.length && !adding) return null;
 
   return (
