@@ -147,6 +147,10 @@ const Analysis = () => {
   const skillCount = useMemo(() => [...new Set(QUESTIONS.map(q => q.skill).filter(Boolean))].length, [QUESTIONS]);
   const [concepts, setConcepts] = useState([]);
   const [newConcept, setNewConcept] = useState("");
+  const [hiddenPrereqs, setHiddenPrereqs] = useState({});
+  const removePrereq = (concept, prereq) => {
+    setHiddenPrereqs((p) => ({ ...p, [concept]: [...(p[concept] || []), prereq] }));
+  };
   const [editingQ, setEditingQ] = useState(null);
   const [questionEdits, setQuestionEdits] = useState({});
   const [analyzing, setAnalyzing] = useState(false);
@@ -343,8 +347,8 @@ const Analysis = () => {
         <ArrowLeft size={14} /> Back to Upload
       </button>
 
-      {/* Compact header — stats & actions */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
+      {/* Compact header — title, stats top-right, actions */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] uppercase text-blue-800">
             <Sparkles size={12} /> {t("aiExtracted")}
@@ -352,33 +356,23 @@ const Analysis = () => {
           <h1 className="font-display text-xl md:text-2xl font-semibold text-stone-900">
             {t("analysisTitle")}
           </h1>
-          <p className="text-sm text-stone-500 mt-0.5">
-            {QUESTIONS.length} questions · {totalMarks} marks · {conceptCount} concepts · {skillCount} skills
-          </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <button onClick={() => setDetailsOpen((v) => !v)} data-testid="btn-view-details" className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 text-sm font-medium">
-            {t("viewDetails")} <ChevronDown size={14} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
-          </button>
-          <button onClick={handleRunEvaluation} disabled={!allApproved} data-testid="btn-run-evaluation" className={`inline-flex items-center gap-2 h-10 px-5 rounded-lg font-medium shadow-sm transition-colors text-sm ${allApproved ? "bg-blue-800 hover:bg-blue-900 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}>
-            {t("runEvaluation")} <ArrowRight size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* Compact stat cards — always visible at top */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
-        {[
-          { label: "Questions", value: QUESTIONS.length },
-          { label: "Marks", value: totalMarks },
-          { label: "Skills", value: skillCount },
-          { label: "Concepts", value: conceptCount },
-        ].map((s) => (
-          <div key={s.label} className="bg-white border border-stone-200 rounded-lg px-3 py-2.5 text-center">
-            <div className="text-[10px] font-semibold tracking-[0.05em] uppercase text-stone-400">{s.label}</div>
-            <div className="font-display text-lg font-semibold text-stone-900">{s.value}</div>
+        <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
+          <div className="flex items-center gap-3 text-xs text-stone-500 flex-wrap">
+            <span><b className="text-stone-800 font-semibold">{QUESTIONS.length}</b> questions</span>
+            <span><b className="text-stone-800 font-semibold">{totalMarks}</b> marks</span>
+            <span><b className="text-stone-800 font-semibold">{skillCount}</b> skills</span>
+            <span><b className="text-stone-800 font-semibold">{conceptCount}</b> concepts</span>
           </div>
-        ))}
+          <div className="flex items-center gap-3">
+            <button onClick={() => setDetailsOpen((v) => !v)} data-testid="btn-view-details" className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 text-sm font-medium">
+              {t("viewDetails")} <ChevronDown size={14} className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+            </button>
+            <button onClick={handleRunEvaluation} disabled={!allApproved} data-testid="btn-run-evaluation" className={`inline-flex items-center gap-2 h-10 px-5 rounded-lg font-medium shadow-sm transition-colors text-sm ${allApproved ? "bg-blue-800 hover:bg-blue-900 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}>
+              {t("runEvaluation")} <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* No concepts warning */}
@@ -625,14 +619,20 @@ const Analysis = () => {
             <div className="space-y-2">
               {concepts.map((concept) => {
                 const qsWithConcept = QUESTIONS.filter(q => (q.concept || "") === concept);
-                const prereqs = [...new Set(qsWithConcept.flatMap(q => q.prerequisites || []))];
+                const allPrereqs = [...new Set(qsWithConcept.flatMap(q => q.prerequisites || []))];
+                const prereqs = allPrereqs.filter(p => !(hiddenPrereqs[concept] || []).includes(p));
                 if (prereqs.length === 0) return null;
                 return (
                   <div key={concept} className="flex items-start gap-2 text-sm">
                     <span className="font-medium text-stone-800 shrink-0">{concept}:</span>
                     <div className="flex flex-wrap gap-1">
                       {prereqs.map(p => (
-                        <span key={p} className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] border border-amber-100">{p}</span>
+                        <span key={p} className="group inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] border border-amber-100">
+                          {p}
+                          <button onClick={() => removePrereq(concept, p)} className="h-3.5 w-3.5 rounded-full hover:bg-amber-100 flex items-center justify-center opacity-60 group-hover:opacity-100">
+                            <X size={9} />
+                          </button>
+                        </span>
                       ))}
                     </div>
                   </div>
