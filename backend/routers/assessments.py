@@ -9,7 +9,6 @@ import uuid
 import os
 import shutil
 import asyncio
-import httpx
 
 router = APIRouter()
 
@@ -36,7 +35,7 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
             dest = os.path.join(target, safe_name)
             with open(dest, "wb") as buf:
                 shutil.copyfileobj(f.file, buf)
-            saved.append(f"media/uploads/{assessment_id}/{subdir}/{safe_name}")
+            saved.append(f"/media/uploads/{assessment_id}/{subdir}/{safe_name}")
         except Exception as e:
             print(f"[Upload] Failed to save {f.filename}: {e}")
     return saved
@@ -189,10 +188,7 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
 
-    qimages = assessment.get("questionsImages") or []
-    if not qimages:
-        return {"status": "skipped", "message": "No question paper images uploaded"}
-
+    # Try text parsing first (faster, no API call needed)
     qtext = assessment.get("questionsText", "")
     if qtext and qtext.strip():
         try:
@@ -202,7 +198,12 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
                 await db.assessments.update_one({"_id": id}, {"$set": {"parsedQuestions": parsed, "processingStatus": "qpaper_done"}})
                 return {"status": "ok", "method": "text_parser", "questions": len(parsed)}
         except Exception as e:
-            print(f"[Qwen] Text parse failed, falling back to OCR: {e}")
+            print(f"[QPaper] Text parse failed, falling back to OCR: {e}")
+
+    # Fall back to image OCR
+    qimages = assessment.get("questionsImages") or []
+    if not qimages:
+        return {"status": "skipped", "message": "No question paper images uploaded"}
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
     if not openrouter_key:
@@ -255,7 +256,7 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
 
 @router.post("/{id}/generate-answer-key")
 async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
-    """Generate answer key using DeepSeek from extracted questions."""
+    """Generate answer key using OpenRouter TEXT_MODEL from extracted questions."""
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
@@ -264,28 +265,63 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     if not questions:
         return {"status": "error", "message": "No questions extracted yet. Run Q paper analysis first."}
 
-    deepseek_key = os.getenv("DEEPSEEK_API_KEY", "") or getattr(settings, "DEEPSEEK_API_KEY", "")
-    if not deepseek_key:
-        return {"status": "error", "message": "DEEPSEEK_API_KEY not configured"}
+    openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+    if not openrouter_key:
+        return {"status": "error", "message": "OPENROUTER_API_KEY not configured"}
 
-    deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") or getattr(settings, "DEEPSEEK_MODEL", "deepseek-chat")
+    text_model = getattr(settings, "TEXT_MODEL", "~google/gemini-flash-latest")
     subject = assessment.get("subject", "")
 
-    print(f"[DeepSeek] Generating answer key for {id} ({subject}): {len(questions)} questions")
+    print(f"[AnswerKey] Generating for {id} ({subject}) via {text_model}: {len(questions)} questions")
     try:
-        from backend.tools.llm.deepseek import generate_answer_key
-        answer_key = generate_answer_key(deepseek_key, questions, subject, model=deepseek_model)
+        import json as _json
+        from openai import OpenAI
+        subject_line = f" This is a {subject} exam paper for school students in India." if subject else ""
+        prompt = f"""You are an expert teacher.{subject_line} Below is a question paper. Generate the complete answer key.
+
+QUESTIONS:
+{_json.dumps(questions, indent=2, ensure_ascii=False)[:6000]}
+
+For EACH question provide:
+{{
+  "q": <question number>,
+  "type": "mcq" | "short" | "long" | "diagram",
+  "correctOption": "<A/B/C/D>" (MCQ only, else null),
+  "correctAnswer": "<full correct answer>",
+  "maxMarks": <marks>,
+  "explanation": "<1-2 line reason>",
+  "keyPoints": ["<point 1>", "<point 2>"],
+  "markingScheme": "<how marks split>"
+}}
+
+Return ONLY a valid JSON array. No markdown."""
+
+        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=openrouter_key)
+        response = client.chat.completions.create(
+            model=text_model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=6000,
+            extra_headers={"X-No-Cache": "true"},
+        )
+        content = response.choices[0].message.content.strip()
+        j0 = content.find("[")
+        j1 = content.rfind("]")
+        if j0 < 0 or j1 < 0:
+            return {"status": "error", "message": "Model returned no JSON array"}
+
+        answer_key = _json.loads(content[j0:j1 + 1])
         if not answer_key:
-            return {"status": "error", "message": "DeepSeek returned empty answer key"}
+            return {"status": "error", "message": "Model returned empty answer key"}
 
         await db.assessments.update_one(
             {"_id": id},
             {"$set": {"parsedAnswerKey": answer_key, "answerKeyStatus": "generated"}}
         )
-        print(f"[DeepSeek] Answer key generated: {len(answer_key)} answers")
+        print(f"[AnswerKey] Generated: {len(answer_key)} answers")
         return {"status": "ok", "answers": len(answer_key), "answerKey": answer_key}
     except Exception as e:
-        print(f"[DeepSeek] Answer key generation failed: {e}")
+        print(f"[AnswerKey] Generation failed: {e}")
         return {"status": "error", "message": str(e)[:200]}
 
 
@@ -450,20 +486,23 @@ async def _run_ocr_pipeline(
 
         db = _get_db()
 
-        # ── Qwen/OpenRouter OCR (if configured) ──
+        # ── Vision LLM OCR via OpenRouter (Gemini Pro with thinking) ──
         openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
         if openrouter_key:
-                from backend.tools.ocr.qwen_ocr import QwenVisionOCR, build_question_paper_from_questions, build_answer_key_from_parsed
+                from backend.services.vision_ocr_service import extract_answers_from_image, grade_answers
 
                 parsed_questions = assessment.get("parsedQuestions")
                 parsed_answer_key = assessment.get("parsedAnswerKey")
 
+                # Load questions — use parsed ones or fall back to seed
                 if parsed_questions:
-                    answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
-                    qpaper = build_question_paper_from_questions(parsed_questions)
+                    questions = parsed_questions
                 else:
-                    qpaper = assessment.get("questionsText", "")
-                    answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
+                    from pathlib import Path as _Path
+                    import json as _json
+                    seed_q_path = str(_Path(__file__).resolve().parents[2] / "backend" / "seed" / "data" / "questions.json")
+                    with open(seed_q_path) as _f:
+                        questions = _json.load(_f)
 
                 # Resolve sheet paths
                 sheet_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads", assessment_id, "sheets")
@@ -479,52 +518,68 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                # Validate that resolved paths exist on disk
-                sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
+                sheet_paths = sorted(p for p in sheet_paths if os.path.exists(p))
 
-                qwen = QwenVisionOCR(openrouter_key, settings.QWEN_MODEL, questions=parsed_questions, answer_key=answer_key)
+                # Group pages by student name prefix (Sanya_01.jpeg, Sanya_02.jpeg → Sanya)
+                from collections import defaultdict
+                student_pages = defaultdict(list)
+                for p in sheet_paths:
+                    base = os.path.basename(p)
+                    name_key = os.path.splitext(base)[0].split("_")[0].lower()
+                    student_pages[name_key].append(p)
 
-                await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
+                vision_model = getattr(settings, "VISION_MODEL", "~google/gemini-pro-latest")
 
-                sem = asyncio.Semaphore(5)
-                total_sheets = len(sheet_paths)
+                num_students = len(student_pages)
+                await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": num_students}})
 
-                async def process_one(path):
-                    base_fname = os.path.basename(path)
-                    name_part = os.path.splitext(base_fname)[0].split("_")[0].capitalize()
-                    student_id = f"stu-{assessment_id}-{name_part.lower()}"
+                sem = asyncio.Semaphore(3)
 
-                    async with sem:
-                        result = await asyncio.to_thread(qwen.process, path, student_id, assessment_id)
+                async def process_one(name_key, pages):
+                    try:
+                        async with sem:
+                            structured = await asyncio.to_thread(
+                                extract_answers_from_image, pages, questions, openrouter_key, vision_model
+                            )
+                            evaluations = grade_answers(structured, questions, parsed_answer_key, openrouter_key, vision_model)
+                    except Exception as e:
+                        print(f"[Vision] Error {name_key}: {e}")
+                        return {"error": str(e), "name": name_key}
 
-                    if "error" in result:
-                        print(f"[Qwen] Error {name_part}: {result['error']}")
-                        return {"error": result['error'], "studentId": student_id, "name": name_part, "path": path}
+                    # Pull name/roll extracted by LLM from sheet header; fall back to filename prefix
+                    ocr_name = (structured[0].get("_studentName") if structured else None)
+                    ocr_roll = (structured[0].get("_studentRoll") if structured else None)
+                    student_name = (ocr_name or name_key).strip().capitalize()
+                    student_roll = (ocr_roll or f"08-{list(student_pages.keys()).index(name_key) + 1}").strip()
+                    student_id = f"stu-{assessment_id}-{student_name.lower().replace(' ', '-')}"
 
-                    for ev in result.get("evaluations", []):
+                    print(f"  [OCR] Identified: {student_name} (roll {student_roll})")
+
+                    for ev in evaluations:
+                        ev["_id"] = f"{assessment_id}-{student_id}-{ev['qId']}"
+                        ev["assessmentId"] = assessment_id
+                        ev["studentId"] = student_id
+                        ev["approved"] = False
                         await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
 
-                    total = result.get("total", 0)
-                    qwen_name = result.get("studentName")
-                    qwen_roll = result.get("rollNumber")
-                    student_name = qwen_name if qwen_name else name_part
-                    student_roll = qwen_roll if qwen_roll else f"08-{total_sheets}"
+                    total = sum(float(ev.get("aiMark", 0) or 0) for ev in evaluations)
+                    image_urls = [f"/media/uploads/{assessment_id}/sheets/{os.path.basename(p)}" for p in pages]
 
                     await db.students.update_one({"_id": student_id}, {"$set": {
                         "_id": student_id, "name": student_name,
                         "roll": student_roll,
                         "total": total, "status": "review",
-                        "imageUrls": [os.path.join("media", "uploads", assessment_id, "sheets", os.path.basename(path))],
+                        "imageUrls": image_urls,
                         "assessmentId": assessment_id,
                     }}, upsert=True)
                     return {"studentId": student_id, "name": student_name, "total": total, "ok": True}
 
-                results = await asyncio.gather(*[process_one(p) for p in sheet_paths], return_exceptions=True)
+                results = await asyncio.gather(*[process_one(k, v) for k, v in student_pages.items()], return_exceptions=True)
                 results = [r for r in results if isinstance(r, dict)]
 
                 successful = sum(1 for r in results if r.get("ok"))
                 failed = sum(1 for r in results if not r.get("ok"))
-                print(f"[Qwen] Parallel done: {successful} ok, {failed} failed of {total_sheets}")
+                print(f"[Vision] Parallel done: {successful} ok, {failed} failed of {num_students}")
 
                 # Formative mode: nullify marks, add isCorrect/mistakeType
                 grading_mode = assessment.get("gradingMode", "scored")
@@ -592,7 +647,7 @@ async def _run_ocr_pipeline(
                     if qwen_total_marks > 0:
                         final_update["totalMarks"] = qwen_total_marks
                 await db.assessments.update_one({"_id": assessment_id}, {"$set": final_update})
-                print(f"[Qwen] Pipeline complete: {num_students} students, {len(final_evals)} evals")
+                print(f"[Vision] Pipeline complete: {num_students} students, {len(final_evals)} evals")
                 return
 
         # ── Local OCR pipeline (fallback) ──
@@ -764,7 +819,7 @@ async def _run_ocr_pipeline(
                 "total": student_total,
                 "status": "review",
                 "imageUrls": [
-                    img.split("media/")[-1] if "media/" in img else img
+                    img if img.startswith("/") else f"/{img}"
                     for img in student_paths
                 ],
                 "assessmentId": assessment_id,
@@ -876,6 +931,11 @@ async def _llm_evaluate_answers(db, assessment_id: str, parsed_questions: list, 
     """
     import json as json_mod
     import re as re_mod
+    try:
+        import httpx
+    except ImportError:
+        print("[LLM Eval] httpx not available, skipping LLM evaluation")
+        return
     
     # Build lookup maps
     key_by_q = {}

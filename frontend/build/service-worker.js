@@ -1,4 +1,4 @@
-const CACHE_VERSION = "3";
+const CACHE_VERSION = "4";
 const CACHE_NAME = `evalassist-v${CACHE_VERSION}`;
 
 self.addEventListener("install", (event) => {
@@ -24,16 +24,13 @@ self.addEventListener("fetch", (event) => {
 
   if (url.pathname.startsWith("/static/") || url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$/i)) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetchPromise = fetch(request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        }).catch(() => cached);
-        return cached || fetchPromise;
-      })
+      fetch(request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(request))
     );
     return;
   }

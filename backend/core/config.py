@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list = ["*"]
     OPENROUTER_API_KEY: str = ""
     QWEN_MODEL: str = "qwen/qwen3-vl-235b-a22b-instruct"
+    VISION_MODEL: str = "~google/gemini-pro-latest"
+    TEXT_MODEL: str = "~google/gemini-flash-latest"
     DEEPSEEK_API_KEY: str = ""
     DEEPSEEK_MODEL: str = "deepseek-chat"
     POSTHOG_API_KEY: str = ""
