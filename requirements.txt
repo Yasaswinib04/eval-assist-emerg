@@ -1,0 +1,30 @@
+# Backend API & Server
+fastapi==0.110.1
+uvicorn==0.25.0
+python-multipart==0.0.20
+starlette==0.37.2
+
+# Database
+motor==3.3.1
+pymongo==4.5.0
+certifi==2026.6.17
+
+# Authentication
+bcrypt==4.1.3
+python-jose[cryptography]==3.5.0
+PyJWT==2.13.0
+
+# Settings & Environment
+pydantic==2.13.4
+pydantic-settings==2.11.0
+python-dotenv==1.2.1
+
+# OpenRouter / OpenAI client (used for Vision LLM + Text LLM via OpenRouter)
+openai==2.44.0
+httpx==0.28.1
+
+# Image handling (for base64 encoding of uploaded sheets)
+pillow==11.3.0
+
+# Utilities
+requests==2.32.5
