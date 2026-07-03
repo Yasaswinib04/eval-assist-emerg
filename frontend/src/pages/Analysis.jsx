@@ -7,17 +7,13 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2, ChevronDown, CheckCircle2, ScanLine, ListChecks, BookOpen, Tags, Brain, ClipboardCheck, PenLine } from "lucide-react";
 
-const ANALYZE_MIN_MS = 16000;
-const GENERATE_MIN_MS = 13000;
+const FULL_ANALYSIS_MIN_MS = 29000;
 
-const ANALYZE_STEPS = [
+const FULL_ANALYSIS_STEPS = [
   { label: "Reading the question paper", detail: "Going through each page you uploaded", icon: ScanLine, minMs: 3000 },
   { label: "Finding all questions", detail: "Picking out question numbers, sections, and marks", icon: ListChecks, minMs: 4000 },
   { label: "Matching to your syllabus", detail: "Linking each question to topics and chapters", icon: BookOpen, minMs: 4000 },
   { label: "Understanding what is tested", detail: "Identifying concepts, skills, and difficulty levels", icon: Tags, minMs: 5000 },
-];
-
-const GENERATE_STEPS = [
   { label: "Reading each question", detail: "Understanding what students need to answer", icon: Brain, minMs: 3000 },
   { label: "Finding correct answers", detail: "Solving each question accurately", icon: ClipboardCheck, minMs: 5000 },
   { label: "Setting grading guidelines", detail: "Preparing how marks will be awarded", icon: PenLine, minMs: 5000 },
@@ -153,11 +149,9 @@ const Analysis = () => {
   };
   const [editingQ, setEditingQ] = useState(null);
   const [questionEdits, setQuestionEdits] = useState({});
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysisError, setAnalysisError] = useState("");
+  const [running, setRunning] = useState(false);
+  const [pipelineError, setPipelineError] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(true);
-  const [generatingKey, setGeneratingKey] = useState(false);
-  const [keyError, setKeyError] = useState("");
   const [approvedAnswers, setApprovedAnswers] = useState({});
   const [expandedAnswers, setExpandedAnswers] = useState({});
 
@@ -169,67 +163,63 @@ const Analysis = () => {
 
   const progressTimerRef = useRef(null);
 
-  const handleAnalyzeQPaper = async () => {
-    setAnalyzing(true);
-    setAnalysisError("");
+  const handleRunFullAnalysis = async () => {
+    setRunning(true);
+    setPipelineError("");
     const startedAt = Date.now();
+
     try {
       const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
-      const data = await r.json();
-      const elapsed = Date.now() - startedAt;
-      const remaining = Math.max(0, ANALYZE_MIN_MS - elapsed);
-      if (data.status === "ok") {
-        progressTimerRef.current = setTimeout(async () => {
-          setAnalyzing(false);
-          await refetchQuestions();
-          await queryClient.invalidateQueries(['concepts', id]);
-        }, remaining);
-      } else {
+      const qdata = await r.json();
+      if (qdata.status !== "ok") {
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, FULL_ANALYSIS_MIN_MS - elapsed);
         progressTimerRef.current = setTimeout(() => {
-          setAnalyzing(false);
-          setAnalysisError(data.message || "Analysis failed. Your images are saved — try again.");
+          setRunning(false);
+          setPipelineError(qdata.message || "Question paper analysis failed.");
           refetchQuestions();
         }, remaining);
+        return;
       }
     } catch (err) {
       const elapsed = Date.now() - startedAt;
-      const remaining = Math.max(0, ANALYZE_MIN_MS - elapsed);
+      const remaining = Math.max(0, FULL_ANALYSIS_MIN_MS - elapsed);
       progressTimerRef.current = setTimeout(() => {
-        setAnalyzing(false);
-        setAnalysisError("Network error. Check your connection and try again.");
+        setRunning(false);
+        setPipelineError("Network error during question paper analysis.");
       }, remaining);
+      return;
     }
-  };
 
-  const handleGenerateAnswerKey = async () => {
-    setGeneratingKey(true);
-    setKeyError("");
-    const startedAt = Date.now();
     try {
       const result = await apiClient.generateAnswerKey(id);
       const elapsed = Date.now() - startedAt;
-      const remaining = Math.max(0, GENERATE_MIN_MS - elapsed);
+      const remaining = Math.max(0, FULL_ANALYSIS_MIN_MS - elapsed);
       if (result.status === "ok") {
         progressTimerRef.current = setTimeout(async () => {
-          setGeneratingKey(false);
+          setRunning(false);
+          await refetchQuestions();
+          await queryClient.invalidateQueries(['concepts', id]);
           await refetchAnswerKey();
           const ak = result.answerKey || [];
           const initial = {};
           ak.forEach((a) => { initial[a.q] = true; });
           setApprovedAnswers(initial);
+          try { sessionStorage.setItem(`$ea-pipe-${id}`, "1"); } catch {}
         }, remaining);
       } else {
         progressTimerRef.current = setTimeout(() => {
-          setGeneratingKey(false);
-          setKeyError(result.message || "Answer key generation failed. Try again.");
+          setRunning(false);
+          setPipelineError(result.message || "Answer key generation failed. Try again.");
+          refetchQuestions();
         }, remaining);
       }
     } catch (err) {
       const elapsed = Date.now() - startedAt;
-      const remaining = Math.max(0, GENERATE_MIN_MS - elapsed);
+      const remaining = Math.max(0, FULL_ANALYSIS_MIN_MS - elapsed);
       progressTimerRef.current = setTimeout(() => {
-        setGeneratingKey(false);
-        setKeyError("Network error generating answer key.");
+        setRunning(false);
+        setPipelineError("Network error generating answer key.");
       }, remaining);
     }
   };
@@ -250,9 +240,9 @@ const Analysis = () => {
   };
 
   useEffect(() => {
-    const t = setTimeout(() => { setAnalyzing(false); setAnalysisError("Analysis timed out. Try again."); }, 45000);
+    const t = setTimeout(() => { setRunning(false); setPipelineError("Timed out. Try again."); }, 60000);
     return () => clearTimeout(t);
-  }, [analyzing]);
+  }, [running]);
 
   useEffect(() => {
     if (QUESTIONS.length > 0 && concepts.length === 0) {
@@ -260,59 +250,39 @@ const Analysis = () => {
     }
   }, [QUESTIONS]);
 
-  const [analysisAttempted, setAnalysisAttempted] = useState(() => {
-    try { return sessionStorage.getItem(`ea-an-${id}`) === "1"; } catch { return false; }
+  const [pipelineAttempted, setPipelineAttempted] = useState(() => {
+    try { return sessionStorage.getItem(`$ea-pipe-${id}`) === "1"; } catch { return false; }
   });
 
   useEffect(() => {
-    if (hasPendingOCR && !analyzing && !analysisAttempted) {
-      setAnalysisAttempted(true);
-      try { sessionStorage.setItem(`ea-an-${id}`, "1"); } catch {}
-      handleAnalyzeQPaper();
+    const needsAnalysis = hasPendingOCR || (QUESTIONS.length > 0 && !hasPendingOCR && !hasAnswerKey);
+    if (needsAnalysis && !running && !pipelineAttempted && !pipelineError) {
+      setPipelineAttempted(true);
+      try { sessionStorage.setItem(`$ea-pipe-${id}`, "1"); } catch {}
+      handleRunFullAnalysis();
     }
-  }, [hasPendingOCR]);
+  }, [hasPendingOCR, QUESTIONS.length, hasAnswerKey, running, pipelineAttempted, pipelineError]);
 
-  // Track attempted operations for this assessment to prevent retry storms on revisit
-  const [answerKeyAttempted, setAnswerKeyAttempted] = useState(() => {
-    try { return sessionStorage.getItem(`ea-ak-${id}`) === "1"; } catch { return false; }
-  });
-  useEffect(() => {
-    if (
-      QUESTIONS.length > 0 &&
-      !hasPendingOCR &&
-      !hasAnswerKey &&
-      !generatingKey &&
-      !analysisError &&
-      !keyError &&
-      !answerKeyAttempted
-    ) {
-      setAnswerKeyAttempted(true);
-      try { sessionStorage.setItem(`ea-ak-${id}`, "1"); } catch {}
-      handleGenerateAnswerKey();
-    }
-  }, [QUESTIONS.length, hasPendingOCR, hasAnswerKey, generatingKey, analysisError, keyError, answerKeyAttempted]);
-
-  if (analyzing || generatingKey) {
+  if (running) {
     return (
       <ProgressPanel
-        title={analyzing ? "Analyzing your question paper" : "Generating answer key"}
-        subtitle={analyzing ? "Let me go through each page you shared and understand the questions" : "Working through each question to prepare the best answers"}
-        steps={analyzing ? ANALYZE_STEPS : GENERATE_STEPS}
+        title="Preparing your assessment"
+        subtitle="Reading the question paper, extracting questions, and generating the answer key"
+        steps={FULL_ANALYSIS_STEPS}
         onSkip={() => {
           if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
-          setAnalyzing(false);
-          setGeneratingKey(false);
+          setRunning(false);
         }}
       />
     );
   }
 
-  if (analysisError && QUESTIONS.length === 0) {
+  if (pipelineError && QUESTIONS.length === 0 && !hasAnswerKey) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-sm text-red-600">{analysisError}</p>
+        <p className="text-sm text-red-600">{pipelineError}</p>
         <div className="flex gap-2">
-          <button onClick={handleAnalyzeQPaper} className="h-9 px-4 rounded-lg bg-blue-800 text-white text-xs font-medium">Retry Analysis</button>
+          <button onClick={handleRunFullAnalysis} className="h-9 px-4 rounded-lg bg-blue-800 text-white text-xs font-medium">Retry</button>
           <button onClick={() => navigate("/dashboard")} className="h-9 px-4 rounded-lg border border-stone-300 text-stone-600 text-xs font-medium">Back to Dashboard</button>
         </div>
       </div>
@@ -396,8 +366,8 @@ const Analysis = () => {
             <div className="flex items-center gap-2">
               <span className="text-xs text-stone-500">{totalApproved}/{answerKey.length} approved</span>
               <button onClick={approveAll} className="text-xs font-medium text-blue-700 hover:text-blue-900">Approve All</button>
-              <button onClick={handleGenerateAnswerKey} disabled={generatingKey} className="text-xs font-medium text-stone-500 hover:text-stone-700">
-                {generatingKey ? <Loader2 size={12} className="animate-spin inline" /> : "Regenerate"}
+              <button onClick={handleRunFullAnalysis} disabled={running} className="text-xs font-medium text-stone-500 hover:text-stone-700">
+                {running ? <Loader2 size={12} className="animate-spin inline" /> : "Regenerate"}
               </button>
             </div>
           </div>
@@ -470,7 +440,7 @@ const Analysis = () => {
             </div>
           )}
 
-          {keyError && <div className="mt-3 text-xs text-rose-600">{keyError}</div>}
+          {pipelineError && <div className="mt-3 text-xs text-rose-600">{pipelineError}</div>}
 
           <div className="mt-4 flex items-center justify-between text-xs text-stone-400">
             <span>Answer key generated by DeepSeek AI</span>
@@ -481,23 +451,23 @@ const Analysis = () => {
         </div>
       )}
 
-      {!hasAnswerKey && QUESTIONS.length > 0 && !hasPendingOCR && !generatingKey && (
+      {!hasAnswerKey && QUESTIONS.length > 0 && !hasPendingOCR && !running && (
         <div className="bg-white border border-stone-200 rounded-xl p-6 mb-5 text-center">
-          {keyError ? (
+          {pipelineError ? (
             <>
               <div className="flex items-center justify-center gap-2 text-rose-700 mb-3">
                 <X size={18} className="text-rose-500" />
                 <span className="font-semibold text-sm">Answer key generation failed</span>
               </div>
-              <p className="text-sm text-rose-600 mb-4">{keyError}</p>
-              <button onClick={handleGenerateAnswerKey} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
-                Retry Generation
+              <p className="text-sm text-rose-600 mb-4">{pipelineError}</p>
+              <button onClick={handleRunFullAnalysis} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
+                Retry
               </button>
             </>
           ) : (
             <>
               <p className="text-sm text-stone-500 mb-3">Answer key has not been generated yet.</p>
-              <button onClick={handleGenerateAnswerKey} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
+              <button onClick={handleRunFullAnalysis} className="h-10 px-4 rounded-lg bg-blue-800 text-white text-sm font-medium hover:bg-blue-900">
                 Generate Answer Key with AI
               </button>
             </>
