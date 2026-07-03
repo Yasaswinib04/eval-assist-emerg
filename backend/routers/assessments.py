@@ -254,7 +254,7 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
 
 @router.post("/{id}/generate-answer-key")
 async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
-    """Generate answer key using DeepSeek from extracted questions."""
+    """Generate answer key using OpenRouter TEXT_MODEL from extracted questions."""
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
@@ -263,28 +263,63 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     if not questions:
         return {"status": "error", "message": "No questions extracted yet. Run Q paper analysis first."}
 
-    deepseek_key = os.getenv("DEEPSEEK_API_KEY", "") or getattr(settings, "DEEPSEEK_API_KEY", "")
-    if not deepseek_key:
-        return {"status": "error", "message": "DEEPSEEK_API_KEY not configured"}
+    openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+    if not openrouter_key:
+        return {"status": "error", "message": "OPENROUTER_API_KEY not configured"}
 
-    deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") or getattr(settings, "DEEPSEEK_MODEL", "deepseek-chat")
+    text_model = getattr(settings, "TEXT_MODEL", "~google/gemini-flash-latest").lstrip("~")
     subject = assessment.get("subject", "")
 
-    print(f"[DeepSeek] Generating answer key for {id} ({subject}): {len(questions)} questions")
+    print(f"[AnswerKey] Generating for {id} ({subject}) via {text_model}: {len(questions)} questions")
     try:
-        from backend.tools.llm.deepseek import generate_answer_key
-        answer_key = generate_answer_key(deepseek_key, questions, subject, model=deepseek_model)
+        import json as _json
+        from openai import OpenAI
+        subject_line = f" This is a {subject} exam paper for school students in India." if subject else ""
+        prompt = f"""You are an expert teacher.{subject_line} Below is a question paper. Generate the complete answer key.
+
+QUESTIONS:
+{_json.dumps(questions, indent=2, ensure_ascii=False)[:6000]}
+
+For EACH question provide:
+{{
+  "q": <question number>,
+  "type": "mcq" | "short" | "long" | "diagram",
+  "correctOption": "<A/B/C/D>" (MCQ only, else null),
+  "correctAnswer": "<full correct answer>",
+  "maxMarks": <marks>,
+  "explanation": "<1-2 line reason>",
+  "keyPoints": ["<point 1>", "<point 2>"],
+  "markingScheme": "<how marks split>"
+}}
+
+Return ONLY a valid JSON array. No markdown."""
+
+        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=openrouter_key)
+        response = client.chat.completions.create(
+            model=text_model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=6000,
+            extra_headers={"X-No-Cache": "true"},
+        )
+        content = response.choices[0].message.content.strip()
+        j0 = content.find("[")
+        j1 = content.rfind("]")
+        if j0 < 0 or j1 < 0:
+            return {"status": "error", "message": "Model returned no JSON array"}
+
+        answer_key = _json.loads(content[j0:j1 + 1])
         if not answer_key:
-            return {"status": "error", "message": "DeepSeek returned empty answer key"}
+            return {"status": "error", "message": "Model returned empty answer key"}
 
         await db.assessments.update_one(
             {"_id": id},
             {"$set": {"parsedAnswerKey": answer_key, "answerKeyStatus": "generated"}}
         )
-        print(f"[DeepSeek] Answer key generated: {len(answer_key)} answers")
+        print(f"[AnswerKey] Generated: {len(answer_key)} answers")
         return {"status": "ok", "answers": len(answer_key), "answerKey": answer_key}
     except Exception as e:
-        print(f"[DeepSeek] Answer key generation failed: {e}")
+        print(f"[AnswerKey] Generation failed: {e}")
         return {"status": "error", "message": str(e)[:200]}
 
 
