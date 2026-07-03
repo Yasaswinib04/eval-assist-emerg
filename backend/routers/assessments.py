@@ -518,29 +518,36 @@ async def _run_ocr_pipeline(
                                   for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
                     sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
 
-                sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
+                sheet_paths = sorted(p for p in sheet_paths if os.path.exists(p))
+
+                # Group pages by student name prefix (Sanya_01.jpeg, Sanya_02.jpeg → Sanya)
+                from collections import defaultdict
+                student_pages = defaultdict(list)
+                for p in sheet_paths:
+                    base = os.path.basename(p)
+                    name_key = os.path.splitext(base)[0].split("_")[0].lower()
+                    student_pages[name_key].append(p)
 
                 vision_model = getattr(settings, "VISION_MODEL", "~google/gemini-pro-latest")
 
-                await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
+                num_students = len(student_pages)
+                await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": num_students}})
 
                 sem = asyncio.Semaphore(3)
-                total_sheets = len(sheet_paths)
 
-                async def process_one(path):
-                    base_fname = os.path.basename(path)
-                    name_part = os.path.splitext(base_fname)[0].split("_")[0].capitalize()
-                    student_id = f"stu-{assessment_id}-{name_part.lower()}"
+                async def process_one(name_key, pages):
+                    name_part = name_key.capitalize()
+                    student_id = f"stu-{assessment_id}-{name_key}"
 
                     try:
                         async with sem:
                             structured = await asyncio.to_thread(
-                                extract_answers_from_image, [path], questions, openrouter_key, vision_model
+                                extract_answers_from_image, pages, questions, openrouter_key, vision_model
                             )
                             evaluations = grade_answers(structured, questions, parsed_answer_key, openrouter_key, vision_model)
                     except Exception as e:
                         print(f"[Vision] Error {name_part}: {e}")
-                        return {"error": str(e), "studentId": student_id, "name": name_part, "path": path}
+                        return {"error": str(e), "studentId": student_id, "name": name_part}
 
                     for ev in evaluations:
                         ev["_id"] = f"{assessment_id}-{student_id}-{ev['qId']}"
@@ -550,24 +557,24 @@ async def _run_ocr_pipeline(
                         await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
 
                     total = sum(float(ev.get("aiMark", 0) or 0) for ev in evaluations)
-                    student_name = name_part
-                    student_roll = f"08-{total_sheets}"
+                    student_roll = f"08-{list(student_pages.keys()).index(name_key) + 1}"
+                    image_urls = [f"/media/uploads/{assessment_id}/sheets/{os.path.basename(p)}" for p in pages]
 
                     await db.students.update_one({"_id": student_id}, {"$set": {
-                        "_id": student_id, "name": student_name,
+                        "_id": student_id, "name": name_part,
                         "roll": student_roll,
                         "total": total, "status": "review",
-                        "imageUrls": [f"/media/uploads/{assessment_id}/sheets/{os.path.basename(path)}"],
+                        "imageUrls": image_urls,
                         "assessmentId": assessment_id,
                     }}, upsert=True)
-                    return {"studentId": student_id, "name": student_name, "total": total, "ok": True}
+                    return {"studentId": student_id, "name": name_part, "total": total, "ok": True}
 
-                results = await asyncio.gather(*[process_one(p) for p in sheet_paths], return_exceptions=True)
+                results = await asyncio.gather(*[process_one(k, v) for k, v in student_pages.items()], return_exceptions=True)
                 results = [r for r in results if isinstance(r, dict)]
 
                 successful = sum(1 for r in results if r.get("ok"))
                 failed = sum(1 for r in results if not r.get("ok"))
-                print(f"[Vision] Parallel done: {successful} ok, {failed} failed of {total_sheets}")
+                print(f"[Vision] Parallel done: {successful} ok, {failed} failed of {num_students}")
 
                 # Formative mode: nullify marks, add isCorrect/mistakeType
                 grading_mode = assessment.get("gradingMode", "scored")
