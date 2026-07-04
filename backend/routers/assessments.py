@@ -194,9 +194,10 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
     qtext = assessment.get("questionsText", "")
     if qtext and qtext.strip():
         try:
-            from backend.services.answer_key_parser import parse_questions_text
+            from backend.services.answer_key_parser import parse_questions_text, tag_question_concepts
             parsed = parse_questions_text(qtext)
             if parsed:
+                tag_question_concepts(parsed, subject=assessment.get("subject", ""))
                 computed_total = _compute_total_marks(parsed)
                 update_fields = {"parsedQuestions": parsed, "processingStatus": "qpaper_done"}
                 if computed_total > 0:
@@ -244,6 +245,8 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
                 q["skill"] = q.get("skill", "Recall")
                 q["difficulty"] = q.get("difficulty", "Medium")
                 q["prerequisites"] = q.get("prerequisites", [])
+            from backend.services.answer_key_parser import tag_question_concepts
+            tag_question_concepts(questions, subject=subject)
             update_fields = {"parsedQuestions": questions, "processingStatus": "qpaper_done"}
             if computed_total > 0:
                 update_fields["totalMarks"] = computed_total
@@ -355,6 +358,8 @@ async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: s
                 q["skill"] = q.get("skill", "Recall")
                 q["difficulty"] = q.get("difficulty", "Medium")
                 q["prerequisites"] = q.get("prerequisites", [])
+            from backend.services.answer_key_parser import tag_question_concepts
+            tag_question_concepts(questions, subject=subject)
             update_fields = {"parsedQuestions": questions, "processingStatus": "qpaper_done"}
             if computed_total > 0:
                 update_fields["totalMarks"] = computed_total

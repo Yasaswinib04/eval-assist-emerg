@@ -125,6 +125,63 @@ Return ONLY a JSON array. No markdown, no explanation."""
     return []
 
 
+def tag_question_concepts(questions: List[Dict[str, Any]], subject: str = "") -> List[Dict[str, Any]]:
+    """Fill in concept/skill/difficulty/prerequisites via local LLM (Ollama).
+
+    Mirrors the schema the Qwen vision path already asks for — this just
+    covers the text/heuristic parsing path, which never requested these
+    fields. Deliberately not curriculum-dependent: the model infers concepts
+    directly from question text + subject, same as the image path does.
+    Skips questions that already have a concept (e.g. tagged by Qwen).
+    """
+    missing = [q for q in questions if not q.get("concept")]
+    if not missing:
+        return questions
+
+    subject_context = f" This is a {subject} exam." if subject else ""
+    items = "\n".join(f'{q["number"]}. {q["text"]}' for q in missing)
+    prompt = f"""For each numbered question below, identify:{subject_context}
+- "number": the question number (must match exactly)
+- "concept": the specific concept being tested (e.g., "Newton's Laws", "Photosynthesis")
+- "skill": MUST be exactly one of these four strings, verbatim: "Recall", "Understanding", "Application", "Analysis"
+- "difficulty": MUST be exactly one of these three strings, verbatim: "Easy", "Medium", "Hard"
+- "prerequisites": list of concepts students must know before attempting this question
+
+QUESTIONS:
+{items}
+
+Return ONLY a JSON array like [{{"number": 1, "concept": "...", "skill": "...", "difficulty": "...", "prerequisites": ["..."]}}]. No markdown, no explanation."""
+
+    try:
+        resp = httpx.post(
+            OLLAMA_URL,
+            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.1},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        response_text = resp.json().get("response", "").strip()
+        json_start = response_text.find("[")
+        json_end = response_text.rfind("]")
+        if json_start >= 0 and json_end > json_start:
+            tags = json.loads(response_text[json_start:json_end + 1])
+            by_num = {t.get("number"): t for t in tags if isinstance(t, dict)}
+            valid_skills = {"Recall", "Understanding", "Application", "Analysis"}
+            valid_difficulty = {"Easy", "Medium", "Hard"}
+            for q in missing:
+                tag = by_num.get(q["number"])
+                if tag:
+                    q["concept"] = tag.get("concept", "") or ""
+                    skill = tag.get("skill")
+                    q["skill"] = skill if skill in valid_skills else "Recall"
+                    difficulty = tag.get("difficulty")
+                    q["difficulty"] = difficulty if difficulty in valid_difficulty else "Medium"
+                    q["prerequisites"] = tag.get("prerequisites") or []
+    except Exception as e:
+        print(f"  Ollama concept tagging failed: {e}")
+
+    return questions
+
+
 def parse_questions_text(text: str) -> List[Dict[str, Any]]:
     """Parse teacher-submitted questions text into structured question array.
 
