@@ -257,10 +257,19 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
 
 @router.post("/{id}/generate-answer-key")
 async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
-    """Generate answer key using DeepSeek from extracted questions."""
+    """Generate answer key using DeepSeek from extracted questions.
+
+    Never overwrites an answer key the teacher already supplied (uploaded/edited) —
+    only fills in when none exists.
+    """
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+
+    existing_key = assessment.get("parsedAnswerKey")
+    existing_status = assessment.get("answerKeyStatus")
+    if existing_key and existing_status in ("uploaded", "edited"):
+        return {"status": "ok", "answers": len(existing_key), "answerKey": existing_key, "skipped": "teacher_provided"}
 
     questions = assessment.get("parsedQuestions")
     if not questions:

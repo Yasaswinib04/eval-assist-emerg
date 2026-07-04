@@ -180,126 +180,171 @@ Return ONLY a JSON array. No markdown, no explanation."""
     return heuristic if heuristic else []
 
 
-def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
-    """Heuristically parse free-text questions into structured Question format."""
-    lines = [l.strip() for l in text.split("\n") if l.strip()]
-    questions = []
-    q_num = 1
-    current_section = "A"
-    current_section_marks = 1
+_SECTION_HEADER_RE = re.compile(r'^section\s+([a-d])\b[:\-.]?\s*(.*)$', re.IGNORECASE)
+_MARKS_SPEC_RE = re.compile(r'(\d+)\s*(?:x|\\times|×)\s*(\d+)\s*=\s*(\d+)')
+_DEFAULT_SECTION_MARKS = {"A": 1, "B": 2, "C": 4, "D": 8}
+# Option marker must be preceded by start-of-string or whitespace, never by a
+# letter/paren — otherwise "Assertion (A): ..." falsely reads as an "A)" option.
+_OPTION_RE = re.compile(r'(?:^|\s)([A-D])\)\s*(.+?)(?=(?:\s[A-D]\))|$)')
+_OPTION_START_RE = re.compile(r'(?:^|\s)([A-D])\)')
+_SECTION_D_MARKER_RE = re.compile(r'^(\d+)\.\s*([AB])\)\s*(.*)$')
+_SUBPART_SPLIT_RE = re.compile(r'\b(i{1,3}v?|iv|v)\)\s*')
 
-    def is_section_header(line):
-        lower = line.lower()
-        if not lower.startswith("section"):
-            return False
-        # "Section A (MCQ - 1 mark each):" — has no question content
-        # "Section B (Short Answer - 2 marks each):" — has no question content
-        has_answer_keywords = any(kw in lower for kw in ("answer", "multiple", "questions", "booklet", "choice", "mcq", "short", "long", "essay", "mark"))
-        return len(line) < 50 or has_answer_keywords
 
-    def is_valid_question_line(line):
-        lower = line.lower()
-        if is_section_header(line):
-            return False
-        if lower.startswith("section"):
-            return False
-        if "self assessment" in lower or "udise" in lower:
-            return False
-        if len(line) < 10:
-            return False
-        # Filter lines that are just option lists (e.g., "A) X  B) Y  C) Z  D) W")
-        opts_only = re.findall(r'\b[A-D]\)', line)
-        if opts_only and len(opts_only) >= 2:
-            remaining = line
-            for m in re.finditer(r'\b[A-D]\)\s*[^A-D\n]+', line):
-                remaining = remaining.replace(m.group(), '', 1)
-            remaining = re.sub(r'\s+', ' ', remaining).strip()
-            if len(remaining) < 5:
-                return False
+def _extract_options(text: str) -> List[str]:
+    opts = _OPTION_RE.findall(text)
+    if len(opts) >= 2:
+        return [f"{o[0]}) {o[1].strip()}" for o in opts]
+    return []
+
+
+def _is_noise_line(line: str) -> bool:
+    lower = line.lower()
+    if "self assessment" in lower or "udise" in lower:
         return True
+    if len(line) < 10:
+        return True
+    return False
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        lower_line = line.lower()
-        if lower_line.startswith("section b") or (lower_line.startswith("section") and " b" in lower_line):
-            current_section = "B"
-            current_section_marks = 2
-            i += 1
+
+def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
+    """Heuristically parse free-text questions into structured Question format.
+
+    Splits the paper by "Section A/B/C/D" headers (deriving marks-per-question
+    from patterns like "10x1=10"), discards front-matter above the first
+    section header (title, UDISE code, roll no, etc.), and numbers questions
+    sequentially across sections so the original 1..N hierarchy is preserved
+    rather than exploding every line into its own top-level question.
+    """
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+
+    start = None
+    for i, line in enumerate(lines):
+        if _SECTION_HEADER_RE.match(line):
+            start = i
+            break
+    if start is None:
+        return []
+    lines = lines[start:]
+
+    sections = []
+    current = None
+    for line in lines:
+        m = _SECTION_HEADER_RE.match(line)
+        if m:
+            current = {"letter": m.group(1).upper(), "header": line, "body": []}
+            sections.append(current)
+        elif current is not None:
+            current["body"].append(line)
+
+    questions: List[Dict[str, Any]] = []
+    q_num = 1
+
+    for sec in sections:
+        letter = sec["letter"]
+        mm = _MARKS_SPEC_RE.search(sec["header"])
+        marks_each = int(mm.group(2)) if mm else _DEFAULT_SECTION_MARKS.get(letter, 1)
+
+        if letter == "D":
+            q_num = _parse_section_d(sec["body"], marks_each, q_num, questions)
             continue
-        elif lower_line.startswith("section c") or (lower_line.startswith("section") and " c" in lower_line):
-            current_section = "C"
-            current_section_marks = 3
-            i += 1
-            continue
-        elif lower_line.startswith("section d") or (lower_line.startswith("section") and " d" in lower_line):
-            current_section = "D"
-            current_section_marks = 4
-            i += 1
-            continue
-        elif lower_line.startswith("section a") or (lower_line.startswith("section") and " a" in lower_line):
-            current_section = "A"
-            current_section_marks = 1
-            i += 1
-            continue
 
-        if not is_valid_question_line(line):
-            i += 1
-            continue
+        for line in sec["body"]:
+            if _is_noise_line(line):
+                continue
 
-        # Pattern for "16. A)" or "1." or "16)" or "1. Question text"
-        num_match = re.match(r'^(?:Q|q)?(\d{1,2})\s*[.):\-?\s-]*\s*([A-Ba-b])?[.):\-?\s-]*\s*(.+)$', line)
+            q_text = line
+            options = _extract_options(q_text)
+            if options:
+                first_opt = _OPTION_START_RE.search(q_text)
+                if first_opt:
+                    q_text = q_text[:first_opt.start()].strip()
 
-        q_text = line
-        custom_num = None
-        if num_match:
-            custom_num = int(num_match.group(1))
-            suffix = num_match.group(2) or ""
-            q_text = num_match.group(3).strip()
-            if suffix:
-                q_text = f"{suffix}) {q_text}"
-
-        options = []
-        # Extract MCQ options from current line
-        def extract_options(text):
-            opts = re.findall(r'([A-D])\s*\)\s*([^A-D\n]+)', text)
-            if len(opts) >= 2:
-                return [f"{o[0]}) {o[1].strip()}" for o in opts]
-            return []
-
-        options = extract_options(q_text)
-        if options:
-            first_opt = re.search(r'\b([A-D])\s*\)', q_text)
-            if first_opt:
-                q_text = q_text[:first_opt.start()].strip()
-
-        # Also check the next line for options (multi-line questions)
-        if not options and i + 1 < len(lines):
-            next_line = lines[i + 1]
-            next_opts = extract_options(next_line)
-            if next_opts:
-                options = next_opts
-                i += 1  # Consume the options line
-
-        actual_num = custom_num if custom_num else q_num
-
-        questions.append({
-            "id": f"q{actual_num}",
-            "_id": f"q{actual_num}",
-            "number": actual_num,
-            "section": current_section,
-            "maxMarks": current_section_marks,
-            "text": q_text,
-            "options": options,
-            "correctAnswer": None,
-            "expected": None,
-            "assessmentId": "__parsed__"
-        })
-
-        q_num = actual_num + 1
-        i += 1
+            questions.append({
+                "id": f"q{q_num}",
+                "_id": f"q{q_num}",
+                "number": q_num,
+                "section": letter,
+                "maxMarks": marks_each,
+                "text": q_text,
+                "options": options,
+                "correctAnswer": None,
+                "expected": None,
+                "subQuestions": [],
+                "assessmentId": "__parsed__"
+            })
+            q_num += 1
 
     return questions
+
+
+def _parse_section_d(body_lines: List[str], marks_each: int, start_num: int, questions: List[Dict[str, Any]]) -> int:
+    """Parse Section D style content: numbered questions with an internal
+    "(Or)" choice between an A) and B) alternative, and inline roman-numeral
+    sub-parts (i) ii) iii) ...) nested under the same top-level question.
+    """
+    blocks = []
+    current = None
+    for line in body_lines:
+        if line.strip().lower() in ("(or)", "or"):
+            continue
+        m = _SECTION_D_MARKER_RE.match(line)
+        if m:
+            current = {"num": int(m.group(1)), "letter": m.group(2).upper(), "lines": []}
+            rest = m.group(3).strip()
+            if rest:
+                current["lines"].append(rest)
+            blocks.append(current)
+        elif current is not None:
+            current["lines"].append(line)
+
+    grouped: Dict[int, Dict[str, List[str]]] = {}
+    order = []
+    for b in blocks:
+        if b["num"] not in grouped:
+            grouped[b["num"]] = {}
+            order.append(b["num"])
+        grouped[b["num"]][b["letter"]] = b["lines"]
+
+    q_num = start_num
+    for num in order:
+        alts = grouped[num]
+        a_lines = alts.get("A", [])
+        b_lines = alts.get("B", [])
+
+        combined_a = " ".join(a_lines).strip()
+        parts = _SUBPART_SPLIT_RE.split(combined_a)
+        sub_questions = []
+        main_text = combined_a
+        if len(parts) > 2:
+            main_text = parts[0].strip()
+            for j in range(1, len(parts) - 1, 2):
+                roman = parts[j]
+                sub_text = parts[j + 1].strip()
+                if sub_text:
+                    sub_questions.append({"number": f"{num}-{roman}", "text": sub_text, "maxMarks": 0})
+
+        text_out = main_text
+        if b_lines:
+            b_text = " ".join(b_lines).strip()
+            text_out = f"{main_text} (OR) {b_text}" if main_text else b_text
+
+        questions.append({
+            "id": f"q{q_num}",
+            "_id": f"q{q_num}",
+            "number": q_num,
+            "section": "D",
+            "maxMarks": marks_each,
+            "text": text_out.strip(),
+            "options": [],
+            "correctAnswer": None,
+            "expected": None,
+            "subQuestions": sub_questions,
+            "assessmentId": "__parsed__"
+        })
+        q_num += 1
+
+    return q_num
 
 
 def parse_curriculum_text(text: str) -> List[Dict[str, Any]]:
