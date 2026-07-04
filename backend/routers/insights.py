@@ -13,9 +13,18 @@ router = APIRouter()
 # ── Helpers ──────────────────────────────────────────────────────────
 
 async def _get_assessment_questions(db, assessment_id: str):
-    """Get questions for this assessment."""
-    questions = await db.questions.find({"assessmentId": assessment_id}).to_list(100)
-    return questions
+    """Get questions for this assessment.
+
+    parsedQuestions on the assessment document is the source of truth —
+    it's populated regardless of which pipeline (Qwen vision or local OCR)
+    processed the paper. The questions collection is only ever synced by
+    the local OCR fallback path, so it's empty for most real assessments.
+    """
+    assessment = await db.assessments.find_one({"_id": assessment_id})
+    parsed = (assessment or {}).get("parsedQuestions")
+    if parsed:
+        return parsed
+    return await db.questions.find({"assessmentId": assessment_id}).to_list(100)
 
 
 async def _get_students(db, assessment_id: str):
