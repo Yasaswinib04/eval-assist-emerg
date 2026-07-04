@@ -13,7 +13,14 @@ async def get_students(id: str, db=Depends(get_db)):
 @router.get("/{id}/students/{sid}/profile")
 async def get_student_profile(id: str, sid: str, db=Depends(get_db)):
     evaluations = await db.evaluations.find({"assessmentId": id, "studentId": sid}).to_list(100)
-    questions = await db.questions.find({"assessmentId": id}).to_list(100)
+    # parsedQuestions on the assessment document is the source of truth — it's
+    # populated regardless of which pipeline (Qwen vision or local OCR)
+    # processed the paper. The questions collection is only synced by the
+    # local OCR fallback path, so it's empty for most real assessments.
+    assessment = await db.assessments.find_one({"_id": id})
+    questions = (assessment or {}).get("parsedQuestions") or []
+    if not questions:
+        questions = await db.questions.find({"assessmentId": id}).to_list(100)
 
     q_map = {}
     for q in questions:
