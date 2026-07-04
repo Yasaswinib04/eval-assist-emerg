@@ -96,7 +96,7 @@ Examine the student's handwritten answer sheet image carefully. For EACH questio
 6. Provide a confidence score (0-100) for your extraction
 
 Return ONLY a JSON object with "studentName", "rollNumber", and "questions" array. No extra text:
-{{"studentName": "Karan Singh", "rollNumber": "0821", "questions": [{{"q": 1, "studentAnswer": "...", "mcqChoice": "A", "mark": 1, "maxMarks": 1, "confidence": 95, "correct": true, "reasoning": "..."}}, ...]}}"""
+{{"studentName": "Student Name", "rollNumber": "0000", "questions": [{{"q": 1, "studentAnswer": "...", "mcqChoice": "A", "mark": 1, "maxMarks": 1, "confidence": 95, "correct": true, "reasoning": "..."}}, ...]}}"""
 
     def _image_to_base64(self, image_path: str) -> str:
         with open(image_path, "rb") as f:

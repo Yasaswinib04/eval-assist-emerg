@@ -538,8 +538,8 @@ async def _run_ocr_pipeline(
                     total = result.get("total", 0)
                     qwen_name = result.get("studentName")
                     qwen_roll = result.get("rollNumber")
-                    student_name = qwen_name if qwen_name else name_part
-                    student_roll = qwen_roll if qwen_roll else f"08-{total_sheets}"
+                    student_name = qwen_name if (qwen_name and qwen_name != "Student Name" and len(qwen_name) > 3) else name_part
+                    student_roll = qwen_roll if (qwen_roll and qwen_roll != "0000") else f"08-{total_sheets}"
 
                     await db.students.update_one({"_id": student_id}, {"$set": {
                         "_id": student_id, "name": student_name,
