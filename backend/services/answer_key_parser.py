@@ -5,12 +5,64 @@ text that the teacher pastes into the Upload page.
 """
 
 import json
+import os
 import re
 import httpx
 from typing import List, Dict, Optional, Any
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "llama3.2:3b"
+DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
+
+
+def _get_deepseek_key() -> str:
+    key = os.getenv("DEEPSEEK_API_KEY", "")
+    if key:
+        return key
+    try:
+        from backend.core.config import settings
+        return getattr(settings, "DEEPSEEK_API_KEY", "") or ""
+    except Exception:
+        return ""
+
+
+def _llm_complete(prompt: str) -> str:
+    """Get a text completion from whichever LLM is actually reachable.
+
+    Ollama only runs on a local/offline machine — it is NOT reachable from
+    the deployed server, so any feature depending on it (concept tagging,
+    the questions-text LLM fallback) silently does nothing in production.
+    Prefer the cloud DeepSeek API (already used elsewhere and confirmed
+    reachable in production) whenever a key is configured, and only fall
+    back to local Ollama for offline/dev setups without one.
+    """
+    deepseek_key = _get_deepseek_key()
+    if deepseek_key:
+        try:
+            resp = httpx.post(
+                DEEPSEEK_ENDPOINT,
+                headers={"Authorization": f"Bearer {deepseek_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "deepseek-chat",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 4096,
+                    "temperature": 0.1,
+                },
+                timeout=90,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"  DeepSeek completion failed, falling back to Ollama: {e}")
+
+    resp = httpx.post(
+        OLLAMA_URL,
+        json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.1},
+        timeout=120,
+    )
+    resp.raise_for_status()
+    return resp.json().get("response", "").strip()
 
 
 def parse_answer_key(text: str) -> List[Dict[str, Any]]:
@@ -105,14 +157,7 @@ ANSWER KEY TEXT:
 Return ONLY a JSON array. No markdown, no explanation."""
 
     try:
-        resp = httpx.post(
-            OLLAMA_URL,
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.0},
-            timeout=120,
-        )
-        resp.raise_for_status()
-        response_text = resp.json().get("response", "").strip()
-
+        response_text = _llm_complete(prompt)
         json_start = response_text.find("[")
         json_end = response_text.rfind("]")
         if json_start >= 0 and json_end > json_start:
@@ -120,13 +165,13 @@ Return ONLY a JSON array. No markdown, no explanation."""
             if isinstance(parsed, list) and len(parsed) >= 1:
                 return parsed
     except Exception as e:
-        print(f"  Ollama answer key parsing failed: {e}")
+        print(f"  Answer key LLM parsing failed: {e}")
 
     return []
 
 
 def tag_question_concepts(questions: List[Dict[str, Any]], subject: str = "") -> List[Dict[str, Any]]:
-    """Fill in concept/skill/difficulty/prerequisites via local LLM (Ollama).
+    """Fill in concept/skill/difficulty/prerequisites via LLM (DeepSeek/Ollama).
 
     Mirrors the schema the Qwen vision path already asks for — this just
     covers the text/heuristic parsing path, which never requested these
@@ -153,13 +198,7 @@ QUESTIONS:
 Return ONLY a JSON array like [{{"number": 1, "concept": "...", "skill": "...", "difficulty": "...", "prerequisites": ["..."]}}]. No markdown, no explanation."""
 
     try:
-        resp = httpx.post(
-            OLLAMA_URL,
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.1},
-            timeout=120,
-        )
-        resp.raise_for_status()
-        response_text = resp.json().get("response", "").strip()
+        response_text = _llm_complete(prompt)
         json_start = response_text.find("[")
         json_end = response_text.rfind("]")
         if json_start >= 0 and json_end > json_start:
@@ -177,7 +216,7 @@ Return ONLY a JSON array like [{{"number": 1, "concept": "...", "skill": "...", 
                     q["difficulty"] = difficulty if difficulty in valid_difficulty else "Medium"
                     q["prerequisites"] = tag.get("prerequisites") or []
     except Exception as e:
-        print(f"  Ollama concept tagging failed: {e}")
+        print(f"  Concept tagging failed: {e}")
 
     return questions
 
@@ -213,14 +252,7 @@ QUESTIONS TEXT:
 Return ONLY a JSON array. No markdown, no explanation."""
 
     try:
-        resp = httpx.post(
-            OLLAMA_URL,
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "temperature": 0.0},
-            timeout=120,
-        )
-        resp.raise_for_status()
-        response_text = resp.json().get("response", "").strip()
-
+        response_text = _llm_complete(prompt)
         json_start = response_text.find("[")
         json_end = response_text.rfind("]")
         if json_start >= 0 and json_end > json_start:
@@ -232,7 +264,7 @@ Return ONLY a JSON array. No markdown, no explanation."""
                     q["assessmentId"] = "__parsed__"
                 return parsed
     except Exception as e:
-        print(f"  Ollama questions parsing failed: {e}")
+        print(f"  Questions LLM parsing failed: {e}")
 
     return heuristic if heuristic else []
 
@@ -246,6 +278,18 @@ _OPTION_RE = re.compile(r'(?:^|\s)([A-D])\)\s*(.+?)(?=(?:\s[A-D]\))|$)')
 _OPTION_START_RE = re.compile(r'(?:^|\s)([A-D])\)')
 _SECTION_D_MARKER_RE = re.compile(r'^(\d+)\.\s*([AB])\)\s*(.*)$')
 _SUBPART_SPLIT_RE = re.compile(r'\b(i{1,3}v?|iv|v)\)\s*')
+_QUESTION_MARKER_RE = re.compile(r'^(\d{1,3})[.)]\s*(.*)$')
+_HR_RE = re.compile(r'^[-*_]{3,}$')
+_MD_HEADING_RE = re.compile(r'^#{1,6}\s*')
+
+
+def _strip_markdown(line: str) -> str:
+    """Strip common markdown noise (headings, bold/italic markers) that LLM-
+    formatted question text tends to add, so the plain-text heuristics below
+    still match."""
+    line = _MD_HEADING_RE.sub('', line)
+    line = line.replace('**', '').replace('__', '')
+    return line.strip()
 
 
 def _extract_options(text: str) -> List[str]:
@@ -264,6 +308,43 @@ def _is_noise_line(line: str) -> bool:
     return False
 
 
+def _split_into_blocks(lines: List[str], expected_start: int) -> List[Dict[str, Any]]:
+    """Group section body lines into per-question blocks.
+
+    If the section actually numbers its questions (the expected next number,
+    continuing the running count from prior sections, appears as a line-
+    leading marker), split on those markers — this also correctly ignores
+    unrelated numbered lists embedded inside a question body (e.g. "1. Frog
+    2. Butterfly...") since they won't match the *expected* next number.
+    Otherwise (e.g. Section A/B/C papers with no printed numbers at all —
+    one question per paragraph), each non-empty line is its own block.
+    """
+    has_valid_start = any(
+        (m := _QUESTION_MARKER_RE.match(line)) and int(m.group(1)) == expected_start
+        for line in lines
+    )
+    if not has_valid_start:
+        return [{"num": None, "lines": [line]} for line in lines]
+
+    blocks = []
+    current = None
+    expected = expected_start
+    for line in lines:
+        m = _QUESTION_MARKER_RE.match(line)
+        if m and int(m.group(1)) == expected:
+            current = {"num": expected, "lines": []}
+            rest = m.group(2).strip()
+            if rest:
+                current["lines"].append(rest)
+            blocks.append(current)
+            expected += 1
+        elif current is not None:
+            current["lines"].append(line)
+        # else: stray content before the first valid marker (e.g. a "Note:"
+        # line) — drop it.
+    return blocks
+
+
 def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
     """Heuristically parse free-text questions into structured Question format.
 
@@ -273,7 +354,8 @@ def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
     sequentially across sections so the original 1..N hierarchy is preserved
     rather than exploding every line into its own top-level question.
     """
-    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    lines = [_strip_markdown(l) for l in text.split("\n")]
+    lines = [l for l in lines if l and not _HR_RE.match(l)]
 
     start = None
     for i, line in enumerate(lines):
@@ -299,18 +381,18 @@ def _heuristic_parse_questions(text: str) -> List[Dict[str, Any]]:
 
     for sec in sections:
         letter = sec["letter"]
-        mm = _MARKS_SPEC_RE.search(sec["header"])
+        mm = _MARKS_SPEC_RE.search(sec["header"] + " " + " ".join(sec["body"]))
         marks_each = int(mm.group(2)) if mm else _DEFAULT_SECTION_MARKS.get(letter, 1)
 
         if letter == "D":
             q_num = _parse_section_d(sec["body"], marks_each, q_num, questions)
             continue
 
-        for line in sec["body"]:
-            if _is_noise_line(line):
+        for block in _split_into_blocks(sec["body"], q_num):
+            q_text = " ".join(block["lines"]).strip()
+            if not q_text or _is_noise_line(q_text):
                 continue
 
-            q_text = line
             options = _extract_options(q_text)
             if options:
                 first_opt = _OPTION_START_RE.search(q_text)
@@ -503,14 +585,7 @@ CURRICULUM TEXT:
 Return ONLY a JSON array. No markdown, no explanation."""
 
     try:
-        import httpx
-        resp = httpx.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "llama3.2:3b", "prompt": prompt, "stream": False, "temperature": 0.0},
-            timeout=120,
-        )
-        resp.raise_for_status()
-        response_text = resp.json().get("response", "").strip()
+        response_text = _llm_complete(prompt)
         json_start = response_text.find("[")
         json_end = response_text.rfind("]")
         if json_start >= 0 and json_end > json_start:
@@ -518,5 +593,5 @@ Return ONLY a JSON array. No markdown, no explanation."""
             if isinstance(parsed, list) and len(parsed) >= 1:
                 return parsed
     except Exception as e:
-        print(f"  Ollama curriculum parsing failed: {e}")
+        print(f"  Curriculum LLM parsing failed: {e}")
     return []
