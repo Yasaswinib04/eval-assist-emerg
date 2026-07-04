@@ -329,14 +329,25 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
           )}
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="text-[11px] font-bold tracking-wider uppercase text-stone-500">Question · Max {q.maxMarks} {q.maxMarks === 1 ? "mark" : "marks"}</div>
-              {ev.needsReview ? (
-                <StatusChip status="review" showLabel />
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 text-[11px] font-semibold">
-                  <Check size={11} /> {ev.confidenceScore}% confident
-                </span>
-              )}
+              <div className="text-[11px] font-bold tracking-wider uppercase text-stone-500">Q{q.number} · Max {q.maxMarks} {q.maxMarks === 1 ? "mark" : "marks"}</div>
+              <div className="flex items-center gap-2">
+                {ev.isCorrect === true && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 text-[11px] font-semibold">
+                    <Check size={11} /> Correct
+                  </span>
+                )}
+                {ev.isCorrect === false && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-50 text-red-800 border border-red-100 text-[11px] font-semibold">
+                    <X size={11} /> Incorrect
+                  </span>
+                )}
+                {ev.needsReview && <StatusChip status="review" showLabel />}
+                {ev.isCorrect === undefined && ev.isCorrect !== false && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 text-[11px] font-semibold">
+                    {ev.confidenceScore}% confident
+                  </span>
+                )}
+              </div>
             </div>
             <h3 className="font-display text-lg font-semibold text-stone-900 leading-snug">{q.text}</h3>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -349,11 +360,11 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
           <div className="grid grid-cols-1 gap-2.5">
             <div className="rounded-lg bg-stone-50 border border-stone-200 p-3">
               <div className="text-[10px] font-bold tracking-wider uppercase text-stone-500 mb-1">Student answer</div>
-              <div className="text-sm text-stone-800 leading-relaxed">{ev.studentAnswer}</div>
+              <div className="text-sm text-stone-800 leading-relaxed">{ev.studentAnswer || "No answer extracted"}</div>
             </div>
             <div className="rounded-lg bg-blue-50/50 border border-blue-100 p-3">
               <div className="text-[10px] font-bold tracking-wider uppercase text-blue-700 mb-1">Expected answer</div>
-              <div className="text-sm text-stone-800 leading-relaxed">{q.correctAnswer || q.expected}</div>
+              <div className="text-sm text-stone-800 leading-relaxed">{(answerKeyMap[q.number] || {}).correctAnswer || (answerKeyMap[q.number] || {}).expectedText || q.expected || "Answer key not generated"}</div>
             </div>
           </div>
 
@@ -645,6 +656,13 @@ const ReviewPage = () => {
   const isTerminalError = !!processingStatus && processingStatus !== "complete" && !isKnownProcessing;
 
   const { data: allQuestions = [], isLoading: loadingQ } = useQuery({ queryKey: ['questions', id], queryFn: () => apiClient.getQuestions(id) });
+  const { data: ANSWER_KEY_DATA } = useQuery({ queryKey: ['answerKey', id], queryFn: () => apiClient.getAnswerKey(id) });
+  const answerKey = ANSWER_KEY_DATA?.answerKey || [];
+  const answerKeyMap = useMemo(() => {
+    const map = {};
+    answerKey.forEach((a) => { map[a.q] = a; });
+    return map;
+  }, [answerKey]);
   const { data: CHAPTERS = {} } = useQuery({ queryKey: ['chapters', id], queryFn: () => apiClient.getChapters(id) });
   const { data: STUDENTS = [], isLoading: loadingS } = useQuery({
     queryKey: ['students', id],

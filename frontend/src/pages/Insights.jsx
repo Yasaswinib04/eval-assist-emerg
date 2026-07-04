@@ -31,7 +31,9 @@ const Insights = () => {
   const { id } = useParams();
   
   const { data: ASSESSMENTS = [] } = useQuery({ queryKey: ['assessments'], queryFn: apiClient.getAssessments });
-  const assessment = ASSESSMENTS.find((a) => a.id === id) || ASSESSMENTS[0] || { name: "", totalMarks: 40, avgScore: 0 };
+  const { data: REAL_ASSESSMENT } = useQuery({ queryKey: ['assessment', id], queryFn: () => apiClient.getAssessment(id) });
+  const assessmentFromList = ASSESSMENTS.find((a) => (a._id || a.id) === id) || ASSESSMENTS[0];
+  const assessment = REAL_ASSESSMENT || assessmentFromList || { name: "", totalMarks: 40, avgScore: 0 };
 
   const { data: STUDENTS = [], isLoading: loadingS } = useQuery({ queryKey: ['students', id], queryFn: () => apiClient.getStudents(id) });
   const { data: kpi = {}, isLoading: loadingK } = useQuery({ queryKey: ['insights-kpi', id], queryFn: () => apiClient.getInsightsKpis(id) });
