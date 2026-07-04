@@ -4,7 +4,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2, ChevronDown, CheckCircle2, ScanLine, ListChecks, BookOpen, Tags, Brain, ClipboardCheck, PenLine } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Pencil, Check, X, Network, Loader2, ChevronDown, CheckCircle2, ScanLine, ListChecks, BookOpen, Tags, Brain, ClipboardCheck, PenLine, RefreshCw } from "lucide-react";
 
 const FULL_ANALYSIS_MIN_MS = 29000;
 
@@ -152,6 +152,8 @@ const Analysis = () => {
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [approvedAnswers, setApprovedAnswers] = useState({});
   const [expandedAnswers, setExpandedAnswers] = useState({});
+  const [reextracting, setReextracting] = useState(false);
+  const [reextractError, setReextractError] = useState("");
 
   const hasPendingOCR = QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING";
 
@@ -223,6 +225,27 @@ const Analysis = () => {
 
   const toggleApproval = (qNum) => {
     setApprovedAnswers((prev) => ({ ...prev, [qNum]: !prev[qNum] }));
+  };
+
+  // Re-run just the question-paper parse — for when extraction came out wrong
+  // (misaligned questions, header text picked up as a question, etc.) without
+  // touching the already-uploaded/approved answer key.
+  const handleReextractQuestions = async () => {
+    setReextracting(true);
+    setReextractError("");
+    try {
+      const r = await fetch(`/api/assessments/${id}/analyze-qpaper`, { method: "POST" });
+      const data = await r.json();
+      if (data.status !== "ok") {
+        setReextractError(data.message || "Re-extraction failed.");
+      } else {
+        await refetchQuestions();
+      }
+    } catch (err) {
+      setReextractError("Network error while re-extracting questions.");
+    } finally {
+      setReextracting(false);
+    }
   };
 
   const approveAll = () => {
@@ -479,10 +502,25 @@ const Analysis = () => {
       {/* Question breakdown — always visible, before concepts */}
       {QUESTIONS.length > 0 && (
         <div className="bg-white border border-stone-200 rounded-xl mb-5 overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-5 py-3.5 border-b border-stone-200 flex items-center justify-between flex-wrap gap-2">
             <h2 className="font-display text-lg font-semibold text-stone-900">Questions Detected</h2>
-            <span className="text-xs text-stone-500">Click any row to edit tags</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-stone-500 hidden sm:inline">Click any row to edit tags</span>
+              <button
+                onClick={handleReextractQuestions}
+                disabled={reextracting}
+                data-testid="btn-reextract-questions"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-stone-700 disabled:opacity-50"
+                title="Questions look wrong or misaligned? Re-parse the question paper text."
+              >
+                <RefreshCw size={12} className={reextracting ? "animate-spin" : ""} />
+                {reextracting ? "Re-extracting…" : "Re-extract questions"}
+              </button>
+            </div>
           </div>
+          {reextractError && (
+            <div className="px-5 py-2.5 bg-rose-50 border-b border-rose-200 text-xs text-rose-700">{reextractError}</div>
+          )}
           <div className="divide-y divide-stone-100">
             {QUESTIONS.map((qRaw) => {
               const q = getQ(qRaw);

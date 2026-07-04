@@ -191,20 +191,24 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
 
-    qimages = assessment.get("questionsImages") or []
-    if not qimages:
-        return {"status": "skipped", "message": "No question paper images uploaded"}
-
     qtext = assessment.get("questionsText", "")
     if qtext and qtext.strip():
         try:
             from backend.services.answer_key_parser import parse_questions_text
             parsed = parse_questions_text(qtext)
             if parsed:
-                await db.assessments.update_one({"_id": id}, {"$set": {"parsedQuestions": parsed, "processingStatus": "qpaper_done"}})
+                computed_total = _compute_total_marks(parsed)
+                update_fields = {"parsedQuestions": parsed, "processingStatus": "qpaper_done"}
+                if computed_total > 0:
+                    update_fields["totalMarks"] = computed_total
+                await db.assessments.update_one({"_id": id}, {"$set": update_fields})
                 return {"status": "ok", "method": "text_parser", "questions": len(parsed)}
         except Exception as e:
             print(f"[Qwen] Text parse failed, falling back to OCR: {e}")
+
+    qimages = assessment.get("questionsImages") or []
+    if not qimages:
+        return {"status": "skipped", "message": "No question paper images uploaded"}
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
     if not openrouter_key:
