@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
 from backend.core.database import get_db
-from backend.models.student import Student
 
 router = APIRouter()
 
-@router.get("/{id}/students", response_model=List[Student])
+@router.get("/{id}/students")
 async def get_students(id: str, db=Depends(get_db)):
     students = await db.students.find({"assessmentId": id}).to_list(100)
+    for s in students:
+        s["id"] = s.get("_id", "")
     return students
 
 @router.get("/{id}/students/{sid}/profile")

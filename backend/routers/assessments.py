@@ -41,17 +41,20 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
     return saved
 
 
-@router.get("/", response_model=List[Assessment])
+@router.get("/")
 async def get_assessments(db=Depends(get_db)):
     assessments = await db.assessments.find().to_list(100)
+    for a in assessments:
+        a["id"] = a.get("_id", "")
     return assessments
 
 
-@router.get("/{id}", response_model=Assessment)
+@router.get("/{id}")
 async def get_assessment(id: str, db=Depends(get_db)):
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+    assessment["id"] = assessment.get("_id", "")
     return assessment
 
 
