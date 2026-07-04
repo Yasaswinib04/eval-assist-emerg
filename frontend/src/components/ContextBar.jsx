@@ -1,111 +1,50 @@
-import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/contexts/AppContext";
-import { Plus, X, ChevronDown } from "lucide-react";
-
-const SUBJECTS_KEY = "evalassist-subjects";
-
-function getPersistedSubjects() {
-  try {
-    const raw = localStorage.getItem(SUBJECTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
+import { apiClient } from "@/data/apiClient";
+import { ChevronDown } from "lucide-react";
 
 export const ContextBar = () => {
   const location = useLocation();
-  const { activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS, user } = useApp();
-  const [subjects, setSubjects] = useState(() => {
-    return user?.subjects?.length ? user.subjects : getPersistedSubjects();
+  const { activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS } = useApp();
+
+  const { data: ASSESSMENTS = [] } = useQuery({
+    queryKey: ['assessments'],
+    queryFn: apiClient.getAssessments,
   });
-  const [adding, setAdding] = useState(false);
-  const [newSubject, setNewSubject] = useState("");
 
-  useEffect(() => {
-    const s = user?.subjects?.length ? user.subjects : getPersistedSubjects();
-    if (!s.length) return;
-    setSubjects(s);
-    if (!activeSubject || !s.includes(activeSubject)) {
-      setActiveSubject(s[0]);
-    }
-  }, [activeSubject, setActiveSubject, user]);
-
-  const addSubject = () => {
-    const trimmed = newSubject.trim();
-    if (!trimmed || subjects.includes(trimmed)) return;
-    const updated = [...subjects, trimmed];
-    setSubjects(updated);
-    localStorage.setItem(SUBJECTS_KEY, JSON.stringify(updated));
-    setActiveSubject(trimmed);
-    setNewSubject("");
-    setAdding(false);
-  };
-
-  const removeSubject = (s) => {
-    const updated = subjects.filter((x) => x !== s);
-    setSubjects(updated);
-    localStorage.setItem(SUBJECTS_KEY, JSON.stringify(updated));
-    if (activeSubject === s) {
-      setActiveSubject(updated[0] || "");
-    }
-  };
+  const subjectOptions = [...new Set(ASSESSMENTS.map((a) => a.subject).filter(Boolean))].sort();
 
   if (/^\/analysis\//.test(location.pathname)) return null;
-  if (!subjects.length && !adding) return null;
+  if (!subjectOptions.length) return null;
 
   return (
     <div className="flex items-center gap-2 px-4 sm:px-6 lg:px-10 py-2 border-b border-stone-200 bg-white sticky top-14 lg:top-0 z-25" data-testid="context-bar">
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin flex-1">
-        {subjects.map((s) => {
+        <button
+          onClick={() => setActiveSubject("")}
+          data-testid="subject-tab-all"
+          className={`h-10 px-3 rounded-md text-sm font-semibold tracking-wide whitespace-nowrap transition-colors ${
+            activeSubject === "" ? "bg-blue-800 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+          }`}
+        >
+          All
+        </button>
+        {subjectOptions.map((s) => {
           const active = activeSubject === s;
           return (
-            <span key={s} className="inline-flex items-center gap-1">
-              <button
-                onClick={() => setActiveSubject(s)}
-                data-testid={`subject-tab-${s}`}
-                className={`h-10 px-3 rounded-md text-sm font-semibold tracking-wide whitespace-nowrap transition-colors ${
-                  active
-                    ? "bg-blue-800 text-white"
-                    : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                }`}
-              >
-                {s}
-              </button>
-              {subjects.length > 1 && (
-                <button
-                  onClick={() => removeSubject(s)}
-                   className="h-8 w-8 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center"
-                  title={`Remove ${s}`}
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </span>
+            <button
+              key={s}
+              onClick={() => setActiveSubject(s)}
+              data-testid={`subject-tab-${s}`}
+              className={`h-10 px-3 rounded-md text-sm font-semibold tracking-wide whitespace-nowrap transition-colors ${
+                active ? "bg-blue-800 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+              }`}
+            >
+              {s}
+            </button>
           );
         })}
-        {adding ? (
-          <span className="inline-flex items-center gap-1">
-            <input
-              value={newSubject}
-              onChange={(e) => setNewSubject(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") addSubject(); if (e.key === "Escape") setAdding(false); }}
-              placeholder="Subject name"
-              autoFocus
-               className="h-10 w-36 px-3 rounded-md border border-stone-300 text-base outline-none focus:ring-2 focus:ring-blue-800"
-            />
-            <button onClick={addSubject} className="h-9 w-9 rounded-md bg-blue-800 text-white flex items-center justify-center">
-              <Plus size={12} />
-            </button>
-          </span>
-        ) : (
-          <button
-            onClick={() => setAdding(true)}
-             className="h-10 w-10 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center"
-            title="Add subject"
-          >
-            <Plus size={14} />
-          </button>
-        )}
       </div>
 
       <div className="relative">

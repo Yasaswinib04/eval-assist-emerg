@@ -6,13 +6,6 @@ const AppContext = createContext(null);
 const CLASS_OPTIONS = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"];
 const SUBJECTS_KEY = "evalassist-subjects";
 
-function loadPersistedSubjects() {
-  try {
-    const raw = localStorage.getItem(SUBJECTS_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
 export const AppProvider = ({ children }) => {
   const [lang, setLang] = useState(() => localStorage.getItem("evalassist-lang") || "en");
   const [user, setUser] = useState(() => {
@@ -68,13 +61,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(data.user));
     setToken(data.access_token);
     setUser(data.user);
-    const subjects = data.user?.subjects;
-    if (subjects?.length) {
-      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
-      if (!localStorage.getItem("evalassist-active-subject")) {
-        setActiveSubject(subjects[0]);
-      }
-    }
     return data;
   };
 
@@ -86,13 +72,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
-    const subjects = data.user?.subjects;
-    if (subjects?.length) {
-      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
-      if (!localStorage.getItem("evalassist-active-subject")) {
-        setActiveSubject(subjects[0]);
-      }
-    }
     return data;
   };
 
@@ -104,13 +83,6 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
-    const subjects = data.user?.subjects;
-    if (subjects?.length) {
-      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
-      if (!localStorage.getItem("evalassist-active-subject")) {
-        setActiveSubject(subjects[0]);
-      }
-    }
     return data;
   };
 

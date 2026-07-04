@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/data/apiClient";
-import { Upload as UploadIcon, Zap, ChevronRight, Loader2, Plus, FileText } from "lucide-react";
+import { Upload as UploadIcon, Zap, ChevronRight, Loader2, Plus, FileText, AlertTriangle, Filter } from "lucide-react";
 
 const StatusPill = ({ status, t }) => {
   const map = {
@@ -32,7 +32,7 @@ const Dashboard = () => {
   const { t, user, activeSubject, activeClass } = useApp();
   const navigate = useNavigate();
 
-  const { data: ALL_ASSESSMENTS = [], isLoading } = useQuery({
+  const { data: ALL_ASSESSMENTS = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['assessments'],
     queryFn: apiClient.getAssessments
   });
@@ -43,8 +43,27 @@ const Dashboard = () => {
     return true;
   });
 
+  const hiddenByFilter = ALL_ASSESSMENTS.length > 0 && ASSESSMENTS.length === 0;
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
+  }
+
+  if (isError) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12">
+        <div className="p-12 text-center bg-white border border-red-200 rounded-xl">
+          <div className="h-14 w-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={26} />
+          </div>
+          <h2 className="font-display text-xl font-semibold text-stone-900 mb-1">Couldn't load assessments</h2>
+          <p className="text-stone-500 mb-6 max-w-sm mx-auto">There was a problem reaching the server. Check your connection and try again.</p>
+          <button onClick={() => refetch()} className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-blue-800 text-white font-medium hover:bg-blue-900 transition-colors shadow-sm">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -88,7 +107,20 @@ const Dashboard = () => {
           <div className="col-span-2 text-right">Action</div>
         </div>
 
-        {ASSESSMENTS.length === 0 ? (
+        {hiddenByFilter ? (
+          <div className="p-12 text-center">
+            <div className="h-14 w-14 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mx-auto mb-4">
+              <Filter size={26} />
+            </div>
+            <h2 className="font-display text-xl font-semibold text-stone-900 mb-1">
+              No assessments for {activeSubject || "this subject"} · {activeClass || "this class"}
+            </h2>
+            <p className="text-stone-500 mb-6 max-w-sm mx-auto">
+              You have {ALL_ASSESSMENTS.length} assessment{ALL_ASSESSMENTS.length === 1 ? "" : "s"} under other subjects or classes.
+              Switch the tab or class dropdown above to see them.
+            </p>
+          </div>
+        ) : ASSESSMENTS.length === 0 ? (
           <div className="p-12 text-center">
             <div className="h-14 w-14 rounded-full bg-blue-50 text-blue-800 flex items-center justify-center mx-auto mb-4">
               <FileText size={26} />
