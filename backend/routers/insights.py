@@ -109,7 +109,11 @@ async def get_root_cause(id: str, db=Depends(get_db)):
         q_id = ev.get("qId", "")
         q = q_map.get(q_id, {})
         concept_name = q.get("concept", "Unknown")
-        mark = ev.get("aiMark", 0) or 0
+        mark = ev.get("aiMark")
+        if mark is None and ev.get("isCorrect") is not None:
+            max_m = q.get("maxMarks", 1)
+            mark = max_m if ev["isCorrect"] else 0
+        mark = mark or 0
         max_m = q.get("maxMarks", 1)
         if max_m > 0:
             score_pct = mark / max_m
@@ -189,7 +193,11 @@ async def get_concept_mastery(id: str, db=Depends(get_db)):
         q = q_map.get(q_id, {})
         concept_name = q.get("concept", "Unknown")
         chapter_id = q.get("chapter", "unknown")
-        mark = ev.get("aiMark", 0) or 0
+        mark = ev.get("aiMark")
+        if mark is None and ev.get("isCorrect") is not None:
+            max_m = q.get("maxMarks", 1)
+            mark = max_m if ev["isCorrect"] else 0
+        mark = mark or 0
         max_m = q.get("maxMarks", 1)
         if max_m > 0:
             if concept_name not in concept_scores:
