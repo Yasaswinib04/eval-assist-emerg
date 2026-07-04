@@ -295,10 +295,79 @@ const ExpandedPaper = ({ student, evals, totals, onPillClick, onWalkAi, t, CHAPT
 let QUESTIONS = [];
 
 // ════════════════════════════════════════════════════════════════════════
+// MCQ helpers — an MCQ shouldn't render as two big text blocks + a paragraph
+// of AI reasoning. Teachers only care about correct-vs-picked at a glance.
+// ════════════════════════════════════════════════════════════════════════
+
+const _LETTER_RE = /(?:^|[^A-Za-z])([A-Da-d])(?![A-Za-z])/;
+
+const getAkForQuestion = (q, answerKeyMap) => {
+  if (!q || !answerKeyMap) return null;
+  return answerKeyMap[q.number] || null;
+};
+
+const isMcqQuestion = (q, answerKeyMap) => {
+  const ak = getAkForQuestion(q, answerKeyMap);
+  if (ak?.correctOption && /^[A-D]$/i.test(ak.correctOption)) return true;
+  if (Array.isArray(q?.options) && q.options.length >= 2) return true;
+  return false;
+};
+
+const extractMcqChoice = (ev) => {
+  if (!ev) return null;
+  if (ev.mcqChoice && /^[A-D]$/i.test(ev.mcqChoice)) return ev.mcqChoice.toUpperCase();
+  const raw = (ev.studentAnswer || "").trim();
+  if (/^[A-D]$/i.test(raw)) return raw.toUpperCase();
+  const m = raw.match(_LETTER_RE);
+  return m ? m[1].toUpperCase() : null;
+};
+
+const findOptionText = (q, letter) => {
+  if (!letter || !Array.isArray(q?.options)) return "";
+  const prefix = `${letter})`;
+  const match = q.options.find((o) => o.trim().toUpperCase().startsWith(prefix));
+  return match ? match.replace(new RegExp(`^\\s*${letter}\\)\\s*`, "i"), "") : "";
+};
+
+const McqSummary = ({ q, ev, answerKeyMap }) => {
+  const ak = getAkForQuestion(q, answerKeyMap);
+  const correctLetter = (ak?.correctOption || "").toUpperCase() || null;
+  const pickedLetter = extractMcqChoice(ev);
+  const correctText = findOptionText(q, correctLetter) || ak?.correctAnswer || "";
+  const pickedText = findOptionText(q, pickedLetter);
+  const isCorrect = pickedLetter && correctLetter && pickedLetter === correctLetter;
+  return (
+    <div className="rounded-lg border border-stone-200 overflow-hidden divide-y divide-stone-200">
+      <div className="flex items-center gap-3 px-3 py-2 bg-emerald-50/40">
+        <span className="text-[10px] font-bold tracking-wider uppercase text-stone-500 w-14 shrink-0">Correct</span>
+        <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-1.5 rounded-md bg-emerald-100 text-emerald-800 font-mono font-bold text-xs">
+          {correctLetter || "—"}
+        </span>
+        {correctText && <span className="text-sm text-stone-700 truncate">{correctText}</span>}
+      </div>
+      <div className={`flex items-center gap-3 px-3 py-2 ${isCorrect ? "bg-emerald-50/20" : "bg-rose-50/30"}`}>
+        <span className="text-[10px] font-bold tracking-wider uppercase text-stone-500 w-14 shrink-0">Student</span>
+        {pickedLetter ? (
+          <span className={`inline-flex items-center justify-center h-6 min-w-[24px] px-1.5 rounded-md font-mono font-bold text-xs ${isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>
+            {pickedLetter}
+          </span>
+        ) : (
+          <span className="inline-flex items-center h-6 px-1.5 rounded-md bg-stone-100 text-stone-500 text-[11px]">Not detected</span>
+        )}
+        {pickedText && <span className="text-sm text-stone-700 truncate">{pickedText}</span>}
+        <span className="ml-auto shrink-0">
+          {isCorrect ? <Check size={15} className="text-emerald-700" /> : <X size={15} className="text-rose-600" />}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════
 // Review Drawer (Grid mode — focused single question)
 // ════════════════════════════════════════════════════════════════════════
 
-const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange, onApprove, onNav, onClose, evals, CHAPTERS, t, subMarks, onSubMarkChange }) => {
+const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange, onApprove, onNav, onClose, evals, CHAPTERS, t, subMarks, onSubMarkChange, answerKeyMap }) => {
   const inputRef = useRef(null);
   const [subExpanded, setSubExpanded] = useState(false);
 
@@ -389,24 +458,32 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5">
-            <div className="rounded-lg bg-stone-50 border border-stone-200 p-3">
-              <div className="text-[10px] font-bold tracking-wider uppercase text-stone-500 mb-1">Student answer</div>
-              <div className="text-sm text-stone-800 leading-relaxed">{ev.studentAnswer || "No answer extracted"}</div>
-            </div>
-            <div className="rounded-lg bg-blue-50/50 border border-blue-100 p-3">
-              <div className="text-[10px] font-bold tracking-wider uppercase text-blue-700 mb-1">Expected answer</div>
-              <div className="text-sm text-stone-800 leading-relaxed">{(answerKeyMap[q.number] || {}).correctAnswer || (answerKeyMap[q.number] || {}).expectedText || q.expected || "Answer key not generated"}</div>
-            </div>
-          </div>
+          {isMcqQuestion(q, answerKeyMap) ? (
+            <McqSummary q={q} ev={ev} answerKeyMap={answerKeyMap} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-2.5">
+                <div className="rounded-lg bg-stone-50 border border-stone-200 p-3">
+                  <div className="text-[10px] font-bold tracking-wider uppercase text-stone-500 mb-1">Student answer</div>
+                  <div className="text-sm text-stone-800 leading-relaxed whitespace-pre-wrap">{ev.studentAnswer || "No answer extracted"}</div>
+                </div>
+                <div className="rounded-lg bg-blue-50/50 border border-blue-100 p-3">
+                  <div className="text-[10px] font-bold tracking-wider uppercase text-blue-700 mb-1">Expected answer</div>
+                  <div className="text-sm text-stone-800 leading-relaxed whitespace-pre-wrap">{(answerKeyMap[q.number] || {}).correctAnswer || (answerKeyMap[q.number] || {}).expectedText || q.expected || "Answer key not generated"}</div>
+                </div>
+              </div>
 
-          <div className="rounded-lg bg-blue-50/30 border border-blue-100 p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles size={13} className="text-blue-800" />
-              <span className="text-[10px] font-bold tracking-wider uppercase text-stone-700">AI reasoning</span>
-            </div>
-            <div className="text-sm text-stone-700 leading-relaxed">{ev.reasoning}</div>
-          </div>
+              {ev.reasoning && (
+                <div className="rounded-lg bg-blue-50/30 border border-blue-100 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles size={13} className="text-blue-800" />
+                    <span className="text-[10px] font-bold tracking-wider uppercase text-stone-700">AI reasoning</span>
+                  </div>
+                  <div className="text-sm text-stone-700 leading-relaxed">{ev.reasoning}</div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="bg-white border border-stone-200 rounded-lg p-4">
             <div className="flex items-end gap-4 flex-wrap">
@@ -526,7 +603,7 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
 // Queue Card (Queue mode — the trust moment)
 // ════════════════════════════════════════════════════════════════════════
 
-const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, onApprove, onSkip, cardRef, CHAPTERS, subMarks, onSubMarkChange, subExpanded, onToggleSubExpand }) => {
+const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, onApprove, onSkip, cardRef, CHAPTERS, subMarks, onSubMarkChange, subExpanded, onToggleSubExpand, answerKeyMap }) => {
   const { student, q, ev } = item;
   const overridden = mark !== ev.aiMark;
   const steps = q.maxMarks <= 2 ? markSteps(q.maxMarks) : null;
@@ -566,18 +643,26 @@ const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, o
           <img src={imgSrc(student.imageUrls[0])} alt={`${student.name} answer sheet`} className="w-full max-h-56 object-contain" loading="lazy" />
         </div>
       ) : null}
-      <div className="mb-3 rounded-lg bg-stone-50 border border-stone-200 p-3">
-        <div className="text-[10px] font-bold tracking-wider uppercase text-stone-500 mb-1">Student answer (transcribed)</div>
-        <div className="text-sm text-stone-800 leading-relaxed">{ev.studentAnswer}</div>
-      </div>
-
-      <div className="mb-4 rounded-lg bg-blue-50/40 border border-blue-100 p-3">
-        <div className="flex items-baseline gap-1.5 mb-1">
-          <Sparkles size={13} className="text-blue-800 shrink-0 relative top-0.5" />
-          <span className="text-[10px] font-bold tracking-wider uppercase text-stone-700">AI mark {ev.aiMark} / {q.maxMarks}</span>
+      {isMcqQuestion(q, answerKeyMap) ? (
+        <div className="mb-4">
+          <McqSummary q={q} ev={ev} answerKeyMap={answerKeyMap} />
         </div>
-        <div className="text-sm text-stone-700 leading-relaxed">"{ev.reasoning}"</div>
-      </div>
+      ) : (
+        <>
+          <div className="mb-3 rounded-lg bg-stone-50 border border-stone-200 p-3">
+            <div className="text-[10px] font-bold tracking-wider uppercase text-stone-500 mb-1">Student answer (transcribed)</div>
+            <div className="text-sm text-stone-800 leading-relaxed whitespace-pre-wrap">{ev.studentAnswer}</div>
+          </div>
+
+          <div className="mb-4 rounded-lg bg-blue-50/40 border border-blue-100 p-3">
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <Sparkles size={13} className="text-blue-800 shrink-0 relative top-0.5" />
+              <span className="text-[10px] font-bold tracking-wider uppercase text-stone-700">AI mark {ev.aiMark} / {q.maxMarks}</span>
+            </div>
+            <div className="text-sm text-stone-700 leading-relaxed">"{ev.reasoning}"</div>
+          </div>
+        </>
+      )}
 
       {hasSubs && (
         <div className="mb-4 rounded-lg border border-stone-200 bg-stone-50/50 overflow-hidden">
@@ -690,7 +775,11 @@ const ReviewPage = () => {
 
   const { data: allQuestions = [], isLoading: loadingQ } = useQuery({ queryKey: ['questions', id], queryFn: () => apiClient.getQuestions(id) });
   const { data: ANSWER_KEY_DATA } = useQuery({ queryKey: ['answerKey', id], queryFn: () => apiClient.getAnswerKey(id) });
-  const answerKey = ANSWER_KEY_DATA?.answerKey || [];
+  // Teacher-uploaded/text-parsed keys use "questionNumber"; DeepSeek keys use "q".
+  const answerKey = useMemo(
+    () => (ANSWER_KEY_DATA?.answerKey || []).map((a) => ({ ...a, q: a.q ?? a.questionNumber })),
+    [ANSWER_KEY_DATA]
+  );
   const answerKeyMap = useMemo(() => {
     const map = {};
     answerKey.forEach((a) => { map[a.q] = a; });
@@ -1234,6 +1323,7 @@ const ReviewPage = () => {
                   onSubMarkChange={(subNum, val) => queueSubMarkChange(item, subNum, val)}
                   subExpanded={qSubExpanded}
                   onToggleSubExpand={() => setSubExpanded((p) => ({ ...p, [key]: !p[key] }))}
+                  answerKeyMap={answerKeyMap}
                 />
               );
             })}
@@ -1454,6 +1544,7 @@ const ReviewPage = () => {
           return result;
         })()}
         onSubMarkChange={drawerSubMarkChange}
+        answerKeyMap={answerKeyMap}
       />
 
       {/* Approve-all confirm sheet */}

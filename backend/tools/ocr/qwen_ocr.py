@@ -141,6 +141,7 @@ Return ONLY a JSON object with "studentName", "rollNumber", and "questions" arra
                 "needsReview": needs_review,
                 "approved": False,
                 "studentAnswer": student_answer if student_answer else (mcq_choice if mcq_choice else "[unreadable]"),
+                "mcqChoice": (mcq_choice or "").strip().upper()[:1] or None,
                 "reasoning": reasoning,
                 "correct": correct,
             })
