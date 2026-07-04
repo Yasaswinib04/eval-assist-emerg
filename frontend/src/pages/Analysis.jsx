@@ -166,12 +166,17 @@ const Analysis = () => {
   const hasAnswerKey = answerKey.length > 0;
   const answerKeyStatus = ANSWER_KEY_DATA?.status;
   const isTeacherProvidedKey = answerKeyStatus === "uploaded" || answerKeyStatus === "edited";
-  // Questions with an internal "OR" choice (e.g. 16A/16B) produce two answer-key
-  // rows sharing one question number. Approving either alternative approves the
-  // question, so completion is measured per distinct question number, not per row.
   const uniqueAnswerKeyQuestions = useMemo(() => new Set(answerKey.map((a) => a.q)).size, [answerKey]);
   const totalApproved = Object.values(approvedAnswers).filter(Boolean).length;
   const allApproved = hasAnswerKey && totalApproved >= uniqueAnswerKeyQuestions;
+
+  useEffect(() => {
+    if (hasAnswerKey && !hasPendingOCR && Object.keys(approvedAnswers).length === 0) {
+      const initial = {};
+      answerKey.forEach((a) => { initial[a.q] = true; });
+      setApprovedAnswers(initial);
+    }
+  }, [hasAnswerKey, hasPendingOCR]);
 
   const progressTimerRef = useRef(null);
 
