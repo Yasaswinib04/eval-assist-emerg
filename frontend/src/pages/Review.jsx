@@ -22,6 +22,52 @@ import { toast } from "sonner";
 // Helpers
 // ════════════════════════════════════════════════════════════════════════
 
+// Backend stores answer-sheet paths in two broken shapes: "media/uploads/…"
+// (Qwen path, no leading slash → resolves against /review/{id}) and
+// "uploads/…" (local-OCR path, missing /media/ prefix). Static files are
+// mounted at /media/ (backend/server.py). Normalize both so <img> works
+// without waiting on a backend fix + data migration.
+const imgSrc = (u) => {
+  if (!u) return u;
+  if (/^(https?:)?\/\//.test(u) || u.startsWith("data:") || u.startsWith("/")) return u;
+  if (u.startsWith("media/")) return "/" + u;
+  if (u.startsWith("uploads/")) return "/media/" + u;
+  return "/" + u;
+};
+
+// Scored-mode evals don't set ev.isCorrect (only formative mode does — see
+// backend/routers/assessments.py). Derive it from aiMark vs maxMarks so the
+// Correct / Wrong / Partial chips always render.
+const deriveCorrectness = (ev, maxMarks) => {
+  if (ev?.isCorrect === true) return "correct";
+  if (ev?.isCorrect === false) return "wrong";
+  const m = Number(ev?.aiMark);
+  const mm = Number(maxMarks);
+  if (!Number.isFinite(m) || !Number.isFinite(mm) || mm <= 0) return null;
+  if (m >= mm) return "correct";
+  if (m <= 0) return "wrong";
+  return "partial";
+};
+
+const CorrectnessChip = ({ kind }) => {
+  if (kind === "correct") return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 text-[11px] font-semibold">
+      <Check size={11} /> Correct
+    </span>
+  );
+  if (kind === "wrong") return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-50 text-red-800 border border-red-100 text-[11px] font-semibold">
+      <X size={11} /> Wrong
+    </span>
+  );
+  if (kind === "partial") return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-100 text-[11px] font-semibold">
+      Partial
+    </span>
+  );
+  return null;
+};
+
 const chapterChip = (chId, CHAPTERS) => {
   const c = Array.isArray(CHAPTERS) ? CHAPTERS.find(x => x.id === chId) : CHAPTERS[chId];
   if (!c) return null;
@@ -322,7 +368,7 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {student.imageUrls.map((url, i) => (
-                  <img key={i} src={url} alt={`${student.name} answer sheet ${i + 1}`} className="w-full object-contain" loading="lazy" />
+                  <img key={i} src={imgSrc(url)} alt={`${student.name} answer sheet ${i + 1}`} className="w-full object-contain" loading="lazy" />
                 ))}
               </div>
             </div>
@@ -331,22 +377,8 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="text-[11px] font-bold tracking-wider uppercase text-stone-500">Q{q.number} · Max {q.maxMarks} {q.maxMarks === 1 ? "mark" : "marks"}</div>
               <div className="flex items-center gap-2">
-                {ev.isCorrect === true && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 text-[11px] font-semibold">
-                    <Check size={11} /> Correct
-                  </span>
-                )}
-                {ev.isCorrect === false && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-50 text-red-800 border border-red-100 text-[11px] font-semibold">
-                    <X size={11} /> Incorrect
-                  </span>
-                )}
+                <CorrectnessChip kind={deriveCorrectness(ev, q.maxMarks)} />
                 {ev.needsReview && <StatusChip status="review" showLabel />}
-                {ev.isCorrect === undefined && ev.isCorrect !== false && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 text-[11px] font-semibold">
-                    {ev.confidenceScore}% confident
-                  </span>
-                )}
               </div>
             </div>
             <h3 className="font-display text-lg font-semibold text-stone-900 leading-snug">{q.text}</h3>
@@ -512,6 +544,7 @@ const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, o
           <div className="text-xs text-stone-500 mt-0.5">Q{q.number} · {q.maxMarks} {q.maxMarks === 1 ? "mark" : "marks"}</div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <CorrectnessChip kind={deriveCorrectness(ev, q.maxMarks)} />
           {isDone ? (
             <StatusChip status="overridden" showLabel={false} className={overridden ? "" : "hidden"} />
           ) : (
@@ -530,7 +563,7 @@ const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, o
             <span>Student answer sheet</span>
             <span className="text-stone-400 normal-case font-normal">no per-question crop yet — look for Q{q.number}</span>
           </div>
-          <img src={student.imageUrls[0]} alt={`${student.name} answer sheet`} className="w-full max-h-56 object-contain" loading="lazy" />
+          <img src={imgSrc(student.imageUrls[0])} alt={`${student.name} answer sheet`} className="w-full max-h-56 object-contain" loading="lazy" />
         </div>
       ) : null}
       <div className="mb-3 rounded-lg bg-stone-50 border border-stone-200 p-3">
