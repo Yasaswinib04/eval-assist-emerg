@@ -18,8 +18,7 @@ export const AppProvider = ({ children }) => {
     return stored || "";
   });
   const [activeClass, setActiveClass] = useState(() => {
-    const stored = localStorage.getItem("evalassist-active-class");
-    return stored || "Class 8";
+    return localStorage.getItem("evalassist-active-class") || "";
   });
 
   useEffect(() => { localStorage.setItem("evalassist-lang", lang); }, [lang]);
@@ -47,6 +46,7 @@ export const AppProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       setActiveSubject("");
+      setActiveClass("");
     };
     window.addEventListener("evalassist:auth-expired", handleExpired);
     return () => window.removeEventListener("evalassist:auth-expired", handleExpired);
@@ -91,6 +91,7 @@ export const AppProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem(SUBJECTS_KEY);
     setActiveSubject("");
+    setActiveClass("");
   };
 
   return (

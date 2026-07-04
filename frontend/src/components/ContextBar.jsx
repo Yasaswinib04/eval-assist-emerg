@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 
 export const ContextBar = () => {
   const location = useLocation();
-  const { activeSubject, setActiveSubject, activeClass, setActiveClass, CLASS_OPTIONS } = useApp();
+  const { activeSubject, setActiveSubject, activeClass, setActiveClass } = useApp();
 
   const { data: ASSESSMENTS = [] } = useQuery({
     queryKey: ['assessments'],
@@ -14,6 +14,7 @@ export const ContextBar = () => {
   });
 
   const subjectOptions = [...new Set(ASSESSMENTS.map((a) => a.subject).filter(Boolean))].sort();
+  const classOptions = [...new Set(ASSESSMENTS.map((a) => a.class).filter(Boolean))].sort();
 
   if (/^\/analysis\//.test(location.pathname)) return null;
   if (!subjectOptions.length) return null;
@@ -54,7 +55,8 @@ export const ContextBar = () => {
           data-testid="context-class-select"
           className="h-10 pl-3 pr-7 rounded-md border border-stone-300 bg-white text-sm font-semibold text-stone-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-800"
         >
-          {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
+          <option value="">All Classes</option>
+          {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-stone-500" />
       </div>
