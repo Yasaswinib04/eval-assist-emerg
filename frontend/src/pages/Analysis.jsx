@@ -441,10 +441,11 @@ const Analysis = () => {
               <div className="text-xs font-semibold text-stone-500 mb-2 uppercase tracking-wider">Subjective ({subjectives.length} questions)</div>
               <div className="space-y-2">
                 {subjectives.map((ak) => {
+                  const rowKey = `${ak.q}${ak.alternative ? "-" + ak.alternative : ""}`;
                   const approved = approvedAnswers[ak.q] !== false;
-                  const expanded = !!expandedAnswers[ak.q];
+                  const expanded = !!expandedAnswers[rowKey];
                   return (
-                    <div key={ak.q} className={`rounded-lg border p-3 ${approved ? "border-stone-200" : "border-rose-200 bg-rose-50/30"}`}>
+                    <div key={rowKey} className={`rounded-lg border p-3 ${approved ? "border-stone-200" : "border-rose-200 bg-rose-50/30"}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 flex-1 min-w-0">
                           <button onClick={() => toggleApproval(ak.q)} className="shrink-0 mt-0.5">
@@ -452,7 +453,7 @@ const Analysis = () => {
                           </button>
                           <div>
                             <div className="flex items-center gap-1.5 text-xs font-mono text-stone-500">
-                              <span>Q{ak.q} ({ak.maxMarks || "?"}M)</span>
+                              <span>Q{ak.q}{ak.alternative ? `.${ak.alternative}` : ""} ({ak.maxMarks || "?"}M)</span>
                               {conceptByQ[ak.q] && (
                                 <span className="font-sans font-semibold text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded normal-case">{conceptByQ[ak.q]}</span>
                               )}
@@ -460,7 +461,7 @@ const Analysis = () => {
                             <div className="text-sm text-stone-800 line-clamp-2">{(ak.correctAnswer || "—").slice(0, 120)}</div>
                           </div>
                         </div>
-                        <button onClick={() => setExpandedAnswers(prev => ({ ...prev, [ak.q]: !prev[ak.q] }))} className="shrink-0 text-xs text-stone-500 hover:text-stone-700">
+                        <button onClick={() => setExpandedAnswers(prev => ({ ...prev, [rowKey]: !prev[rowKey] }))} className="shrink-0 text-xs text-stone-500 hover:text-stone-700">
                           {expanded ? "Collapse ▴" : "Expand ▾"}
                         </button>
                       </div>

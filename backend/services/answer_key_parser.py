@@ -95,50 +95,120 @@ def parse_answer_key(text: str) -> List[Dict[str, Any]]:
     return heuristic if heuristic else []
 
 
-def _heuristic_parse(text: str) -> List[Dict[str, Any]]:
-    """Fast rule-based extraction of MCQ and short-answer keys."""
-    results = []
-    lines = [l.strip() for l in text.split("\n") if l.strip()]
+_AK_MCQ_START_RE = re.compile(r'^Q?\s*(\d{1,3})\s*[.):\s-]\s*([A-Da-d])\b')
+_AK_SUBJ_START_RE = re.compile(r'^Q?\s*(\d{1,3})\s*[.):-]\s+(.+)$')
+_AK_SECTION_HEADER_RE = re.compile(r'^section\s+([a-d])\b', re.IGNORECASE)
+# "16. A) ..." style — Section-D alternatives that share a question number
+_AK_ALT_START_RE = re.compile(r'^Q?\s*(\d{1,3})\s*\.\s*([AB])\)\s*(.*)$')
 
-    for raw_line in lines:
-        line = raw_line.strip()
+
+def _strip_ak_markdown(line: str) -> str:
+    line = _MD_HEADING_RE.sub('', line)
+    line = line.replace('**', '').replace('__', '')
+    return line.strip()
+
+
+def _heuristic_parse(text: str) -> List[Dict[str, Any]]:
+    """Rule-based extraction of MCQ and subjective answer keys.
+
+    Groups continuation lines (Term:, Precautions:, bullet points, etc.)
+    under the most recent numbered answer, so a subjective answer with
+    multiple detail lines under one heading isn't truncated to just the
+    heading. Handles "16. A) ..." / "16. B) ..." internal-choice pairs by
+    emitting each as its own row (same question number, distinct option).
+    """
+    lines = text.split("\n")
+    blocks: List[Dict[str, Any]] = []
+    current: Optional[Dict[str, Any]] = None
+    # Only Section A entries are MCQs; Section D entries with an A)/B) suffix
+    # are internal-choice essay alternatives (same question number, different
+    # sub-answer) — so we need section context to tell them apart, since
+    # "1. A) Frog" and "16. A) Disease Table Analysis" have identical shape.
+    section = "A"
+
+    for raw in lines:
+        line = _strip_ak_markdown(raw)
         if not line:
             continue
-
-        # Pattern: "1. A" or "1) B" or "1. A) Human" or "Q1. Human"
-        # MCQ first: match number then letter
-        mcq = re.match(r'^Q?\s*(\d{1,2})\s*[.):\s-]\s*([A-Da-d])\b', line)
-        if mcq:
-            q_num = int(mcq.group(1))
-            letter = mcq.group(2).upper()
-            # Extract the answer text after the letter if present
-            rest = line[mcq.end():].strip()
-            # Strip leading punctuation like ") " or " - "
-            rest = re.sub(r'^[)\]-]\s*', '', rest)
-            answer_text = rest if rest and len(rest) > 1 else f"Option {letter}"
-            results.append({
-                "questionNumber": q_num,
-                "correctOption": letter,
-                "correctAnswer": answer_text,
-                "expectedText": answer_text,
-            })
+        sh = _AK_SECTION_HEADER_RE.match(line)
+        if sh:
+            section = sh.group(1).upper()
+            current = None
             continue
 
-        # Subjective: "11. Weeds are unwanted plants..." (no letter after number)
-        subj = re.match(r'^Q?\s*(\d{1,2})\s*[.):-]\s+(.+)$', line)
+        if section == "A":
+            mcq = _AK_MCQ_START_RE.match(line)
+            if mcq:
+                q_num = int(mcq.group(1))
+                letter = mcq.group(2).upper()
+                rest = line[mcq.end():].strip()
+                rest = re.sub(r'^[)\]\-]\s*', '', rest)
+                current = {
+                    "questionNumber": q_num,
+                    "correctOption": letter,
+                    "isSubjective": False,
+                    "lines": [rest] if rest else [],
+                }
+                blocks.append(current)
+                continue
+
+        if section != "A":
+            alt = _AK_ALT_START_RE.match(line)
+            if alt:
+                q_num = int(alt.group(1))
+                alt_letter = alt.group(2).upper()
+                rest = alt.group(3).strip()
+                # Internal-choice alternatives (16A/16B, 17A/17B) share a
+                # question number but are subjective essay-style answers, not
+                # MCQ options — leave correctOption null and record the choice
+                # separately so the frontend classifies them as subjective.
+                current = {
+                    "questionNumber": q_num,
+                    "correctOption": None,
+                    "alternative": alt_letter,
+                    "isSubjective": True,
+                    "lines": [rest] if rest else [],
+                }
+                blocks.append(current)
+                continue
+
+        subj = _AK_SUBJ_START_RE.match(line)
         if subj:
             q_num = int(subj.group(1))
-            answer_text = subj.group(2).strip()
-            results.append({
+            current = {
                 "questionNumber": q_num,
                 "correctOption": None,
-                "correctAnswer": answer_text,
-                "expectedText": answer_text,
-            })
+                "isSubjective": True,
+                "lines": [subj.group(2).strip()],
+            }
+            blocks.append(current)
             continue
 
+        if current is not None:
+            current["lines"].append(line)
+
+    results: List[Dict[str, Any]] = []
+    for b in blocks:
+        if b["isSubjective"]:
+            answer_text = " ".join(l for l in b["lines"] if l).strip()
+            if not answer_text and b["correctOption"]:
+                answer_text = f"Option {b['correctOption']}"
+        else:
+            first = b["lines"][0] if b["lines"] else ""
+            answer_text = first if first and len(first) > 1 else f"Option {b['correctOption']}"
+
+        row = {
+            "questionNumber": b["questionNumber"],
+            "correctOption": b["correctOption"],
+            "correctAnswer": answer_text,
+            "expectedText": answer_text,
+        }
+        if b.get("alternative"):
+            row["alternative"] = b["alternative"]
+        results.append(row)
+
     if len(results) >= 3:
-        results.sort(key=lambda r: r["questionNumber"])
+        results.sort(key=lambda r: (r["questionNumber"], r.get("alternative") or ""))
         return results
     return []
 
