@@ -4,47 +4,12 @@ import { useApp } from "@/contexts/AppContext";
 import { apiClient } from "@/data/apiClient";
 import { GRADES } from "@/data/gradeUtils";
 import {
-  ArrowLeft, Plus, Trash2, BarChart3, ClipboardPaste,
-  Loader2, Zap, UploadCloud, X, Image as ImageIcon, FileSpreadsheet,
-  Search, Type, FileText
+  ArrowLeft, BarChart3, ClipboardPaste,
+  Loader2, UploadCloud, X, Image as ImageIcon, FileSpreadsheet,
+  Search, Type, AlertTriangle, RotateCw
 } from "lucide-react";
 import { toast } from "sonner";
 
-const SUBJECT_CHAPTERS = {
-  Biology: [
-    { id: "ch1", name: "Cell Structure & Functions", concepts: ["Cell Wall", "Cell Membrane", "Cytoplasm", "Nucleus", "Unicellular", "Multicellular"] },
-    { id: "ch2", name: "Microorganisms: Friend & Foe", concepts: ["Bacteria", "Virus", "Fungi", "Protozoa", "Communicable Diseases", "Antibiotics & Medicine", "Food Preservation"] },
-    { id: "ch3", name: "Crop Production & Management", concepts: ["Crop Production", "Crop Seasons", "Agricultural Implements", "Irrigation", "Weed Control"] },
-    { id: "ch4", name: "Reproduction in Animals", concepts: ["Sexual Reproduction", "Asexual Reproduction", "Fertilization", "Internal Fertilization", "IVF", "Metamorphosis", "Gametes", "Budding", "Binary Fission", "Male Reproductive System", "Female Reproductive System"] },
-  ],
-  Physics: [
-    { id: "ch1", name: "Force and Laws of Motion", concepts: ["Force", "Newton's Laws", "Friction", "Pressure", "Gravity"] },
-    { id: "ch2", name: "Sound", concepts: ["Vibration", "Frequency", "Amplitude", "Pitch", "Noise Pollution"] },
-    { id: "ch3", name: "Light", concepts: ["Reflection", "Refraction", "Lenses", "Mirrors", "Human Eye"] },
-    { id: "ch4", name: "Electric Current", concepts: ["Conductors", "Insulators", "Circuit", "Voltage", "Resistance"] },
-  ],
-  Chemistry: [
-    { id: "ch1", name: "Matter & Its States", concepts: ["Solid", "Liquid", "Gas", "Plasma", "Phase Change"] },
-    { id: "ch2", name: "Elements & Compounds", concepts: ["Atom", "Molecule", "Periodic Table", "Chemical Bond", "Mixture"] },
-    { id: "ch3", name: "Acids, Bases & Salts", concepts: ["pH Scale", "Indicator", "Neutralization", "Salt Formation"] },
-    { id: "ch4", name: "Chemical Reactions", concepts: ["Combination", "Decomposition", "Displacement", "Oxidation", "Reduction"] },
-  ],
-  Mathematics: [
-    { id: "ch1", name: "Rational Numbers", concepts: ["Fractions", "Decimals", "Number Line", "Operations"] },
-    { id: "ch2", name: "Algebra", concepts: ["Variables", "Equations", "Inequalities", "Polynomials"] },
-    { id: "ch3", name: "Geometry", concepts: ["Angles", "Triangles", "Quadrilaterals", "Circles", "Area"] },
-    { id: "ch4", name: "Data Handling", concepts: ["Mean", "Median", "Mode", "Bar Graph", "Probability"] },
-  ],
-};
-
-const getChaptersForSubject = (subject) => {
-  return SUBJECT_CHAPTERS[subject] || [
-    { id: "ch1", name: "Chapter 1", concepts: ["Concept A", "Concept B", "Concept C"] },
-    { id: "ch2", name: "Chapter 2", concepts: ["Concept D", "Concept E", "Concept F"] },
-  ];
-};
-
-const SECTIONS = ["A", "B", "C", "D"];
 const STUDENT_COUNT_OPTIONS = [10, 20, 30, 40, 50];
 
 const getGrade = (total, maxMarks) => {
@@ -145,34 +110,16 @@ const ScoreEntry = () => {
   const [totalMarks, setTotalMarks] = useState(40);
 
   const [questions, setQuestions] = useState([]);
-  const [qSection, setQSection] = useState("A");
-  const [qMarks, setQMarks] = useState(1);
-  const [qCount, setQCount] = useState(10);
-  const [qChapter, setQChapter] = useState("ch1");
-  const [qConcept, setQConcept] = useState("");
 
   const [studentCount, setStudentCount] = useState(30);
   const [scores, setScores] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [subExpanded, setSubExpanded] = useState({});
 
   const [qImages, setQImages] = useState([]);
   const [qTextInput, setQTextInput] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [showQPaperUpload, setShowQPaperUpload] = useState(false);
-
-  const chapters = useMemo(() => getChaptersForSubject(subject), [subject]);
-
-  const selectedChapterConcepts = useMemo(() => {
-    const ch = chapters.find((c) => c.id === qChapter);
-    return ch ? ch.concepts : [];
-  }, [qChapter, chapters]);
-
-  useEffect(() => {
-    if (selectedChapterConcepts.length > 0 && !selectedChapterConcepts.includes(qConcept)) {
-      setQConcept(selectedChapterConcepts[0]);
-    }
-  }, [qChapter, selectedChapterConcepts]);
+  const [analysisError, setAnalysisError] = useState("");
+  const [qInputMode, setQInputMode] = useState("images");
 
   const addImages = useCallback((incoming) => {
     const list = Array.from(incoming).map((f, i) => ({
@@ -195,21 +142,8 @@ const ScoreEntry = () => {
       return;
     }
 
-    if (qImages.length === 0 && qTextInput.trim()) {
-      try {
-        const parsed = qTextInput.trim().split("\n").filter(Boolean).map((line, i) => {
-          const num = i + 1;
-          return { number: num, section: "A", maxMarks: 1, chapter: "ch1", concept: "" };
-        });
-        if (parsed.length > 0) {
-          setQuestions(parsed);
-          toast.success(`Parsed ${parsed.length} questions from text`);
-        }
-      } catch (e) { toast.error("Could not parse text"); }
-      return;
-    }
-
     setAnalyzing(true);
+    setAnalysisError("");
     const metadata = { name: name || "Draft", class: klass, subject: subject === "__custom__" ? subjects[0] : subject, type, totalMarks };
 
     try {
@@ -243,95 +177,25 @@ const ScoreEntry = () => {
         if (qs && qs.length > 0) {
           const mapped = qs.map((q) => ({
             number: q.number, section: q.section || "A",
-            maxMarks: q.maxMarks || 1, chapter: q.chapter || "ch1",
+            maxMarks: q.maxMarks || 1, chapter: q.chapter || "",
             concept: q.concept || "",
           }));
           setQuestions(mapped);
           toast.success(`AI extracted ${mapped.length} questions`);
         } else {
-          toast.error("Questions extracted but none were mapped");
+          setAnalysisError("Questions were extracted but none could be mapped. Try a clearer photo or re-paste the text.");
         }
       } else if (analysis.status === "skipped") {
-        toast("Could not analyze images. Use templates or manual entry instead.");
+        setAnalysisError("Could not read the question paper. Try a clearer photo, or switch to pasting the text instead.");
       } else {
-        toast.error(analysis.message || "Analysis failed");
+        setAnalysisError(analysis.message || "Analysis failed. Please try again.");
       }
     } catch (err) {
-      toast.error(err.message || "Analysis failed. Try templates or manual entry.");
+      setAnalysisError(err.message || "Network error. Check your connection and try again.");
     } finally {
       setAnalyzing(false);
     }
   }, [qImages, qTextInput, name, klass, subject, type, totalMarks, subjects]);
-
-  const addQuestions = useCallback(() => {
-    const startNum = questions.length + 1;
-    const newQs = [];
-    for (let i = 0; i < qCount; i++) {
-      newQs.push({ number: startNum + i, section: qSection, maxMarks: qMarks, chapter: qChapter, concept: qConcept || selectedChapterConcepts[0] || "", subQuestions: [] });
-    }
-    setQuestions((prev) => [...prev, ...newQs]);
-  }, [questions.length, qCount, qSection, qMarks, qChapter, qConcept, selectedChapterConcepts]);
-
-  const updateQuestion = useCallback((idx, field, value) => {
-    setQuestions((prev) => {
-      const updated = [...prev];
-      updated[idx] = { ...updated[idx], [field]: value };
-      if (field === "chapter") {
-        const ch = chapters.find((c) => c.id === value);
-        if (ch?.concepts.length) updated[idx].concept = ch.concepts[0];
-      }
-      return updated;
-    });
-  }, []);
-
-  const removeQuestion = useCallback((idx) => {
-    setQuestions((prev) => {
-      const updated = prev.filter((_, i) => i !== idx);
-      return updated.map((q, i) => ({ ...q, number: i + 1 }));
-    });
-  }, []);
-
-  const addSubQuestion = useCallback((qIdx) => {
-    setQuestions((prev) => {
-      const updated = [...prev];
-      const q = { ...updated[qIdx] };
-      const subs = [...(q.subQuestions || [])];
-      const subNum = subs.length + 1;
-      const letter = String.fromCharCode(96 + subNum);
-      subs.push({ number: `${q.number}${letter}`, text: "", maxMarks: 0 });
-      q.subQuestions = subs;
-      updated[qIdx] = q;
-      return updated;
-    });
-  }, []);
-
-  const updateSubQuestion = useCallback((qIdx, subIdx, field, value) => {
-    setQuestions((prev) => {
-      const updated = [...prev];
-      const q = { ...updated[qIdx] };
-      const subs = [...(q.subQuestions || [])];
-      subs[subIdx] = { ...subs[subIdx], [field]: value };
-      q.subQuestions = subs;
-      updated[qIdx] = q;
-      return updated;
-    });
-  }, []);
-
-  const removeSubQuestion = useCallback((qIdx, subIdx) => {
-    setQuestions((prev) => {
-      const updated = [...prev];
-      const q = { ...updated[qIdx] };
-      const subs = (q.subQuestions || []).filter((_, i) => i !== subIdx)
-        .map((sq, i) => ({ ...sq, number: `${q.number}${String.fromCharCode(97 + i)}` }));
-      q.subQuestions = subs;
-      updated[qIdx] = q;
-      return updated;
-    });
-  }, []);
-
-  const toggleSubExpand = useCallback((qIdx) => {
-    setSubExpanded((p) => ({ ...p, [qIdx]: !p[qIdx] }));
-  }, []);
 
   const scoreColumns = useMemo(() => {
     const cols = [];
@@ -518,209 +382,121 @@ const ScoreEntry = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-12" data-testid="score-entry-page">
-      <button onClick={() => navigate("/dashboard")} className="inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900 mb-2">
-        <ArrowLeft size={14} /> Back to Dashboard
-      </button>
-
-      <div className="mb-6 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-5">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0"><Zap size={20} /></div>
-          <div>
-            <div className="text-sm font-semibold tracking-[0.08em] uppercase text-emerald-800">Quick Score Entry</div>
-            <h1 className="mt-0.5 font-display text-3xl font-semibold text-stone-900">Enter Marks Directly</h1>
-            <p className="text-sm text-stone-600 mt-1">Upload Q paper images for AI extraction, or build the question structure by hand. Enter scores manually or import from Excel.</p>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-4 md:py-6" data-testid="score-entry-page">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <button onClick={() => navigate("/dashboard")} className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 shrink-0">
+          <ArrowLeft size={14} /> Dashboard
+        </button>
+        <div className="text-right min-w-0">
+          <span className="font-display text-base md:text-lg font-semibold text-stone-900">Quick Score Entry</span>
+          <span className="hidden sm:inline text-xs text-stone-400 italic ml-2">— upload the question paper, AI structures it, you enter marks</span>
         </div>
       </div>
 
-      {/* Step 1: Assessment Metadata */}
-      <div className="bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm mb-6">
-        <div className="text-sm font-semibold text-stone-700 mb-4">1. Assessment Details</div>
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Assessment Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Unit Test 3 — Reproduction" className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-emerald-600" data-testid="input-se-name" />
+      {/* Step 1: Assessment Metadata (compact) */}
+      <div className="bg-white border border-stone-200 rounded-xl px-4 py-3 shadow-sm mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-end gap-3 flex-wrap">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-[11px] font-semibold tracking-wide text-stone-500 mb-0.5">Assessment Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Unit Test 3 — Reproduction" className="w-full h-9 px-2.5 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" data-testid="input-se-name" />
           </div>
           <div className="w-28">
-            <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Subject</label>
-            <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            <label className="block text-[11px] font-semibold tracking-wide text-stone-500 mb-0.5">Subject</label>
+            <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full h-9 px-2 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
               {subjects.map((s) => <option key={s}>{s}</option>)}
               <option value="__custom__">+ Custom</option>
             </select>
           </div>
-          <div className="w-28">
-            <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Class</label>
-            <select value={klass} onChange={(e) => setKlass(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <div className="w-24">
+            <label className="block text-[11px] font-semibold tracking-wide text-stone-500 mb-0.5">Class</label>
+            <select value={klass} onChange={(e) => setKlass(e.target.value)} className="w-full h-9 px-2 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
               {["Class 6","Class 7","Class 8","Class 9","Class 10"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
-          <div className="w-40">
-            <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <div className="w-36">
+            <label className="block text-[11px] font-semibold tracking-wide text-stone-500 mb-0.5">Type</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} className="w-full h-9 px-2 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
               {["Revision Test","Unit Test","Formative Assessment","Summative Assessment","Practice Quiz"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
-          <div className="w-24">
-            <label className="block text-xs font-semibold tracking-wide text-stone-500 mb-1">Total Marks</label>
-            <input type="number" value={totalMarks} onChange={(e) => setTotalMarks(parseInt(e.target.value || "40", 10))} className="w-full h-11 px-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+          <div className="w-20">
+            <label className="block text-[11px] font-semibold tracking-wide text-stone-500 mb-0.5">Total Marks</label>
+            <input type="number" value={totalMarks} onChange={(e) => setTotalMarks(parseInt(e.target.value || "40", 10))} className="w-full h-9 px-2 rounded-md border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" />
           </div>
         </div>
       </div>
 
-      {/* Step 2: Question Structure */}
-      <div className="bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm mb-6">
-        <div className="text-sm font-semibold text-stone-700 mb-4">2. Question Structure</div>
+      {/* Step 2: Question Paper (unified input) */}
+      <div className="bg-white border border-stone-200 rounded-xl px-4 py-4 md:px-5 md:py-5 shadow-sm mb-4">
+        <div className="mb-3">
+          <div className="text-sm font-semibold text-stone-800">Question Paper</div>
+          <div className="text-xs text-stone-500 italic mt-0.5">Upload photos of the paper, or paste the text. AI will structure the questions for you.</div>
+        </div>
 
-        {/* Q Paper Upload — collapsible */}
-        <div className="mb-4">
+        <div className="flex gap-1 mb-3 bg-stone-100 rounded-lg p-1 w-fit">
           <button
-            onClick={() => setShowQPaperUpload((v) => !v)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${showQPaperUpload ? "bg-blue-50 border-blue-300 text-blue-800" : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-stone-800"}`}
+            onClick={() => setQInputMode("images")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${qInputMode === "images" ? "bg-white shadow-sm text-stone-900" : "text-stone-500 hover:text-stone-700"}`}
           >
-            <ImageIcon size={16} />
-            AI Extract from Q Paper Images
-            <span className="text-xs text-stone-400 ml-1">{showQPaperUpload ? "(close)" : "(optional)"}</span>
+            <ImageIcon size={14} /> Photos
           </button>
-          {showQPaperUpload && (
-            <div className="mt-3 p-4 rounded-lg bg-blue-50/30 border border-blue-100">
-              <p className="text-xs text-stone-500 mb-3">
-                Upload photos of the question paper. AI will extract question numbers, sections, marks, chapters, and concepts.
-                Multiple screenshots, textbook paragraphs, and board-written questions are all supported — the AI will do its best to structure them.
-              </p>
-              <DropZone files={qImages} onAdd={addImages} onRemove={removeQImage} testId="zone-qpaper" acceptLabel="JPEG or PNG — Q paper, paragraphs, screenshots" />
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={handleAnalyzeQPaper}
-                  disabled={analyzing || (qImages.length === 0 && !qTextInput.trim())}
-                  className={`inline-flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm transition-colors ${analyzing ? "bg-blue-100 text-blue-600" : "bg-blue-800 text-white hover:bg-blue-900"} disabled:opacity-40 disabled:cursor-not-allowed`}
-                >
-                  {analyzing ? <><Loader2 size={14} className="animate-spin" /> Analyzing with AI...</> : <><Search size={14} /> Analyze Q Paper</>}
-                </button>
-                <span className="text-xs text-stone-400">or paste text below</span>
-              </div>
-              <textarea
-                value={qTextInput}
-                onChange={(e) => setQTextInput(e.target.value)}
-                placeholder="Paste question text here if you prefer...&#10;1. Identify the odd one with respect to fertilization&#10;2. Best way to prevent Hepatitis A?&#10;..."
-                rows={3}
-                className="mt-3 w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 resize-none"
-              />
+          <button
+            onClick={() => setQInputMode("text")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${qInputMode === "text" ? "bg-white shadow-sm text-stone-900" : "text-stone-500 hover:text-stone-700"}`}
+          >
+            <Type size={14} /> Text
+          </button>
+        </div>
+
+        {qInputMode === "images" ? (
+          <DropZone
+            files={qImages}
+            onAdd={addImages}
+            onRemove={removeQImage}
+            testId="zone-qpaper"
+            acceptLabel="JPEG or PNG · up to 10 pages"
+          />
+        ) : (
+          <textarea
+            value={qTextInput}
+            onChange={(e) => setQTextInput(e.target.value)}
+            placeholder="Paste the questions here...&#10;&#10;1. First question&#10;2. Second question&#10;..."
+            rows={6}
+            className="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
+          />
+        )}
+
+        <div className="mt-4">
+          <button
+            onClick={handleAnalyzeQPaper}
+            disabled={analyzing || (qImages.length === 0 && !qTextInput.trim())}
+            className={`inline-flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm transition-colors ${analyzing ? "bg-emerald-100 text-emerald-700" : "bg-emerald-600 text-white hover:bg-emerald-700"} disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            {analyzing ? <><Loader2 size={14} className="animate-spin" /> Analyzing…</> : <><Search size={14} /> Analyze with AI</>}
+          </button>
+        </div>
+
+        {analysisError && (
+          <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-2.5">
+            <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-red-800">{analysisError}</div>
+              <button onClick={handleAnalyzeQPaper} className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:text-red-900 underline underline-offset-2">
+                <RotateCw size={12} /> Try again
+              </button>
             </div>
-          )}
-        </div>
-
-        {/* Manual builder */}
-        <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-stone-50 rounded-lg border border-stone-200">
-          <div>
-            <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Add</label>
-            <input type="number" min="1" max="50" value={qCount} onChange={(e) => setQCount(parseInt(e.target.value || "1", 10))} className="w-16 h-9 px-2 rounded border border-stone-300 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-600" />
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Section</label>
-            <select value={qSection} onChange={(e) => setQSection(e.target.value)} className="h-9 px-2 rounded border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-              {SECTIONS.map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Marks</label>
-            <input type="number" min="0.5" step="0.5" value={qMarks} onChange={(e) => setQMarks(parseFloat(e.target.value || "1"))} className="w-16 h-9 px-2 rounded border border-stone-300 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-600" />
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Chapter</label>
-            <select value={qChapter} onChange={(e) => setQChapter(e.target.value)} className="h-9 px-2 rounded border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-              {chapters.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-stone-500 mb-0.5">Concept</label>
-            <select value={qConcept} onChange={(e) => setQConcept(e.target.value)} className="h-9 px-2 rounded border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-              {selectedChapterConcepts.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <button onClick={addQuestions} className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-1.5"><Plus size={14} /> Add</button>
-        </div>
-
-        {questions.length === 0 && (
-          <div className="mb-4 p-4 rounded-lg border border-dashed border-stone-300 bg-stone-50 text-sm text-stone-500 text-center">
-            No questions yet. Use the row above to add questions — pick section, marks, chapter and concept, then hit <span className="font-medium text-stone-700">Add</span>.
           </div>
         )}
 
         {questions.length > 0 && (
-          <div className="border border-stone-200 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-[44px_64px_64px_1fr_1fr_44px] gap-1 px-3 py-2 bg-stone-50 border-b border-stone-200 text-xs font-semibold tracking-wide text-stone-500">
-              <div>#</div><div>Section</div><div>Marks</div><div>Chapter</div><div>Concept</div><div></div>
+          <div className="mt-4 flex items-center justify-between gap-2 p-3 rounded-lg bg-emerald-50/60 border border-emerald-200">
+            <div className="text-sm text-emerald-900">
+              <span className="font-semibold">{questions.length} question{questions.length === 1 ? "" : "s"}</span>
+              <span className="text-emerald-700"> · {questions.reduce((s, q) => s + (q.maxMarks || 0), 0)} marks total</span>
             </div>
-            <div className="divide-y divide-stone-100 max-h-96 overflow-y-auto">
-              {questions.map((q, i) => {
-                const ch = chapters.find((c) => c.id === q.chapter);
-                const concepts = ch ? ch.concepts : [];
-                return (
-                  <div key={i}>
-                    <div className="grid grid-cols-[44px_64px_64px_1fr_1fr_64px] gap-1 px-3 py-1.5 items-center hover:bg-stone-50/50">
-                      <div className="text-sm font-mono text-stone-600">{q.number}</div>
-                      <select value={q.section} onChange={(e) => updateQuestion(i, "section", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                        {SECTIONS.map((s) => <option key={s}>{s}</option>)}
-                      </select>
-                      <input type="number" min="0.5" step="0.5" value={q.maxMarks} onChange={(e) => updateQuestion(i, "maxMarks", parseFloat(e.target.value || "1"))} className="h-8 w-full px-1 rounded border border-stone-200 bg-white text-xs text-center focus:outline-none focus:ring-1 focus:ring-emerald-500" />
-                      <select value={q.chapter} onChange={(e) => updateQuestion(i, "chapter", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                        {chapters.map((c) => <option key={c.id} value={c.id}>{c.name.split(":")[0]}</option>)}
-                      </select>
-                      <select value={q.concept} onChange={(e) => updateQuestion(i, "concept", e.target.value)} className="h-8 px-1 rounded border border-stone-200 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                        {concepts.map((c) => <option key={c} value={c}>{c}</option>)}
-                        {!concepts.includes(q.concept) && q.concept && <option value={q.concept}>{q.concept}</option>}
-                      </select>
-                      <div className="flex items-center gap-0.5 justify-end">
-                        <button onClick={() => toggleSubExpand(i)} className={`h-7 w-7 rounded flex items-center justify-center ${subExpanded[i] ? "bg-blue-50 text-blue-700" : "text-stone-400 hover:text-stone-600 hover:bg-stone-100"}`} title="Sub-questions">
-                          <Plus size={13} />
-                        </button>
-                        <button onClick={() => removeQuestion(i)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center"><Trash2 size={14} /></button>
-                      </div>
-                    </div>
-                    {subExpanded[i] && (
-                      <div className="ml-11 mr-2 mb-2 border border-blue-200 rounded-lg bg-blue-50/20 overflow-hidden">
-                        <div className="px-3 py-1.5 bg-blue-50/50 border-b border-blue-100 flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-blue-800">Sub-questions for Q{q.number}</span>
-                          <button onClick={() => addSubQuestion(i)} className="inline-flex items-center gap-1 h-6 px-2 rounded text-[11px] font-medium bg-blue-800 text-white hover:bg-blue-900"><Plus size={10} /> Add Part</button>
-                        </div>
-                        {(q.subQuestions || []).length === 0 ? (
-                          <div className="px-3 py-2 text-[11px] text-stone-500">No sub-parts added yet. Click "Add Part" to define sub-questions.</div>
-                        ) : (
-                          <div className="divide-y divide-blue-100">
-                            {(q.subQuestions || []).map((sq, sIdx) => (
-                              <div key={sIdx} className="grid grid-cols-[56px_1fr_72px_32px] gap-1 px-3 py-1 items-center">
-                                <input
-                                  value={sq.number}
-                                  onChange={(e) => updateSubQuestion(i, sIdx, "number", e.target.value)}
-                                  className="h-7 px-1 rounded border border-stone-200 bg-white text-[11px] font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                                <input
-                                  value={sq.text}
-                                  onChange={(e) => updateSubQuestion(i, sIdx, "text", e.target.value)}
-                                  placeholder={`Part ${sq.number} text…`}
-                                  className="h-7 px-2 rounded border border-stone-200 bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                                <div className="flex items-center gap-0.5">
-                                  <input
-                                    type="number" min="0.5" step="0.5"
-                                    value={sq.maxMarks}
-                                    onChange={(e) => updateSubQuestion(i, sIdx, "maxMarks", parseFloat(e.target.value || "0"))}
-                                    className="h-7 w-full px-1 rounded border border-stone-200 bg-white text-[11px] text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                  />
-                                  <span className="text-[10px] text-stone-400">m</span>
-                                </div>
-                                <button onClick={() => removeSubQuestion(i, sIdx)} className="h-7 w-7 rounded hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center"><X size={12} /></button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <button onClick={() => { setQuestions([]); setQImages([]); setQTextInput(""); }} className="text-xs text-emerald-700 underline hover:text-emerald-900">
+              Reset
+            </button>
           </div>
         )}
       </div>
@@ -730,7 +506,7 @@ const ScoreEntry = () => {
         <div className="px-5 py-4 border-b border-stone-200 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-4">
             <div>
-              <div className="text-sm font-semibold text-stone-700">3. Enter Scores</div>
+              <div className="text-sm font-semibold text-stone-700">Enter Scores</div>
               <div className="text-xs text-stone-500 mt-0.5">Click any cell or use Tab/Enter to navigate. Only rows with scores are saved.</div>
             </div>
             <div className="flex items-center gap-2">
@@ -757,7 +533,7 @@ const ScoreEntry = () => {
         </div>
 
         {questions.length === 0 ? (
-          <div className="px-5 py-12 text-center text-stone-400 text-sm">Define question structure above to begin entering scores.</div>
+          <div className="px-5 py-12 text-center text-stone-400 text-sm">Analyze the question paper above to begin entering scores.</div>
         ) : (
           <>
             <div className="px-5 py-2 border-b border-stone-100 flex items-center gap-4 text-xs text-stone-500">

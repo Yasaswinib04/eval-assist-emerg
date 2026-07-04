@@ -14,6 +14,7 @@ import {
 import {
   Search, X, Check, Sparkles, ChevronRight, ChevronLeft, ChevronDown,
   Wand2, Keyboard, Save, ArrowRight, Maximize2, Minimize2, ListChecks, LayoutGrid, User, Loader2,
+  ScanLine, FileText, Tags, Brain, Users, BarChart3, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +34,81 @@ const markSteps = (maxMarks) => {
   const steps = [];
   for (let m = 0; m <= maxMarks; m += 0.5) steps.push(m);
   return steps;
+};
+
+// ════════════════════════════════════════════════════════════════════════
+// Processing steps — driven by real backend pipeline status, not a timer
+// ════════════════════════════════════════════════════════════════════════
+
+const PROCESSING_STEPS = [
+  { statuses: ["pending", "ocr", "step_ocr"], label: "Reading answer sheets", detail: "OCR is transcribing each student's handwriting", icon: ScanLine },
+  { statuses: ["step_qp"], label: "Structuring the question paper", detail: "Matching questions to marks and sections", icon: FileText },
+  { statuses: ["step_concept"], label: "Mapping concepts & chapters", detail: "Linking questions to your curriculum", icon: Tags },
+  { statuses: ["step_eval"], label: "Grading student answers", detail: "AI is comparing each answer to the key", icon: Brain },
+  { statuses: ["step_gap"], label: "Building student records", detail: "Compiling results for each student", icon: Users },
+  { statuses: ["step_insights"], label: "Generating classroom insights", detail: "Preparing your review queue", icon: BarChart3 },
+];
+
+const ProcessingSteps = ({ processingStatus, studentCount }) => {
+  const [elapsedSec, setElapsedSec] = useState(0);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const t = setInterval(() => setElapsedSec(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  let currentIdx = PROCESSING_STEPS.findIndex((s) => s.statuses.includes(processingStatus));
+  if (currentIdx === -1) currentIdx = 0;
+
+  return (
+    <div className="max-w-xl mx-auto">
+      <div className="flex items-start gap-4 mb-6">
+        <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
+          <Sparkles size={22} />
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <h2 className="font-display text-xl font-semibold text-stone-900">Processing answer sheets</h2>
+          <p className="text-sm text-stone-500 mt-0.5">{studentCount} student sheet{studentCount === 1 ? "" : "s"} · AI is grading each answer</p>
+        </div>
+        <div className="text-xs font-mono text-stone-400 shrink-0 pt-1">{elapsedSec}s</div>
+      </div>
+
+      <ol className="space-y-2.5 text-left">
+        {PROCESSING_STEPS.map((step, i) => {
+          const isDone = i < currentIdx;
+          const isActive = i === currentIdx;
+          const Icon = step.icon;
+          return (
+            <li
+              key={i}
+              className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
+                isDone ? "bg-emerald-50/60 border-emerald-200" :
+                isActive ? "bg-blue-50 border-blue-200" :
+                "bg-stone-50 border-stone-200 opacity-60"
+              }`}
+            >
+              <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                isDone ? "bg-emerald-100 text-emerald-700" :
+                isActive ? "bg-blue-100 text-blue-800" :
+                "bg-stone-200 text-stone-400"
+              }`}>
+                {isDone ? <Check size={16} /> : isActive ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-medium ${isDone ? "text-emerald-900" : isActive ? "text-blue-900" : "text-stone-600"}`}>
+                  {step.label}
+                </div>
+                <div className={`text-xs mt-0.5 ${isDone ? "text-emerald-700" : isActive ? "text-blue-700" : "text-stone-400"}`}>
+                  {step.detail}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
 };
 
 // ════════════════════════════════════════════════════════════════════════
@@ -564,10 +640,17 @@ const ReviewPage = () => {
 
   const { data: assessmentStatus } = useQuery({ queryKey: ['assessmentStatus', id], queryFn: () => apiClient.getAssessmentStatus(id), refetchInterval: 5000 });
   const processingStatus = assessmentStatus?.processingStatus || assessment?.processingStatus || "";
+  const KNOWN_PROCESSING_STATUSES = ["pending", "ocr", "step_ocr", "step_qp", "step_concept", "step_eval", "step_gap", "step_insights"];
+  const isKnownProcessing = KNOWN_PROCESSING_STATUSES.includes(processingStatus);
+  const isTerminalError = !!processingStatus && processingStatus !== "complete" && !isKnownProcessing;
 
   const { data: allQuestions = [], isLoading: loadingQ } = useQuery({ queryKey: ['questions', id], queryFn: () => apiClient.getQuestions(id) });
   const { data: CHAPTERS = {} } = useQuery({ queryKey: ['chapters', id], queryFn: () => apiClient.getChapters(id) });
-  const { data: STUDENTS = [], isLoading: loadingS } = useQuery({ queryKey: ['students', id], queryFn: () => apiClient.getStudents(id) });
+  const { data: STUDENTS = [], isLoading: loadingS } = useQuery({
+    queryKey: ['students', id],
+    queryFn: () => apiClient.getStudents(id),
+    refetchInterval: (isKnownProcessing || !processingStatus) ? 5000 : false,
+  });
 
   QUESTIONS = allQuestions;
 
@@ -578,19 +661,39 @@ const ReviewPage = () => {
   useEffect(() => {
     if (!STUDENTS.length) return;
     let cancelled = false;
-    setLoadingEvals(true);
-    Promise.all(
-      STUDENTS.map((s) =>
-        apiClient.getEvaluations(id, s.id).then((evals) => ({ studentId: s.id, evals: evals || [] }))
-      )
-    ).then((results) => {
-      if (cancelled) return;
-      const map = {};
-      results.forEach((r) => { map[r.studentId] = r.evals; });
-      setAllEvals(map);
-      setLoadingEvals(false);
+    let pollTimer = null;
+
+    const fetchEvals = () => {
+      setLoadingEvals(true);
+      return Promise.all(
+        STUDENTS.map((s) =>
+          apiClient.getEvaluations(id, s.id).then((evals) => ({ studentId: s.id, evals: evals || [] }))
+        )
+      ).then((results) => {
+        if (cancelled) return false;
+        const map = {};
+        let anyFound = false;
+        results.forEach((r) => { map[r.studentId] = r.evals; if (r.evals.length) anyFound = true; });
+        setAllEvals(map);
+        setLoadingEvals(false);
+        return anyFound;
+      });
+    };
+
+    // Evaluations are written by the backend pipeline mid-run, well before the
+    // status flips to "complete". Poll until we actually see them rather than
+    // fetching once — otherwise a page opened while still processing gets
+    // stuck forever once status catches up but this data never re-fetches.
+    fetchEvals().then((found) => {
+      if (cancelled || found) return;
+      pollTimer = setInterval(() => {
+        fetchEvals().then((found2) => {
+          if (found2 && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        });
+      }, 4000);
     });
-    return () => { cancelled = true; };
+
+    return () => { cancelled = true; if (pollTimer) clearInterval(pollTimer); };
   }, [id, STUDENTS]);
 
   // Mode: queue (default, trust moment) or grid (power users)
@@ -912,10 +1015,40 @@ const ReviewPage = () => {
   const drawerStudent = drawer ? STUDENTS.find((s) => s.id === drawer.studentId) : null;
 
   const hasEvals = STUDENTS.length > 0 && Object.values(allEvals).some((arr) => arr.length > 0);
-  const isProcessing = ["pending", "ocr", "step_ocr", "step_qp", "step_concept", "step_eval", "step_gap", "step_insights"].includes(processingStatus) || (!loadingQ && !loadingS && !loadingEvals && STUDENTS.length > 0 && !hasEvals);
+  const isProcessing = !isTerminalError && (isKnownProcessing || (!loadingQ && !loadingS && !loadingEvals && STUDENTS.length > 0 && !hasEvals));
 
   if (loadingQ || loadingS) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-blue-800" size={32} /></div>;
+  }
+
+  if (isTerminalError) {
+    const ERROR_MESSAGES = {
+      no_sheets_found: "The uploaded answer sheets could not be found on the server. Please re-upload the student sheets and try again.",
+      error_no_evaluations_produced: "AI could not grade any answers from these sheets. Try clearer photos, or check that the answer key is set.",
+      error_no_evals: "AI could not grade any answers from these sheets. Try clearer photos, or check that the answer key is set.",
+      qpaper_error: "AI could not read the question paper. Try clearer photos, or re-check the question text.",
+    };
+    return (
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-6" data-testid="review-page">
+        <Breadcrumbs items={[
+          { label: t("assessments"), to: `/analysis/${id}` },
+          { label: assessment.name, to: `/insights/${id}` },
+          { label: t("reviewOverride") },
+        ]} />
+        <div className="bg-white border border-red-200 rounded-xl p-12 text-center mt-8">
+          <div className="h-14 w-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={26} />
+          </div>
+          <div className="font-display text-xl font-semibold text-stone-900 mb-2">Processing didn't finish</div>
+          <div className="text-sm text-stone-500 mb-6 max-w-md mx-auto">
+            {ERROR_MESSAGES[processingStatus] || "Something went wrong while grading the answer sheets. Your uploads are safe — try running the evaluation again from the Analysis page."}
+          </div>
+          <button onClick={() => navigate(`/analysis/${id}`)} className="inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-blue-800 hover:bg-blue-900 text-white text-sm font-medium">
+            <ArrowRight size={14} /> Back to analysis
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (isProcessing && !loadingEvals) {
@@ -926,16 +1059,13 @@ const ReviewPage = () => {
           { label: assessment.name, to: `/insights/${id}` },
           { label: t("reviewOverride") },
         ]} />
-        <div className="bg-white border border-stone-200 rounded-xl p-12 text-center mt-8">
-          <Loader2 className="animate-spin text-blue-800 mx-auto mb-4" size={36} />
-          <div className="font-display text-xl font-semibold text-stone-900 mb-2">{t("evaluationsProcessing") || "Processing answer sheets..."}</div>
-          <div className="text-sm text-stone-500 mb-6">
-            {processingStatus ? `Status: ${processingStatus.replace(/_/g, " ")}` : "AI is analyzing student handwriting and grading answers. This may take a few minutes."}
+        <div className="bg-white border border-stone-200 rounded-xl p-8 md:p-10 mt-8">
+          <ProcessingSteps processingStatus={processingStatus} studentCount={STUDENTS.length} />
+          <div className="text-center mt-2">
+            <button onClick={() => navigate(`/analysis/${id}`)} className="inline-flex items-center gap-2 h-11 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium">
+              <ArrowRight size={14} /> Back to analysis
+            </button>
           </div>
-          <div className="text-xs text-stone-400">{STUDENTS.length} student sheet(s) found. Evaluations will appear once processing completes.</div>
-          <button onClick={() => navigate(`/analysis/${id}`)} className="mt-6 inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-medium">
-            <ArrowRight size={14} /> Back to analysis
-          </button>
         </div>
       </div>
     );
