@@ -160,6 +160,8 @@ const Analysis = () => {
   const [expandedAnswers, setExpandedAnswers] = useState({});
   const [reextracting, setReextracting] = useState(false);
   const [reextractError, setReextractError] = useState("");
+  const [answerEdits, setAnswerEdits] = useState({});
+  const [savingAnswerKey, setSavingAnswerKey] = useState(false);
 
   const hasPendingOCR = QUESTIONS.length === 1 && QUESTIONS[0]?.text === "OCR_ANALYSIS_PENDING";
 
@@ -242,6 +244,26 @@ const Analysis = () => {
 
   const toggleApproval = (qNum) => {
     setApprovedAnswers((prev) => ({ ...prev, [qNum]: !prev[qNum] }));
+  };
+
+  const saveAnswerEdit = async (rowKey) => {
+    const edited = answerEdits[rowKey];
+    if (edited === undefined) return;
+    setSavingAnswerKey(true);
+    try {
+      const nextKey = answerKey.map((ak) => {
+        const k = `${ak.q}${ak.alternative ? "-" + ak.alternative : ""}`;
+        if (k !== rowKey) return ak;
+        return { ...ak, correctAnswer: edited, expectedText: edited };
+      });
+      await apiClient.updateAnswerKey(id, nextKey);
+      await refetchAnswerKey();
+      setAnswerEdits((p) => { const c = { ...p }; delete c[rowKey]; return c; });
+    } catch (err) {
+      // Fall through; the input stays with the edited value so the teacher can retry
+    } finally {
+      setSavingAnswerKey(false);
+    }
   };
 
   // Re-run just the question-paper parse — for when extraction came out wrong
@@ -444,6 +466,9 @@ const Analysis = () => {
                   const rowKey = `${ak.q}${ak.alternative ? "-" + ak.alternative : ""}`;
                   const approved = approvedAnswers[ak.q] !== false;
                   const expanded = !!expandedAnswers[rowKey];
+                  const editedValue = answerEdits[rowKey];
+                  const isEdited = editedValue !== undefined && editedValue !== (ak.correctAnswer || "");
+                  const fullAnswer = ak.correctAnswer || "";
                   return (
                     <div key={rowKey} className={`rounded-lg border p-3 ${approved ? "border-stone-200" : "border-rose-200 bg-rose-50/30"}`}>
                       <div className="flex items-start justify-between gap-2">
@@ -451,14 +476,16 @@ const Analysis = () => {
                           <button onClick={() => toggleApproval(ak.q)} className="shrink-0 mt-0.5">
                             {approved ? <Check size={16} className="text-emerald-600" /> : <X size={16} className="text-rose-600" />}
                           </button>
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 text-xs font-mono text-stone-500">
                               <span>Q{ak.q}{ak.alternative ? `.${ak.alternative}` : ""} ({ak.maxMarks || "?"}M)</span>
                               {conceptByQ[ak.q] && (
                                 <span className="font-sans font-semibold text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded normal-case">{conceptByQ[ak.q]}</span>
                               )}
                             </div>
-                            <div className="text-sm text-stone-800 line-clamp-2">{(ak.correctAnswer || "—").slice(0, 120)}</div>
+                            {!expanded && (
+                              <div className="text-sm text-stone-800 line-clamp-2 whitespace-pre-wrap">{fullAnswer || "—"}</div>
+                            )}
                           </div>
                         </div>
                         <button onClick={() => setExpandedAnswers(prev => ({ ...prev, [rowKey]: !prev[rowKey] }))} className="shrink-0 text-xs text-stone-500 hover:text-stone-700">
@@ -466,17 +493,48 @@ const Analysis = () => {
                         </button>
                       </div>
                       {expanded && (
-                        <div className="mt-3 ml-7 p-3 rounded-lg bg-stone-50 border border-stone-200">
-                          {ak.explanation && <div className="text-xs text-stone-600 mb-2"><span className="font-semibold">Explanation:</span> {ak.explanation}</div>}
-                          {ak.keyPoints?.length > 0 && (
-                            <div className="mb-2">
-                              <div className="text-xs font-semibold text-stone-500 mb-1">Key Points:</div>
-                              <ul className="list-disc list-inside text-xs text-stone-600 space-y-0.5">
-                                {ak.keyPoints.map((kp, i) => <li key={i}>{kp}</li>)}
-                              </ul>
+                        <div className="mt-3 ml-7 space-y-2">
+                          <div>
+                            <div className="text-[10px] font-bold tracking-wider uppercase text-stone-500 mb-1">Correct answer (editable)</div>
+                            <textarea
+                              value={editedValue !== undefined ? editedValue : fullAnswer}
+                              onChange={(e) => setAnswerEdits((p) => ({ ...p, [rowKey]: e.target.value }))}
+                              rows={Math.min(12, Math.max(3, ((editedValue !== undefined ? editedValue : fullAnswer).split(/\r?\n/).length + 1)))}
+                              className="w-full text-sm text-stone-800 leading-relaxed p-3 rounded-lg border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-800 font-sans whitespace-pre-wrap"
+                              placeholder="No answer text yet — paste or type the model answer here."
+                            />
+                            {isEdited && (
+                              <div className="mt-2 flex items-center gap-2">
+                                <button
+                                  onClick={() => saveAnswerEdit(rowKey)}
+                                  disabled={savingAnswerKey}
+                                  className="h-8 px-3 rounded-md bg-blue-800 text-white hover:bg-blue-900 text-xs font-semibold disabled:opacity-50"
+                                >
+                                  {savingAnswerKey ? "Saving…" : "Save changes"}
+                                </button>
+                                <button
+                                  onClick={() => setAnswerEdits((p) => { const c = { ...p }; delete c[rowKey]; return c; })}
+                                  className="h-8 px-3 rounded-md text-xs text-stone-600 hover:text-stone-800"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {(ak.explanation || ak.keyPoints?.length > 0 || ak.markingScheme) && (
+                            <div className="p-3 rounded-lg bg-stone-50 border border-stone-200">
+                              {ak.explanation && <div className="text-xs text-stone-600 mb-2"><span className="font-semibold">Explanation:</span> {ak.explanation}</div>}
+                              {ak.keyPoints?.length > 0 && (
+                                <div className="mb-2">
+                                  <div className="text-xs font-semibold text-stone-500 mb-1">Key Points:</div>
+                                  <ul className="list-disc list-inside text-xs text-stone-600 space-y-0.5">
+                                    {ak.keyPoints.map((kp, i) => <li key={i}>{kp}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                              {ak.markingScheme && <div className="text-xs text-stone-600"><span className="font-semibold">Marking:</span> {ak.markingScheme}</div>}
                             </div>
                           )}
-                          {ak.markingScheme && <div className="text-xs text-stone-600"><span className="font-semibold">Marking:</span> {ak.markingScheme}</div>}
                         </div>
                       )}
                     </div>
