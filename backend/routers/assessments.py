@@ -18,13 +18,19 @@ OLLAMA_MODEL = "llama3.2:3b"
 UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads")
 
 
-def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: str) -> List[str]:
-    """Save uploaded files to media/uploads/{assessment_id}/{subdir}/. Returns list of saved paths."""
+async def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: str, db=None) -> List[str]:
+    """Save uploaded files to disk AND (best-effort) stash bytes in Mongo.
+
+    Render's disk is wiped on every redeploy, so the on-disk copy is only
+    a fast-path cache. The durable record is the Mongo copy — served by the
+    /media/{path:path} fallback in server.py when the disk copy is missing.
+    """
     if not files:
         return []
     target = os.path.join(UPLOADS_DIR, assessment_id, subdir)
     os.makedirs(target, exist_ok=True)
     saved = []
+    from backend.services.media_store import store_bytes
     for f in files:
         if not f.filename:
             continue
@@ -33,9 +39,13 @@ def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subdir: st
             if safe_name.startswith(".") or ".." in safe_name:
                 safe_name = os.path.basename(safe_name)
             dest = os.path.join(target, safe_name)
+            data = await f.read()
             with open(dest, "wb") as buf:
-                shutil.copyfileobj(f.file, buf)
-            saved.append(f"media/uploads/{assessment_id}/{subdir}/{safe_name}")
+                buf.write(data)
+            rel_path = f"media/uploads/{assessment_id}/{subdir}/{safe_name}"
+            saved.append(rel_path)
+            if db is not None:
+                await store_bytes(db, rel_path, data)
         except Exception as e:
             print(f"[Upload] Failed to save {f.filename}: {e}")
     return saved
@@ -81,11 +91,11 @@ async def create_assessment(
         created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         print(f"[Upload] Step 2: saving {len(questionFiles)} question files")
-        question_images = _save_uploaded_files(assessment_id, questionFiles or [], "questions")
+        question_images = await _save_uploaded_files(assessment_id, questionFiles or [], "questions", db)
         print(f"[Upload] Step 3: saving {len(answerKeyFiles)} answer key files")
-        answer_key_images = _save_uploaded_files(assessment_id, answerKeyFiles or [], "answer_key")
+        answer_key_images = await _save_uploaded_files(assessment_id, answerKeyFiles or [], "answer_key", db)
         print(f"[Upload] Step 4: saving {len(sheetFiles)} sheet files")
-        sheet_images = _save_uploaded_files(assessment_id, sheetFiles or [], "sheets")
+        sheet_images = await _save_uploaded_files(assessment_id, sheetFiles or [], "sheets", db)
 
         print(f"[Upload] Step 5: building doc")
         doc = {
@@ -413,8 +423,8 @@ async def append_sheets(
         raise HTTPException(status_code=400, detail="No new student answer sheets uploaded")
 
     # Save new files
-    new_sheet_images = _save_uploaded_files(
-        id, sheetFiles, "sheets"
+    new_sheet_images = await _save_uploaded_files(
+        id, sheetFiles, "sheets", db
     )
 
     # Append to existing sheet images

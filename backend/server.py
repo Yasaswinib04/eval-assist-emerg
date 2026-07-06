@@ -4,12 +4,14 @@ import logging
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 from backend.core.config import settings
+from backend.core.database import get_db
 from backend.routers import auth, assessments, questions, students, evaluations, insights, interventions, score_entry
+from backend.services.media_store import fetch_bytes, guess_content_type
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -54,10 +56,26 @@ async def validation_exception_handler(request, exc):
     detail = "; ".join(messages)
     return JSONResponse(status_code=422, content={"detail": detail})
 
-# Serve media files (sample answer sheets, etc.)
+# Serve media files (uploaded answer sheets, question papers, etc.).
+# Render's disk is ephemeral — every redeploy wipes /media, so we fall back
+# to bytes stashed in Mongo (backend/services/media_store.py) when the on-disk
+# copy is missing. Explicit route beats a StaticFiles mount here so the
+# fallback runs.
 media_dir = os.path.join(os.path.dirname(__file__), "..", "media")
-if os.path.exists(media_dir):
-    app.mount("/media", StaticFiles(directory=media_dir), name="media")
+
+
+@app.get("/media/{path:path}")
+async def serve_media(path: str):
+    if ".." in path.split("/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    disk_path = os.path.join(media_dir, path)
+    if os.path.isfile(disk_path):
+        return FileResponse(disk_path)
+    fetched = await fetch_bytes(get_db(), f"media/{path}")
+    if fetched is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    data, content_type = fetched
+    return Response(content=data, media_type=content_type or guess_content_type(path))
 
 # Serve frontend static assets (JS, CSS, etc.)
 frontend_build = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
