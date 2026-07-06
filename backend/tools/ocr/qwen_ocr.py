@@ -148,23 +148,31 @@ Return ONLY a JSON object with "studentName", "rollNumber", and "questions" arra
         return evaluations, student_name, roll_number
 
     def process(self, image_path: str, student_id: str, assessment_id: str = "asm-001") -> dict:
-        if not os.path.exists(image_path):
-            return {"error": f"Image not found: {image_path}", "studentId": student_id}
+        return self.process_pages([image_path], student_id, assessment_id)
 
-        image_b64 = self._image_to_base64(image_path)
+    def process_pages(self, image_paths: List[str], student_id: str, assessment_id: str = "asm-001") -> dict:
+        """Grade one student's answer sheet from one or more page images.
+
+        All pages are sent to the model in a single request so it can
+        follow an answer that continues across pages, rather than grading
+        each page in isolation.
+        """
+        existing_paths = [p for p in image_paths if os.path.exists(p)]
+        if not existing_paths:
+            return {"error": f"Image(s) not found: {image_paths}", "studentId": student_id}
+
         prompt = self._build_prompt()
+        if len(existing_paths) > 1:
+            prompt += f"\n\nNote: this student's answer sheet spans {len(existing_paths)} pages, provided in order. Treat them as one continuous answer sheet."
+
+        content = [{"type": "text", "text": prompt}]
+        for path in existing_paths:
+            image_b64 = self._image_to_base64(path)
+            content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
 
         payload = {
             "model": self.model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
-                    ],
-                }
-            ],
+            "messages": [{"role": "user", "content": content}],
             "max_tokens": 4096,
             "temperature": 0.1,
         }
@@ -176,8 +184,9 @@ Return ONLY a JSON object with "studentName", "rollNumber", and "questions" arra
             "X-Title": "EvalAssist Demo",
         }
 
-        print(f"[Qwen] Processing {os.path.basename(image_path)} for student {student_id}...")
-        resp = requests.post(self.endpoint, headers=headers, json=payload, timeout=120)
+        page_names = ", ".join(os.path.basename(p) for p in existing_paths)
+        print(f"[Qwen] Processing {page_names} for student {student_id}...")
+        resp = requests.post(self.endpoint, headers=headers, json=payload, timeout=180)
         resp.raise_for_status()
 
         data = resp.json()

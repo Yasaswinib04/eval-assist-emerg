@@ -51,6 +51,34 @@ async def _save_uploaded_files(assessment_id: str, files: List[UploadFile], subd
     return saved
 
 
+def _parse_student_groups(raw: Optional[str], file_count: int) -> List[dict]:
+    """Parse the studentGroups form field: JSON [{"name": str, "count": int}, ...].
+
+    Falls back to an empty list (legacy per-file grouping) if missing,
+    malformed, or the counts don't add up to the files actually uploaded.
+    """
+    if not raw:
+        return []
+    try:
+        import json
+        groups = json.loads(raw)
+        if not isinstance(groups, list):
+            return []
+        cleaned = []
+        for g in groups:
+            name = str(g.get("name") or "").strip() or f"Student {len(cleaned) + 1}"
+            count = int(g.get("count") or 0)
+            if count > 0:
+                cleaned.append({"name": name, "count": count})
+        if sum(g["count"] for g in cleaned) != file_count:
+            print(f"[Upload] studentGroups count mismatch ({sum(g['count'] for g in cleaned)} vs {file_count} files) — ignoring groups")
+            return []
+        return cleaned
+    except Exception as e:
+        print(f"[Upload] Failed to parse studentGroups: {e}")
+        return []
+
+
 @router.get("/")
 async def get_assessments(db=Depends(get_db)):
     assessments = await db.assessments.find().to_list(100)
@@ -83,6 +111,7 @@ async def create_assessment(
     questionFiles: List[UploadFile] = File(default=[]),
     answerKeyFiles: List[UploadFile] = File(default=[]),
     sheetFiles: List[UploadFile] = File(default=[]),
+    studentGroups: Optional[str] = Form(None),
 ):
     """Create a new assessment with optional files and text content."""
     try:
@@ -97,6 +126,8 @@ async def create_assessment(
         print(f"[Upload] Step 4: saving {len(sheetFiles)} sheet files")
         sheet_images = await _save_uploaded_files(assessment_id, sheetFiles or [], "sheets", db)
 
+        parsed_groups = _parse_student_groups(studentGroups, len(sheet_images))
+
         print(f"[Upload] Step 5: building doc")
         doc = {
             "_id": assessment_id,
@@ -105,8 +136,8 @@ async def create_assessment(
             "subject": subject,
             "type": type,
             "totalMarks": totalMarks,
-            "totalPapers": len(sheet_images),
-            "pendingReview": len(sheet_images),
+            "totalPapers": len(parsed_groups) if parsed_groups else len(sheet_images),
+            "pendingReview": len(parsed_groups) if parsed_groups else len(sheet_images),
             "avgScore": 0.0,
             "status": "draft",
             "createdAt": created_at,
@@ -116,6 +147,7 @@ async def create_assessment(
             "questionsImages": question_images,
             "answerKeyImages": answer_key_images,
             "sheetImages": sheet_images,
+            "studentGroups": parsed_groups,
             "processingStatus": "pending",
             "parsedQuestions": None,
             "parsedAnswerKey": None,
@@ -277,7 +309,8 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     """Generate answer key using DeepSeek from extracted questions.
 
     Never overwrites an answer key the teacher already supplied (uploaded/edited) —
-    only fills in when none exists.
+    only fills in when none exists. When teacher-provided raw text exists but
+    couldn't be parsed automatically, re-tries parsing before calling DeepSeek.
     """
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
@@ -292,9 +325,40 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     if not questions:
         return {"status": "error", "message": "No questions extracted yet. Run Q paper analysis first."}
 
+    # Re-try parsing teacher's raw answer key text if it was provided but
+    # couldn't be parsed during upload (e.g. Ollama wasn't reachable then).
+    raw_ak_text = (assessment.get("answerKeyText") or "").strip()
+    if raw_ak_text and not existing_key:
+        try:
+            from backend.services.answer_key_parser import parse_answer_key
+            retry_parsed = parse_answer_key(raw_ak_text)
+            if retry_parsed and len(retry_parsed) >= 1:
+                await db.assessments.update_one(
+                    {"_id": id},
+                    {"$set": {"parsedAnswerKey": retry_parsed, "answerKeyStatus": "uploaded"}}
+                )
+                print(f"[AK] Re-parsed teacher answer key: {len(retry_parsed)} answers")
+                return {"status": "ok", "answers": len(retry_parsed), "answerKey": retry_parsed, "source": "teacher_reparsed"}
+        except Exception as e:
+            print(f"[AK] Re-parse attempt failed: {e}")
+
+    # If we have the raw teacher text but still couldn't parse it, pass it
+    # as guidance to DeepSeek so the AI can use it as a reference.
+    teacher_ref = f"\n\nTEACHER'S REFERENCE ANSWER KEY (use this as guidance for correct answers):\n{raw_ak_text[:4000]}" if raw_ak_text else ""
+
     deepseek_key = os.getenv("DEEPSEEK_API_KEY", "") or getattr(settings, "DEEPSEEK_API_KEY", "")
     if not deepseek_key:
-        return {"status": "error", "message": "DEEPSEEK_API_KEY not configured"}
+        # When no LLM is available but we have questions, create a skeleton
+        # answer key so the teacher can fill in answers manually.
+        skeleton = _build_skeleton_answer_key(questions)
+        if raw_ak_text:
+            print(f"[AK] No DeepSeek key — merging teacher text hints into skeleton")
+            _merge_ak_text_hints(skeleton, raw_ak_text)
+        await db.assessments.update_one(
+            {"_id": id},
+            {"$set": {"parsedAnswerKey": skeleton, "answerKeyStatus": "generated"}}
+        )
+        return {"status": "ok", "answers": len(skeleton), "answerKey": skeleton, "source": "skeleton"}
 
     deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") or getattr(settings, "DEEPSEEK_MODEL", "deepseek-chat")
     subject = assessment.get("subject", "")
@@ -302,9 +366,17 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     print(f"[DeepSeek] Generating answer key for {id} ({subject}): {len(questions)} questions")
     try:
         from backend.tools.llm.deepseek import generate_answer_key
-        answer_key = generate_answer_key(deepseek_key, questions, subject, model=deepseek_model)
+        answer_key = generate_answer_key(deepseek_key, questions, subject, model=deepseek_model, teacher_ref=teacher_ref)
         if not answer_key:
-            return {"status": "error", "message": "DeepSeek returned empty answer key"}
+            # Fallback: create skeleton
+            skeleton = _build_skeleton_answer_key(questions)
+            if raw_ak_text:
+                _merge_ak_text_hints(skeleton, raw_ak_text)
+            await db.assessments.update_one(
+                {"_id": id},
+                {"$set": {"parsedAnswerKey": skeleton, "answerKeyStatus": "generated"}}
+            )
+            return {"status": "ok", "answers": len(skeleton), "answerKey": skeleton, "source": "skeleton_fallback_web_empty"}
 
         await db.assessments.update_one(
             {"_id": id},
@@ -314,7 +386,15 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
         return {"status": "ok", "answers": len(answer_key), "answerKey": answer_key}
     except Exception as e:
         print(f"[DeepSeek] Answer key generation failed: {e}")
-        return {"status": "error", "message": str(e)[:200]}
+        # Fallback: create skeleton so teacher can fill answers manually
+        skeleton = _build_skeleton_answer_key(questions)
+        if raw_ak_text:
+            _merge_ak_text_hints(skeleton, raw_ak_text)
+        await db.assessments.update_one(
+            {"_id": id},
+            {"$set": {"parsedAnswerKey": skeleton, "answerKeyStatus": "generated"}}
+        )
+        return {"status": "ok", "answers": len(skeleton), "answerKey": skeleton, "source": "skeleton_fallback", "warning": str(e)[:200]}
 
 
 @router.get("/{id}/answer-key")
@@ -345,6 +425,49 @@ def _compute_total_marks(questions: list) -> int:
     if not questions:
         return 0
     return sum(q.get("maxMarks", 0) for q in questions)
+
+
+def _build_skeleton_answer_key(questions: list) -> list:
+    """Create a basic answer key skeleton from question definitions.
+
+    When no LLM is available, this gives the teacher a structured answer
+    key on the Analysis page so they can fill in correct answers manually
+    instead of staring at an error.
+    """
+    skeleton = []
+    for q in questions:
+        q_num = q.get("number", 0)
+        max_m = q.get("maxMarks", 1)
+        options = q.get("options", [])
+        is_mcq = bool(options and len(options) > 0)
+        skeleton.append({
+            "q": q_num,
+            "questionNumber": q_num,
+            "type": "mcq" if is_mcq else ("short" if max_m <= 2 else "long"),
+            "correctOption": "" if not is_mcq else None,
+            "correctAnswer": "",
+            "maxMarks": max_m,
+            "explanation": "Fill in the correct answer.",
+            "keyPoints": [],
+            "markingScheme": "",
+        })
+    return skeleton
+
+
+def _merge_ak_text_hints(skeleton: list, raw_text: str):
+    """Try to mine simple answer hints from raw teacher text into the skeleton.
+
+    Handles the most common shorthand: "1. A  2. C  3. B  ..."
+    """
+    import re as _re
+    pairs = _re.findall(r'\b(\d{1,3})\s*[.):\s-]\s*([A-Da-d])\b', raw_text)
+    hint_map = {int(num): letter.upper() for num, letter in pairs}
+    for item in skeleton:
+        q_num = item.get("q", 0)
+        if q_num in hint_map:
+            item["correctOption"] = hint_map[q_num]
+            item["correctAnswer"] = f"Option {hint_map[q_num]}"
+            item["explanation"] = "Parsed from teacher answer key text."
 
 
 async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: str, model: str, subject: str = ""):
@@ -413,6 +536,7 @@ async def append_sheets(
     db=Depends(get_db),
     current_user=Depends(get_current_user),
     sheetFiles: List[UploadFile] = File(default=[]),
+    studentGroups: Optional[str] = Form(None),
 ):
     """Append new student answer sheets to an existing assessment and trigger OCR."""
     assessment = await db.assessments.find_one({"_id": id})
@@ -427,18 +551,23 @@ async def append_sheets(
         id, sheetFiles, "sheets", db
     )
 
+    new_groups = _parse_student_groups(studentGroups, len(new_sheet_images))
+
     # Append to existing sheet images
     existing_sheets = assessment.get("sheetImages", []) or []
     updated_sheets = existing_sheets + new_sheet_images
+    existing_groups = assessment.get("studentGroups", []) or []
+    updated_groups = existing_groups + new_groups if (existing_groups or new_groups) else []
 
     # Increment total papers
-    new_total_papers = len(updated_sheets)
+    new_total_papers = len(updated_groups) if updated_groups else len(updated_sheets)
 
     await db.assessments.update_one(
         {"_id": id},
         {
             "$set": {
                 "sheetImages": updated_sheets,
+                "studentGroups": updated_groups,
                 "totalPapers": new_total_papers,
                 "status": "processing",
                 "processingStatus": "step_ocr",
@@ -453,7 +582,7 @@ async def append_sheets(
         for img in new_sheet_images
     ]
 
-    background_tasks.add_task(_run_ocr_pipeline, id, assessment, abs_new_paths)
+    background_tasks.add_task(_run_ocr_pipeline, id, assessment, abs_new_paths, new_groups)
     
     # Return updated assessment
     updated_doc = await db.assessments.find_one({"_id": id})
@@ -464,6 +593,7 @@ async def _run_ocr_pipeline(
     assessment_id: str,
     assessment: dict,
     custom_sheet_paths: Optional[List[str]] = None,
+    custom_student_groups: Optional[List[dict]] = None,
 ):
     """Background task: run OCR on student sheets, grade against answer key."""
     import sys
@@ -495,10 +625,17 @@ async def _run_ocr_pipeline(
                     qpaper = assessment.get("questionsText", "")
                     answer_key = build_answer_key_from_parsed(parsed_answer_key or [])
 
-                # Resolve sheet paths
+                # Which student each page belongs to (name + page count, in upload order).
+                student_groups = custom_student_groups if custom_student_groups is not None else (assessment.get("studentGroups") or [])
+
+                # Resolve sheet paths. When student_groups is present, ordering matters —
+                # os.listdir() does NOT preserve upload order, so we must use the
+                # recorded sheetImages list instead of scanning the directory.
                 sheet_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media", "uploads", assessment_id, "sheets")
                 if custom_sheet_paths:
                     sheet_paths = custom_sheet_paths
+                elif student_groups:
+                    sheet_paths = [os.path.join(os.path.dirname(__file__), "..", "..", img) for img in assessment.get("sheetImages", [])]
                 elif os.path.exists(sheet_dir):
                     sheet_paths = [os.path.join(sheet_dir, f) for f in os.listdir(sheet_dir) if f.lower().endswith((".jpg",".jpeg",".png"))]
                 else:
@@ -525,22 +662,38 @@ async def _run_ocr_pipeline(
 
                 qwen = QwenVisionOCR(openrouter_key, settings.QWEN_MODEL, questions=parsed_questions, answer_key=answer_key)
 
-                await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(sheet_paths)}})
+                # Slice sheet_paths into per-student page groups. Falls back to
+                # one page = one student (legacy filename-prefix grouping) when
+                # studentGroups wasn't provided or its counts don't match.
+                if student_groups and sum(g["count"] for g in student_groups) == len(sheet_paths):
+                    chunks = []
+                    idx = 0
+                    for g in student_groups:
+                        chunks.append((sheet_paths[idx: idx + g["count"]], g["name"]))
+                        idx += g["count"]
+                else:
+                    chunks = [([p], None) for p in sheet_paths]
+
+                await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "step_ocr", "totalPapers": len(chunks)}})
 
                 sem = asyncio.Semaphore(5)
                 total_sheets = len(sheet_paths)
 
-                async def process_one(path):
-                    base_fname = os.path.basename(path)
-                    name_part = os.path.splitext(base_fname)[0].split("_")[0].capitalize()
-                    student_id = f"stu-{assessment_id}-{name_part.lower()}"
+                async def process_group(paths, group_name):
+                    if group_name:
+                        name_part = group_name
+                    else:
+                        base_fname = os.path.basename(paths[0])
+                        name_part = os.path.splitext(base_fname)[0].split("_")[0].capitalize()
+                    slug = "".join(c for c in name_part.lower() if c.isalnum()) or "student"
+                    student_id = f"stu-{assessment_id}-{slug}"
 
                     async with sem:
-                        result = await asyncio.to_thread(qwen.process, path, student_id, assessment_id)
+                        result = await asyncio.to_thread(qwen.process_pages, paths, student_id, assessment_id)
 
                     if "error" in result:
                         print(f"[Qwen] Error {name_part}: {result['error']}")
-                        return {"error": result['error'], "studentId": student_id, "name": name_part, "path": path}
+                        return {"error": result['error'], "studentId": student_id, "name": name_part, "path": paths[0]}
 
                     for ev in result.get("evaluations", []):
                         await db.evaluations.update_one({"_id": ev["_id"]}, {"$set": ev}, upsert=True)
@@ -555,17 +708,17 @@ async def _run_ocr_pipeline(
                         "_id": student_id, "name": student_name,
                         "roll": student_roll,
                         "total": total, "status": "review",
-                        "imageUrls": [os.path.join("media", "uploads", assessment_id, "sheets", os.path.basename(path))],
+                        "imageUrls": [os.path.join("media", "uploads", assessment_id, "sheets", os.path.basename(p)) for p in paths],
                         "assessmentId": assessment_id,
                     }}, upsert=True)
                     return {"studentId": student_id, "name": student_name, "total": total, "ok": True}
 
-                results = await asyncio.gather(*[process_one(p) for p in sheet_paths], return_exceptions=True)
+                results = await asyncio.gather(*[process_group(paths, name) for paths, name in chunks], return_exceptions=True)
                 results = [r for r in results if isinstance(r, dict)]
 
                 successful = sum(1 for r in results if r.get("ok"))
                 failed = sum(1 for r in results if not r.get("ok"))
-                print(f"[Qwen] Parallel done: {successful} ok, {failed} failed of {total_sheets}")
+                print(f"[Qwen] Parallel done: {successful} ok, {failed} failed of {len(chunks)} students ({total_sheets} pages)")
 
                 # Formative mode: nullify marks, add isCorrect/mistakeType
                 grading_mode = assessment.get("gradingMode", "scored")

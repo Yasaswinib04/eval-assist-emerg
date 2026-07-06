@@ -20,7 +20,7 @@ const TabUpload = ({ files, onAdd, onRemove, testId }) => {
         <UploadCloud size={24} className="text-blue-800 mx-auto" />
         <div className="mt-2 text-sm font-medium text-stone-700">Click or drop files</div>
         <div className="text-xs text-stone-400 mt-1">JPEG or PNG only</div>
-        <input ref={ref} type="file" multiple accept="image/jpeg,image/png" capture="environment" className="hidden" data-testid={`${testId}-input`} onChange={(e) => { if (e.target.files?.length) onAdd(e.target.files); e.target.value = ""; }} />
+        <input ref={ref} type="file" multiple accept="image/jpeg,image/png" className="hidden" data-testid={`${testId}-input`} onChange={(e) => { if (e.target.files?.length) onAdd(e.target.files); e.target.value = ""; }} />
       </div>
       {files.length > 0 && (
         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-52 overflow-auto scrollbar-thin">
@@ -34,6 +34,58 @@ const TabUpload = ({ files, onAdd, onRemove, testId }) => {
                 <X size={14} />
               </button>
               <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 truncate">{f.name}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MAX_STUDENTS = 60;
+const MAX_PAGES_PER_STUDENT = 15;
+
+const StudentRow = ({ row, index, maxPages, onLabelChange, onAddFiles, onRemoveFile }) => {
+  const ref = useRef(null);
+  const [drag, setDrag] = useState(false);
+  return (
+    <div className="border border-stone-200 rounded-lg p-3 bg-stone-50/40" data-testid={`student-row-${index}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="shrink-0 h-6 w-6 rounded-full bg-blue-800 text-white text-xs font-bold flex items-center justify-center">{index + 1}</span>
+        <input
+          value={row.label}
+          onChange={(e) => onLabelChange(e.target.value)}
+          placeholder={`Student ${index + 1}`}
+          data-testid={`student-row-label-${index}`}
+          className="flex-1 min-w-0 h-8 px-2 rounded-md border border-stone-300 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-800"
+        />
+        <span className={`shrink-0 text-xs font-medium ${row.files.length > 0 ? "text-stone-500" : "text-amber-600"}`}>{row.files.length}/{maxPages}</span>
+      </div>
+      <div
+        onClick={() => ref.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files?.length) onAddFiles(e.dataTransfer.files); }}
+        data-testid={`student-row-dropzone-${index}`}
+        className={`cursor-pointer rounded-lg border-2 border-dashed px-3 py-2.5 text-center transition-colors ${drag ? "border-blue-800 bg-blue-50" : "border-stone-300 bg-white hover:border-blue-400 hover:bg-blue-50/30"}`}
+      >
+        <div className="text-xs text-stone-500">
+          <UploadCloud size={14} className="inline -mt-0.5 mr-1 text-blue-800" />
+          Click or drop this student's pages
+        </div>
+        <input ref={ref} type="file" multiple accept="image/jpeg,image/png" className="hidden" data-testid={`student-row-input-${index}`} onChange={(e) => { if (e.target.files?.length) onAddFiles(e.target.files); e.target.value = ""; }} />
+      </div>
+      {row.files.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {row.files.map((f) => (
+            <div key={f.id} className="relative group h-14 w-14 rounded-md overflow-hidden border border-stone-200 bg-stone-100 shrink-0">
+              <img src={f.preview} alt="" className="w-full h-full object-cover" />
+              <button
+                onClick={() => onRemoveFile(f.id)}
+                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+              >
+                <X size={16} />
+              </button>
             </div>
           ))}
         </div>
@@ -107,8 +159,52 @@ const Upload = () => {
   const [cMode, setCMode] = useState("none");
   const [cText, setCText] = useState(saved.cText || "");
 
-  // Student sheets section
-  const [sheetFiles, setSheetFiles] = useState([]);
+  // Student sheets section — one row per student, each with its own pages
+  const [studentCount, setStudentCount] = useState(1);
+  const [studentRows, setStudentRows] = useState([{ id: "row-0", label: "Student 1", files: [] }]);
+
+  useEffect(() => {
+    setStudentRows((prev) => {
+      const n = Math.max(1, Math.min(MAX_STUDENTS, studentCount || 1));
+      if (n === prev.length) return prev;
+      if (n > prev.length) {
+        const additions = Array.from({ length: n - prev.length }, (_, i) => ({
+          id: `row-${prev.length + i}-${Date.now()}`,
+          label: `Student ${prev.length + i + 1}`,
+          files: [],
+        }));
+        return [...prev, ...additions];
+      }
+      const removed = prev.slice(n);
+      removed.forEach((r) => r.files.forEach((f) => f.preview && URL.revokeObjectURL(f.preview)));
+      return prev.slice(0, n);
+    });
+  }, [studentCount]);
+
+  const addFilesToRow = (rowId, incoming) => {
+    const list = Array.from(incoming).map((f, i) => ({
+      id: `img-${Date.now()}-${i}`,
+      name: f.name,
+      file: f,
+      preview: URL.createObjectURL(f),
+    }));
+    setStudentRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, files: [...r.files, ...list].slice(0, MAX_PAGES_PER_STUDENT) } : r)));
+  };
+
+  const removeFileFromRow = (rowId, fileId) => {
+    setStudentRows((prev) => prev.map((r) => {
+      if (r.id !== rowId) return r;
+      const item = r.files.find((f) => f.id === fileId);
+      if (item?.preview) URL.revokeObjectURL(item.preview);
+      return { ...r, files: r.files.filter((f) => f.id !== fileId) };
+    }));
+  };
+
+  const updateRowLabel = (rowId, label) => {
+    setStudentRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, label } : r)));
+  };
+
+  const allStudentsHaveFiles = studentRows.length > 0 && studentRows.every((r) => r.files.length > 0);
 
   // Answer key section
   const [aMode, setAMode] = useState("text");
@@ -147,8 +243,8 @@ const Upload = () => {
 
   const effectiveSubject = subject === "__custom__" ? customSubject.trim() : subject;
   const canContinue = assessmentId
-    ? sheetFiles.length > 0
-    : name.trim() && effectiveSubject && klass && type && (qImages.length > 0 || qText.trim()) && sheetFiles.length > 0;
+    ? allStudentsHaveFiles
+    : name.trim() && effectiveSubject && klass && type && (qImages.length > 0 || qText.trim()) && allStudentsHaveFiles;
 
   const handleSubmit = async () => {
     if (!canContinue || submitting) return;
@@ -158,9 +254,12 @@ const Upload = () => {
     try {
       if (assessmentId) {
         const formData = new FormData();
-        for (const img of sheetFiles) {
-          if (img.file) formData.append("sheetFiles", img.file);
+        for (const row of studentRows) {
+          for (const img of row.files) {
+            if (img.file) formData.append("sheetFiles", img.file);
+          }
         }
+        formData.append("studentGroups", JSON.stringify(studentRows.map((r) => ({ name: (r.label || "").trim() || "Student", count: r.files.length }))));
         const result = await apiClient.appendStudentResponses(assessmentId, formData);
         if (result) {
           navigate(`/processing/${assessmentId}`);
@@ -181,7 +280,12 @@ const Upload = () => {
 
         if (cText.trim()) formData.append("curriculumText", cText);
 
-        for (const img of sheetFiles) { if (img.file) formData.append("sheetFiles", img.file); }
+        for (const row of studentRows) {
+          for (const img of row.files) {
+            if (img.file) formData.append("sheetFiles", img.file);
+          }
+        }
+        formData.append("studentGroups", JSON.stringify(studentRows.map((r) => ({ name: (r.label || "").trim() || "Student", count: r.files.length }))));
 
         const result = await apiClient.createAssessment(formData);
         if (!result || (!result._id && !result.id)) {
@@ -212,7 +316,7 @@ const Upload = () => {
         <p className="mt-1.5 text-stone-600 text-base sm:text-lg">{assessmentId ? "Scan and add new student answer sheets for this existing assessment." : t("createSub")}</p>
         <div className="mt-3 inline-flex items-center gap-2 text-xs sm:text-sm text-stone-500">
           <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-800 tracking-wide">BETA</span>
-          <span>Up to 15 pages per upload.</span>
+          <span>Up to {MAX_PAGES_PER_STUDENT} pages per student.</span>
         </div>
       </div>
 
@@ -371,16 +475,46 @@ const Upload = () => {
         </div>
       )}
 
-      {/* Section 3: Student Answer Sheets */}
+      {/* Section 3: Student Answer Sheets — one row per student */}
       <div className="mt-4 bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-10 w-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center shrink-0"><ImageIcon size={18} /></div>
           <div>
             <div className="font-medium text-stone-900">{assessmentId ? "New Student Answer Sheet(s)" : "Student Answer Sheets"}</div>
-            <div className="text-xs text-stone-500">{assessmentId ? "Scan and add new student sheets (JPEG/PNG, max 15)" : "Required · Upload up to 15 handwritten answer sheets (JPEG/PNG)"}</div>
+            <div className="text-xs text-stone-500">{assessmentId ? "Add each new student in their own row, with all of their pages" : "Required · Add each student in their own row, with all of their pages (JPEG/PNG)"}</div>
           </div>
         </div>
-        <TabUpload files={sheetFiles} onAdd={addImages(setSheetFiles)} onRemove={removeImage(setSheetFiles)} testId="zone-sheets" />
+
+        <div className="flex items-center gap-3 mb-4">
+          <label className="text-sm font-medium text-stone-700">Number of students</label>
+          <input
+            type="number"
+            min={1}
+            max={MAX_STUDENTS}
+            value={studentCount}
+            onChange={(e) => setStudentCount(Math.max(1, Math.min(MAX_STUDENTS, parseInt(e.target.value || "1", 10))))}
+            data-testid="input-student-count"
+            className="w-20 h-9 px-2 rounded-lg border border-stone-300 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-800"
+          />
+        </div>
+
+        <div className="space-y-3 max-h-[32rem] overflow-auto pr-1 scrollbar-thin">
+          {studentRows.map((row, i) => (
+            <StudentRow
+              key={row.id}
+              row={row}
+              index={i}
+              maxPages={MAX_PAGES_PER_STUDENT}
+              onLabelChange={(label) => updateRowLabel(row.id, label)}
+              onAddFiles={(files) => addFilesToRow(row.id, files)}
+              onRemoveFile={(fileId) => removeFileFromRow(row.id, fileId)}
+            />
+          ))}
+        </div>
+
+        {!allStudentsHaveFiles && (
+          <div className="mt-3 text-xs text-amber-600">Every student row needs at least one page before you can continue.</div>
+        )}
       </div>
 
       {/* Actions */}
