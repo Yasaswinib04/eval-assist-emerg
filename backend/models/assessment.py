@@ -25,8 +25,11 @@ class Assessment(AssessmentBase):
     answerKeyText: Optional[str] = None
     questionsImages: Optional[List[str]] = None
     answerKeyImages: Optional[List[str]] = None
+    curriculumImages: Optional[List[str]] = None
     sheetImages: Optional[List[str]] = None
     processingStatus: Optional[str] = "pending"
+    stageError: Optional[str] = None
+    stageErrorHint: Optional[str] = None
     parsedQuestions: Optional[List[dict]] = None
     parsedAnswerKey: Optional[List[dict]] = None
     parsedCurriculum: Optional[List[dict]] = None

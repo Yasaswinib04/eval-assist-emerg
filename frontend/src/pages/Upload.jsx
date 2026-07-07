@@ -155,9 +155,10 @@ const Upload = () => {
   const [qImages, setQImages] = useState([]);
   const [qText, setQText] = useState(saved.qText || "");
 
-  // Curriculum section (optional)
+  // Curriculum section (highly recommended — text or textbook/chapter images)
   const [cMode, setCMode] = useState("none");
   const [cText, setCText] = useState(saved.cText || "");
+  const [cImages, setCImages] = useState([]);
 
   // Student sheets section — one row per student, each with its own pages
   const [studentCount, setStudentCount] = useState(1);
@@ -279,6 +280,7 @@ const Upload = () => {
         for (const img of aImages) { if (img.file) formData.append("answerKeyFiles", img.file); }
 
         if (cText.trim()) formData.append("curriculumText", cText);
+        for (const img of cImages) { if (img.file) formData.append("curriculumFiles", img.file); }
 
         for (const row of studentRows) {
           for (const img of row.files) {
@@ -386,6 +388,7 @@ const Upload = () => {
             <div>
               <div className="font-medium text-stone-900">Questions</div>
               <div className="text-xs text-stone-500">Upload an image of the question paper or paste the questions as text</div>
+              <div className="mt-1 text-[11px] text-amber-700">Note: handwritten/printed tables, labelled diagrams, graphs, and maps are flagged for manual review rather than auto-graded.</div>
             </div>
           </div>
           <div className="flex gap-1 mb-4 bg-stone-100 rounded-lg p-1 w-fit">
@@ -445,9 +448,12 @@ const Upload = () => {
         <div className="mt-4 bg-white border border-stone-200 rounded-xl p-5 md:p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-10 w-10 rounded-lg bg-violet-50 text-violet-800 flex items-center justify-center shrink-0"><BookOpen size={18} /></div>
-            <div>
-              <div className="font-medium text-stone-900">Curriculum / Topics (Optional)</div>
-              <div className="text-xs text-stone-500">Help AI map concepts better — paste chapter summaries, topics, or subtopics</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-stone-900">Curriculum / Textbook</span>
+                <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded bg-emerald-100 text-emerald-800 tracking-wide">HIGHLY RECOMMENDED</span>
+              </div>
+              <div className="text-xs text-stone-500">Upload chapter/textbook pages or paste topics — significantly improves concept mapping and grading quality.</div>
             </div>
           </div>
           <div className="flex gap-1 mb-4 bg-stone-100 rounded-lg p-1 w-fit">
@@ -456,6 +462,9 @@ const Upload = () => {
             </button>
             <button onClick={() => setCMode("text")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${cMode === "text" ? "bg-white shadow-sm text-stone-900" : "text-stone-500 hover:text-stone-700"}`}>
               <Type size={15} /> Paste text
+            </button>
+            <button onClick={() => setCMode("images")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${cMode === "images" ? "bg-white shadow-sm text-stone-900" : "text-stone-500 hover:text-stone-700"}`}>
+              <ImageIcon size={15} /> Images
             </button>
           </div>
           {cMode === "text" && (
@@ -466,10 +475,13 @@ const Upload = () => {
               className="w-full h-40 px-4 py-3 rounded-lg border border-stone-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-800 resize-y"
             />
           )}
+          {cMode === "images" && (
+            <TabUpload files={cImages} onAdd={addImages(setCImages)} onRemove={removeImage(setCImages)} testId="zone-curriculum" />
+          )}
           {cMode === "none" && (
             <div className="text-sm text-stone-500 p-3 bg-stone-50 rounded-lg border border-stone-200">
-              Concepts will be auto-detected from your questions using AI similarity matching. 
-              Paste text above for more accurate chapter and topic mapping.
+              Concepts will be auto-detected from your questions using AI similarity matching.
+              For much better results, upload textbook/chapter pages or paste topics above.
             </div>
           )}
         </div>
@@ -482,6 +494,7 @@ const Upload = () => {
           <div>
             <div className="font-medium text-stone-900">{assessmentId ? "New Student Answer Sheet(s)" : "Student Answer Sheets"}</div>
             <div className="text-xs text-stone-500">{assessmentId ? "Add each new student in their own row, with all of their pages" : "Required · Add each student in their own row, with all of their pages (JPEG/PNG)"}</div>
+            <div className="mt-1 text-[11px] text-amber-700">Note: tables, labelled diagrams (Bio/Chem/Phy), math graphs, and social-studies maps in student answers are flagged for manual review rather than auto-graded.</div>
           </div>
         </div>
 

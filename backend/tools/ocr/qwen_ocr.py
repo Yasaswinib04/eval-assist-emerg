@@ -344,3 +344,34 @@ ANSWER KEY TEXT:
     except:
         print(f"[Qwen] Failed to parse answer key")
         return []
+
+
+def extract_curriculum_from_images(api_key: str, model: str, image_paths: list, subject: str = "") -> str:
+    """OCR textbook/chapter images into plain topic outline text for downstream curriculum parsing."""
+    if not image_paths:
+        return ""
+    subject_ctx = f" This is a {subject} textbook." if subject else ""
+    prompt = (
+        f"Read the textbook/chapter pages in these images.{subject_ctx} "
+        "Produce a clean plain-text outline of chapters, topics, and subtopics — one topic per line, "
+        "use 'Chapter N: Title' headings and '- subtopic' bullets. Do NOT invent content that isn't on the page. "
+        "Return ONLY the outline, no commentary."
+    )
+    content_parts = [{"type": "text", "text": prompt}]
+    for path in image_paths:
+        try:
+            with open(path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+            content_parts.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
+        except Exception as e:
+            print(f"[Qwen] curriculum image read failed for {path}: {e}")
+    payload = {"model": model, "messages": [{"role": "user", "content": content_parts}], "max_tokens": 3072, "temperature": 0.1}
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+               "HTTP-Referer": "https://eval-assist-emerg.onrender.com", "X-Title": "EvalAssist"}
+    try:
+        resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=120)
+        resp.raise_for_status()
+        return (resp.json()["choices"][0]["message"]["content"] or "").strip()
+    except Exception as e:
+        print(f"[Qwen] curriculum image OCR failed: {e}")
+        return ""

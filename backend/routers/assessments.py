@@ -110,6 +110,7 @@ async def create_assessment(
     curriculumText: Optional[str] = Form(None),
     questionFiles: List[UploadFile] = File(default=[]),
     answerKeyFiles: List[UploadFile] = File(default=[]),
+    curriculumFiles: List[UploadFile] = File(default=[]),
     sheetFiles: List[UploadFile] = File(default=[]),
     studentGroups: Optional[str] = Form(None),
 ):
@@ -123,6 +124,8 @@ async def create_assessment(
         question_images = await _save_uploaded_files(assessment_id, questionFiles or [], "questions", db)
         print(f"[Upload] Step 3: saving {len(answerKeyFiles)} answer key files")
         answer_key_images = await _save_uploaded_files(assessment_id, answerKeyFiles or [], "answer_key", db)
+        print(f"[Upload] Step 4a: saving {len(curriculumFiles)} curriculum files")
+        curriculum_images = await _save_uploaded_files(assessment_id, curriculumFiles or [], "curriculum", db)
         print(f"[Upload] Step 4: saving {len(sheetFiles)} sheet files")
         sheet_images = await _save_uploaded_files(assessment_id, sheetFiles or [], "sheets", db)
 
@@ -146,6 +149,7 @@ async def create_assessment(
             "curriculumText": curriculumText or "",
             "questionsImages": question_images,
             "answerKeyImages": answer_key_images,
+            "curriculumImages": curriculum_images,
             "sheetImages": sheet_images,
             "studentGroups": parsed_groups,
             "processingStatus": "pending",
@@ -206,10 +210,32 @@ async def create_assessment(
             except Exception as e:
                 print(f"[Upload] Questions parse skip: {e}")
 
-        if curriculumText and curriculumText.strip():
+        effective_curr_text = (curriculumText or "").strip()
+        if not effective_curr_text and curriculum_images:
+            try:
+                openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
+                if openrouter_key:
+                    from backend.tools.ocr.qwen_ocr import extract_curriculum_from_images
+                    abs_curr_paths = []
+                    for img in curriculum_images:
+                        abs_path = os.path.join(os.path.dirname(__file__), "..", "..", img)
+                        if os.path.exists(abs_path):
+                            abs_curr_paths.append(abs_path)
+                    if abs_curr_paths:
+                        print(f"[Upload] OCR'ing {len(abs_curr_paths)} curriculum images...")
+                        effective_curr_text = extract_curriculum_from_images(
+                            openrouter_key, settings.QWEN_MODEL, abs_curr_paths, subject=subject
+                        )
+                        if effective_curr_text:
+                            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"curriculumText": effective_curr_text}})
+                            doc["curriculumText"] = effective_curr_text
+            except Exception as e:
+                print(f"[Upload] Curriculum image OCR skip: {e}")
+
+        if effective_curr_text:
             try:
                 from backend.services.answer_key_parser import parse_curriculum_text
-                parsed_curr = parse_curriculum_text(curriculumText)
+                parsed_curr = parse_curriculum_text(effective_curr_text)
                 if parsed_curr:
                     await db.assessments.update_one({"_id": assessment_id}, {"$set": {"parsedCurriculum": parsed_curr}})
                     doc["parsedCurriculum"] = parsed_curr
@@ -228,34 +254,60 @@ async def create_assessment(
 
 @router.post("/{id}/analyze-qpaper")
 async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
-    """Analyze uploaded question paper images using Qwen OCR — extracts questions, concepts, chapters."""
+    """Analyze uploaded question paper images using Qwen OCR — extracts questions, concepts, chapters.
+
+    Emits granular pre-eval stages so the Analysis page can progressively
+    reveal each card as its stage completes:
+      qpaper_extracting → concepts_tagging → qpaper_done
+    On failure or degraded fallback, sets a plain-English stageError so the
+    UI can show inline guidance instead of a generic red banner.
+    """
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
 
+    subject = assessment.get("subject", "")
+    await _set_stage(db, id, "qpaper_extracting")
+
+    async def _tag_concepts_and_finalize(questions: list, method: str):
+        """Shared final leg: concept tagging + persist + status transitions."""
+        await _set_stage(db, id, "concepts_tagging")
+        concepts_error_key = None
+        try:
+            from backend.services.answer_key_parser import tag_question_concepts, _get_deepseek_key
+            if not _get_deepseek_key():
+                concepts_error_key = "concepts_llm_missing"
+            tag_question_concepts(questions, subject=subject)
+        except Exception as e:
+            print(f"[Concepts] Tagging failed: {e}")
+            concepts_error_key = "concepts_llm_error"
+        computed_total = _compute_total_marks(questions)
+        extra = {"parsedQuestions": questions}
+        if computed_total > 0:
+            extra["totalMarks"] = computed_total
+        await _set_stage(db, id, "qpaper_done", error_key=concepts_error_key, **extra)
+        return {"status": "ok", "method": method, "questions": len(questions)}
+
+    # 1. Text path — teacher pasted questions text
     qtext = assessment.get("questionsText", "")
     if qtext and qtext.strip():
         try:
-            from backend.services.answer_key_parser import parse_questions_text, tag_question_concepts
+            from backend.services.answer_key_parser import parse_questions_text
             parsed = parse_questions_text(qtext)
             if parsed:
-                tag_question_concepts(parsed, subject=assessment.get("subject", ""))
-                computed_total = _compute_total_marks(parsed)
-                update_fields = {"parsedQuestions": parsed, "processingStatus": "qpaper_done"}
-                if computed_total > 0:
-                    update_fields["totalMarks"] = computed_total
-                await db.assessments.update_one({"_id": id}, {"$set": update_fields})
-                return {"status": "ok", "method": "text_parser", "questions": len(parsed)}
+                return await _tag_concepts_and_finalize(parsed, "text_parser")
         except Exception as e:
             print(f"[Qwen] Text parse failed, falling back to OCR: {e}")
 
+    # 2. Image path — question paper uploaded as images
     qimages = assessment.get("questionsImages") or []
     if not qimages:
+        await _set_stage(db, id, "qpaper_skipped", error_key="qpaper_no_questions")
         return {"status": "skipped", "message": "No question paper images uploaded"}
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
     if not openrouter_key:
-        await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_skipped"}})
+        await _set_stage(db, id, "qpaper_skipped", error_key="qpaper_openrouter_missing")
         return {"status": "skipped", "message": "OPENROUTER_API_KEY not configured"}
 
     image_paths = []
@@ -265,42 +317,34 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
             image_paths.append(abs_path)
 
     if not image_paths:
-        await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
+        await _set_stage(db, id, "qpaper_error", error_key="qpaper_images_gone")
         return {"status": "error", "message": "Question paper image files not found on disk. Please re-upload after deploy."}
 
-    subject = assessment.get("subject", "")
     print(f"[Qwen] Analyzing Q paper for {id} ({subject}): {len(image_paths)} images")
     try:
         from backend.tools.ocr.qwen_ocr import analyze_question_paper
         result = analyze_question_paper(openrouter_key, settings.QWEN_MODEL, image_paths, subject=subject)
         questions = result.get("questions", [])
-        if questions:
-            computed_total = _compute_total_marks(questions)
-            for i, q in enumerate(questions):
-                q["id"] = f"q{i+1}"
-                q["number"] = q.get("number", i+1)
-                q["assessmentId"] = id
-                q["section"] = q.get("section", "A")
-                q["maxMarks"] = q.get("maxMarks", 1)
-                q["text"] = q.get("text", "")
-                q["concept"] = q.get("concept", "")
-                q["skill"] = q.get("skill", "Recall")
-                q["difficulty"] = q.get("difficulty", "Medium")
-                q["prerequisites"] = q.get("prerequisites", [])
-            from backend.services.answer_key_parser import tag_question_concepts
-            tag_question_concepts(questions, subject=subject)
-            update_fields = {"parsedQuestions": questions, "processingStatus": "qpaper_done"}
-            if computed_total > 0:
-                update_fields["totalMarks"] = computed_total
-            await db.assessments.update_one({"_id": id}, {"$set": update_fields})
-            print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted")
-            return {"status": "ok", "questions": len(questions)}
-        else:
-            await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
+        if not questions:
+            await _set_stage(db, id, "qpaper_error", error_key="qpaper_no_questions")
             return {"status": "error", "message": "No questions extracted"}
+
+        for i, q in enumerate(questions):
+            q["id"] = f"q{i+1}"
+            q["number"] = q.get("number", i+1)
+            q["assessmentId"] = id
+            q["section"] = q.get("section", "A")
+            q["maxMarks"] = q.get("maxMarks", 1)
+            q["text"] = q.get("text", "")
+            q["concept"] = q.get("concept", "")
+            q["skill"] = q.get("skill", "Recall")
+            q["difficulty"] = q.get("difficulty", "Medium")
+            q["prerequisites"] = q.get("prerequisites", [])
+        print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted")
+        return await _tag_concepts_and_finalize(questions, "vision")
     except Exception as e:
         print(f"[Qwen] Q paper analysis failed: {e}")
-        await db.assessments.update_one({"_id": id}, {"$set": {"processingStatus": "qpaper_error"}})
+        await _set_stage(db, id, "qpaper_error", error_key="qpaper_vision_error")
         return {"status": "error", "message": str(e)[:200]}
 
 
@@ -311,6 +355,12 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     Never overwrites an answer key the teacher already supplied (uploaded/edited) —
     only fills in when none exists. When teacher-provided raw text exists but
     couldn't be parsed automatically, re-tries parsing before calling DeepSeek.
+
+    Emits granular stages so the Analysis page can progressively reveal the
+    answer-key card:
+      answerkey_generating → answerkey_done (or answerkey_done + stageError on
+      degraded fallback). Transitions to `ready` once both questions and
+      answer key are populated.
     """
     assessment = await db.assessments.find_one({"_id": id})
     if not assessment:
@@ -319,11 +369,15 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
     existing_key = assessment.get("parsedAnswerKey")
     existing_status = assessment.get("answerKeyStatus")
     if existing_key and existing_status in ("uploaded", "edited"):
+        await _finalize_ready_if_complete(db, id)
         return {"status": "ok", "answers": len(existing_key), "answerKey": existing_key, "skipped": "teacher_provided"}
 
     questions = assessment.get("parsedQuestions")
     if not questions:
+        await _set_stage(db, id, "answerkey_error", error_key="answerkey_no_questions")
         return {"status": "error", "message": "No questions extracted yet. Run Q paper analysis first."}
+
+    await _set_stage(db, id, "answerkey_generating")
 
     # Re-try parsing teacher's raw answer key text if it was provided but
     # couldn't be parsed during upload (e.g. Ollama wasn't reachable then).
@@ -333,10 +387,8 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
             from backend.services.answer_key_parser import parse_answer_key
             retry_parsed = parse_answer_key(raw_ak_text)
             if retry_parsed and len(retry_parsed) >= 1:
-                await db.assessments.update_one(
-                    {"_id": id},
-                    {"$set": {"parsedAnswerKey": retry_parsed, "answerKeyStatus": "uploaded"}}
-                )
+                await _set_stage(db, id, "answerkey_done", parsedAnswerKey=retry_parsed, answerKeyStatus="uploaded")
+                await _finalize_ready_if_complete(db, id)
                 print(f"[AK] Re-parsed teacher answer key: {len(retry_parsed)} answers")
                 return {"status": "ok", "answers": len(retry_parsed), "answerKey": retry_parsed, "source": "teacher_reparsed"}
         except Exception as e:
@@ -354,10 +406,9 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
         if raw_ak_text:
             print(f"[AK] No DeepSeek key — merging teacher text hints into skeleton")
             _merge_ak_text_hints(skeleton, raw_ak_text)
-        await db.assessments.update_one(
-            {"_id": id},
-            {"$set": {"parsedAnswerKey": skeleton, "answerKeyStatus": "generated"}}
-        )
+        await _set_stage(db, id, "answerkey_done", error_key="answerkey_llm_missing",
+                         parsedAnswerKey=skeleton, answerKeyStatus="generated")
+        await _finalize_ready_if_complete(db, id)
         return {"status": "ok", "answers": len(skeleton), "answerKey": skeleton, "source": "skeleton"}
 
     deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat") or getattr(settings, "DEEPSEEK_MODEL", "deepseek-chat")
@@ -368,33 +419,43 @@ async def generate_answer_key_endpoint(id: str, db=Depends(get_db)):
         from backend.tools.llm.deepseek import generate_answer_key
         answer_key = generate_answer_key(deepseek_key, questions, subject, model=deepseek_model, teacher_ref=teacher_ref)
         if not answer_key:
-            # Fallback: create skeleton
             skeleton = _build_skeleton_answer_key(questions)
             if raw_ak_text:
                 _merge_ak_text_hints(skeleton, raw_ak_text)
-            await db.assessments.update_one(
-                {"_id": id},
-                {"$set": {"parsedAnswerKey": skeleton, "answerKeyStatus": "generated"}}
-            )
+            await _set_stage(db, id, "answerkey_done", error_key="answerkey_llm_error",
+                             parsedAnswerKey=skeleton, answerKeyStatus="generated")
+            await _finalize_ready_if_complete(db, id)
             return {"status": "ok", "answers": len(skeleton), "answerKey": skeleton, "source": "skeleton_fallback_web_empty"}
 
-        await db.assessments.update_one(
-            {"_id": id},
-            {"$set": {"parsedAnswerKey": answer_key, "answerKeyStatus": "generated"}}
-        )
+        await _set_stage(db, id, "answerkey_done", parsedAnswerKey=answer_key, answerKeyStatus="generated")
+        await _finalize_ready_if_complete(db, id)
         print(f"[DeepSeek] Answer key generated: {len(answer_key)} answers")
         return {"status": "ok", "answers": len(answer_key), "answerKey": answer_key}
     except Exception as e:
         print(f"[DeepSeek] Answer key generation failed: {e}")
-        # Fallback: create skeleton so teacher can fill answers manually
         skeleton = _build_skeleton_answer_key(questions)
         if raw_ak_text:
             _merge_ak_text_hints(skeleton, raw_ak_text)
-        await db.assessments.update_one(
-            {"_id": id},
-            {"$set": {"parsedAnswerKey": skeleton, "answerKeyStatus": "generated"}}
-        )
+        await _set_stage(db, id, "answerkey_done", error_key="answerkey_llm_error",
+                         parsedAnswerKey=skeleton, answerKeyStatus="generated")
+        await _finalize_ready_if_complete(db, id)
         return {"status": "ok", "answers": len(skeleton), "answerKey": skeleton, "source": "skeleton_fallback", "warning": str(e)[:200]}
+
+
+async def _finalize_ready_if_complete(db, assessment_id: str):
+    """Promote to the terminal `ready` stage when both questions and answer key exist.
+
+    Preserves any stageError already set (e.g. concepts fell back to keyword
+    matcher) so the UI still shows the informational message.
+    """
+    doc = await db.assessments.find_one({"_id": assessment_id}, {
+        "parsedQuestions": 1, "parsedAnswerKey": 1, "stageError": 1, "stageErrorHint": 1,
+    })
+    if not doc:
+        return
+    if doc.get("parsedQuestions") and doc.get("parsedAnswerKey"):
+        update = {"processingStatus": "ready"}
+        await db.assessments.update_one({"_id": assessment_id}, {"$set": update})
 
 
 @router.get("/{id}/answer-key")
@@ -425,6 +486,67 @@ def _compute_total_marks(questions: list) -> int:
     if not questions:
         return 0
     return sum(q.get("maxMarks", 0) for q in questions)
+
+
+# Plain-English messages the teacher sees inline on the Analysis page — no jargon,
+# no env-var names. Kept in one place so the wording stays consistent across stages.
+STAGE_MESSAGES = {
+    "qpaper_openrouter_missing": (
+        "AI vision service isn't configured yet. Ask your admin to add the OpenRouter API key so we can read the question paper.",
+        None,
+    ),
+    "qpaper_images_gone": (
+        "Uploaded question paper files couldn't be found on the server. Please re-upload the question paper.",
+        "Re-upload question paper",
+    ),
+    "qpaper_no_questions": (
+        "AI couldn't find any questions in the uploaded pages. Check that the images are clear and try again.",
+        "Retry",
+    ),
+    "qpaper_vision_error": (
+        "AI vision service is temporarily unavailable. Try again in a moment.",
+        "Retry",
+    ),
+    "concepts_llm_missing": (
+        "Concept-tagging AI isn't configured — used keyword matching instead. Concepts may be less accurate.",
+        None,
+    ),
+    "concepts_llm_error": (
+        "Concept-tagging AI was temporarily unavailable. Concepts filled with keyword matcher; you can retry later.",
+        "Retry",
+    ),
+    "answerkey_no_questions": (
+        "No questions have been extracted yet. Run question-paper analysis first.",
+        None,
+    ),
+    "answerkey_llm_missing": (
+        "Answer-key AI isn't configured — a blank answer key was created for you to fill in.",
+        None,
+    ),
+    "answerkey_llm_error": (
+        "Answer-key generation failed — a partial answer key was created; you can retry.",
+        "Retry",
+    ),
+}
+
+
+async def _set_stage(db, assessment_id: str, status: str, error_key: str = None, **extra):
+    """Atomically write processingStatus + stageError + stageErrorHint on the assessment.
+
+    error_key looks up the plain-English message in STAGE_MESSAGES; pass None
+    to clear any prior stageError. Any extra fields piggyback into the same
+    update so callers don't need a second write.
+    """
+    update = {"processingStatus": status}
+    if error_key and error_key in STAGE_MESSAGES:
+        msg, hint = STAGE_MESSAGES[error_key]
+        update["stageError"] = msg
+        update["stageErrorHint"] = hint
+    else:
+        update["stageError"] = None
+        update["stageErrorHint"] = None
+    update.update(extra)
+    await db.assessments.update_one({"_id": assessment_id}, {"$set": update})
 
 
 def _build_skeleton_answer_key(questions: list) -> list:
@@ -475,34 +597,43 @@ async def _run_qpaper_analysis(assessment_id: str, image_paths: list, api_key: s
     from backend.core.database import get_db as _get_db
     from backend.tools.ocr.qwen_ocr import analyze_question_paper
     db = _get_db()
+    await _set_stage(db, assessment_id, "qpaper_extracting")
     try:
         result = analyze_question_paper(api_key, model, image_paths, subject=subject)
         questions = result.get("questions", [])
-        if questions:
-            computed_total = _compute_total_marks(questions)
-            for i, q in enumerate(questions):
-                q["id"] = f"q{i+1}"
-                q["number"] = q.get("number", i+1)
-                q["assessmentId"] = assessment_id
-                q["section"] = q.get("section", "A")
-                q["maxMarks"] = q.get("maxMarks", 1)
-                q["text"] = q.get("text", "")
-                q["concept"] = q.get("concept", "")
-                q["skill"] = q.get("skill", "Recall")
-                q["difficulty"] = q.get("difficulty", "Medium")
-                q["prerequisites"] = q.get("prerequisites", [])
-            from backend.services.answer_key_parser import tag_question_concepts
+        if not questions:
+            await _set_stage(db, assessment_id, "qpaper_error", error_key="qpaper_no_questions")
+            return
+        computed_total = _compute_total_marks(questions)
+        for i, q in enumerate(questions):
+            q["id"] = f"q{i+1}"
+            q["number"] = q.get("number", i+1)
+            q["assessmentId"] = assessment_id
+            q["section"] = q.get("section", "A")
+            q["maxMarks"] = q.get("maxMarks", 1)
+            q["text"] = q.get("text", "")
+            q["concept"] = q.get("concept", "")
+            q["skill"] = q.get("skill", "Recall")
+            q["difficulty"] = q.get("difficulty", "Medium")
+            q["prerequisites"] = q.get("prerequisites", [])
+        await _set_stage(db, assessment_id, "concepts_tagging")
+        concepts_error_key = None
+        try:
+            from backend.services.answer_key_parser import tag_question_concepts, _get_deepseek_key
+            if not _get_deepseek_key():
+                concepts_error_key = "concepts_llm_missing"
             tag_question_concepts(questions, subject=subject)
-            update_fields = {"parsedQuestions": questions, "processingStatus": "qpaper_done"}
-            if computed_total > 0:
-                update_fields["totalMarks"] = computed_total
-            await db.assessments.update_one({"_id": assessment_id}, {"$set": update_fields})
-            print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted for {assessment_id}")
-        else:
-            await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "qpaper_error"}})
+        except Exception as e:
+            print(f"[Concepts] Background tagging failed: {e}")
+            concepts_error_key = "concepts_llm_error"
+        extra = {"parsedQuestions": questions}
+        if computed_total > 0:
+            extra["totalMarks"] = computed_total
+        await _set_stage(db, assessment_id, "qpaper_done", error_key=concepts_error_key, **extra)
+        print(f"[Qwen] Q paper analysis done: {len(questions)} questions extracted for {assessment_id}")
     except Exception as e:
         print(f"[Qwen] Q paper analysis failed: {e}")
-        await db.assessments.update_one({"_id": assessment_id}, {"$set": {"processingStatus": "qpaper_error"}})
+        await _set_stage(db, assessment_id, "qpaper_error", error_key="qpaper_vision_error")
 
 
 @router.post("/{id}/process")
@@ -1364,15 +1495,22 @@ async def update_assessment(id: str, updates: dict, db=Depends(get_db), current_
 @router.get("/{id}/status")
 async def get_assessment_status(id: str, db=Depends(get_db)):
     assessment = await db.assessments.find_one({"_id": id}, {
-        "status": 1, "processingStatus": 1, "totalPapers": 1, 
-        "totalMarks": 1, "avgScore": 1, "pendingReview": 1,
-        "studentIds": 1,
+        "status": 1, "processingStatus": 1, "stageError": 1, "stageErrorHint": 1,
+        "totalPapers": 1, "totalMarks": 1, "avgScore": 1, "pendingReview": 1,
+        "studentIds": 1, "parsedQuestions": 1, "parsedAnswerKey": 1,
     })
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+    parsed_qs = assessment.get("parsedQuestions") or []
+    parsed_ak = assessment.get("parsedAnswerKey") or []
     return {
         "status": assessment.get("status", "draft"),
         "processingStatus": assessment.get("processingStatus", "pending"),
+        "stageError": assessment.get("stageError"),
+        "stageErrorHint": assessment.get("stageErrorHint"),
+        "hasQuestions": bool(parsed_qs),
+        "hasConcepts": any(q.get("concept") for q in parsed_qs) if parsed_qs else False,
+        "hasAnswerKey": bool(parsed_ak),
         "totalPapers": assessment.get("totalPapers", 0),
         "totalMarks": assessment.get("totalMarks", 0),
         "avgScore": assessment.get("avgScore", 0),
