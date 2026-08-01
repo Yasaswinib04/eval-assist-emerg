@@ -1,0 +1,9 @@
+{
+  "icp_note": "Reputed private K-12 schools with sizeable Class 11-12 cohorts, visible extracurricular/innovation culture, and active parent communities. Board matters less than prestige and openness to external programming.",
+  "dimensions": [
+    {"key": "brand_alignment", "label": "Brand alignment", "guidance": "Schools that market themselves on holistic education, innovation labs, arts, clubs or beyond-academics programming score HIGH; purely exam-factory positioning scores low."},
+    {"key": "senior_cohort_size", "label": "Senior cohort", "guidance": "Larger Class 11-12 strength = more students reached per workshop = higher score."},
+    {"key": "event_openness", "label": "Event openness", "guidance": "Evidence of hosting external events, fests, guest talks, MUNs, career fairs = higher."},
+    {"key": "decision_maker_access", "label": "DM access", "guidance": "Named principal/correspondent/activities-coordinator with reachable contact info = higher."}
+  ]
+}

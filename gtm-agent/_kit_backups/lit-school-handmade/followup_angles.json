@@ -1,0 +1,9 @@
+[
+  {"key": "student_story", "name": "Student transformation story", "hint": "Lead with a concrete story: a student who discovered a creative career path at a workshop and what they built."},
+  {"key": "free_workshop", "name": "Free on-campus workshop", "hint": "Offer to run ONE free creative-careers workshop for their Class 11-12 students this term, on their campus."},
+  {"key": "parent_demand", "name": "Parent-demand insight", "hint": "A data point on rising parent/student interest in design, media and entrepreneurship careers beyond engineering/medicine."},
+  {"key": "event_invite", "name": "Event or showcase invite", "hint": "Invite the principal/coordinator to a LIT student showcase or principals' roundtable on future-of-careers."},
+  {"key": "case_study", "name": "Partner-school case study", "hint": "A comparable school's experience: what the workshop looked like, student feedback, what the school gained."},
+  {"key": "term_slot", "name": "Time-sensitive term slot", "hint": "Limited workshop slots this term; align to their event calendar before exam season closes the window."},
+  {"key": "peer_proof", "name": "Peer social proof", "hint": "Which reputed schools in their city already run creative-careers programming; positioning risk of lagging peers."}
+]
