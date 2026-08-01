@@ -401,12 +401,19 @@ const Analysis = () => {
       </div>
 
       {/* No concepts warning */}
-      {conceptCount === 0 && (
+      {conceptCount === 0 && QUESTIONS.length > 0 && !hasPendingOCR && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 text-sm text-amber-700">
-          <strong>No concepts detected yet.</strong> Upload a question paper and run AI analysis to extract concepts, skills, and prerequisites.
-          {QUESTIONS.length > 0 && !hasPendingOCR && (
-            <div className="mt-2 text-xs text-amber-600">Your question paper has been analyzed but concept tagging may not have completed. Try running analysis again.</div>
-          )}
+          <strong>No concepts detected yet.</strong> Click the edit icon on any question row below to manually add concepts, or click "Regenerate" on the answer key to re-run concept tagging.
+          <div className="mt-2 flex gap-2">
+            <button onClick={handleRunFullAnalysis} disabled={running} className="text-xs font-medium text-amber-800 underline hover:text-amber-900">
+              {running ? "Running..." : "Re-run full analysis"}
+            </button>
+          </div>
+        </div>
+      )}
+      {conceptCount === 0 && QUESTIONS.length === 0 && !hasPendingOCR && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 text-sm text-amber-700">
+          <strong>No questions extracted yet.</strong> Please upload a question paper and run AI analysis.
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import posthog from "posthog-js";
 import { translations } from "@/data/translations";
 
 const AppContext = createContext(null);
@@ -61,6 +62,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(data.user));
     setToken(data.access_token);
     setUser(data.user);
+    posthog.identify(data.user.email || data.user._id, { email: data.user.email });
     return data;
   };
 
@@ -72,6 +74,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
+    posthog.identify(userWithName.email || userWithName._id, { email: userWithName.email, name: displayName });
     return data;
   };
 
@@ -83,6 +86,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evalassist-user", JSON.stringify(userWithName));
     setToken(data.access_token);
     setUser(userWithName);
+    posthog.identify(userWithName.email || userWithName._id, { email: userWithName.email, name: displayName });
     return data;
   };
 
@@ -92,6 +96,7 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem(SUBJECTS_KEY);
     setActiveSubject("");
     setActiveClass("");
+    posthog.reset();
   };
 
   return (

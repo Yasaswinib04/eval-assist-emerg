@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import posthog from "posthog-js";
 import "@/index.css";
 import App from "@/App";
 
@@ -18,6 +19,19 @@ if ("serviceWorker" in navigator) {
     window.location.reload();
   });
 }
+
+fetch("/api/config")
+  .then((res) => res.json())
+  .then((config) => {
+    if (config.posthogKey) {
+      posthog.init(config.posthogKey, {
+        api_host: config.posthogHost || "https://us.i.posthog.com",
+        autocapture: true,
+        capture_pageview: true,
+      });
+    }
+  })
+  .catch(() => {});
 
 const queryClient = new QueryClient({
   defaultOptions: {

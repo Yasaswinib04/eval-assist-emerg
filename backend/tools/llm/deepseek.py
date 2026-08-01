@@ -11,13 +11,15 @@ DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
 
 
 def generate_answer_key(api_key: str, questions: list, subject: str = "",
-                        model: str = "deepseek-chat") -> list:
+                        model: str = "deepseek-chat", teacher_ref: str = "") -> list:
     if not questions:
         return []
 
     subject_line = f" This is a {subject} exam paper for school students." if subject else ""
 
-    prompt = f"""You are an expert teacher.{subject_line} Below is a question paper extracted from a scanned exam. Generate the complete answer key.
+    ref_block = f"\n\nREFERENCE ANSWER KEY (use this as a guide — it comes from the teacher, so follow it where possible):\n{teacher_ref}" if teacher_ref else ""
+
+    prompt = f"""You are an expert teacher.{subject_line} Below is a question paper extracted from a scanned exam. Generate the complete answer key.{ref_block}
 
 QUESTION PAPER:
 {json.dumps(questions, indent=2, ensure_ascii=False)}
@@ -40,6 +42,8 @@ For short answers (2-3 marks): answer text with 2-3 key points.
 For long answers (4+ marks): complete model answer with key points and marking scheme.
 For numerical questions: show the formula and final answer with units.
 For diagram questions: describe what should be drawn and labelled.
+
+IMPORTANT: If a teacher's reference answer key is provided above, USE IT as your primary source for correct answers. Only fill gaps it doesn't cover.
 
 Return ONLY a JSON array. No other text."""
 

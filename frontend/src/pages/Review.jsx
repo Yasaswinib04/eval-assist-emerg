@@ -35,12 +35,21 @@ const imgSrc = (u) => {
   return "/" + u;
 };
 
+const imgSrcOrPlaceholder = (u) => {
+  if (!u) return null;
+  const src = imgSrc(u);
+  return src ? src : null;
+};
+
 // Scored-mode evals don't set ev.isCorrect (only formative mode does — see
 // backend/routers/assessments.py). Derive it from aiMark vs maxMarks so the
 // Correct / Wrong / Partial chips always render.
+// Also handles LLM-evaluated answers where isCorrect can be a string
+// ("correct" / "partial" / "incorrect") instead of a boolean.
 const deriveCorrectness = (ev, maxMarks) => {
-  if (ev?.isCorrect === true) return "correct";
-  if (ev?.isCorrect === false) return "wrong";
+  if (ev?.isCorrect === true || ev?.isCorrect === "correct") return "correct";
+  if (ev?.isCorrect === false || ev?.isCorrect === "incorrect") return "wrong";
+  if (ev?.isCorrect === "partial") return "partial";
   const m = Number(ev?.aiMark);
   const mm = Number(maxMarks);
   if (!Number.isFinite(m) || !Number.isFinite(mm) || mm <= 0) return null;
@@ -437,7 +446,7 @@ const ReviewDrawer = ({ open, student, qId, queue, queueIdx, marks, onMarkChange
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {student.imageUrls.map((url, i) => (
-                  <img key={i} src={imgSrc(url)} alt={`${student.name} answer sheet ${i + 1}`} className="w-full object-contain" loading="lazy" />
+                  <img key={i} src={imgSrc(url)} alt={`${student.name} answer sheet ${i + 1}`} className="w-full object-contain" loading="lazy" onError={(e) => { e.target.parentElement.innerHTML = '<div class=\'flex items-center justify-center h-32 bg-stone-100 text-stone-400 text-xs italic\'>Answer sheet image unavailable</div>'; }} />
                 ))}
               </div>
             </div>
@@ -640,7 +649,7 @@ const QueueCard = ({ item, index, total, mark, isActive, isDone, onMarkChange, o
             <span>Student answer sheet</span>
             <span className="text-stone-400 normal-case font-normal">no per-question crop yet — look for Q{q.number}</span>
           </div>
-          <img src={imgSrc(student.imageUrls[0])} alt={`${student.name} answer sheet`} className="w-full max-h-56 object-contain" loading="lazy" />
+          <img src={imgSrc(student.imageUrls[0])} alt={`${student.name} answer sheet`} className="w-full max-h-56 object-contain" loading="lazy" onError={(e) => { e.target.parentElement.textContent = 'Answer sheet image not available on server. Uploaded files may have been cleared on deploy.'; e.target.parentElement.className = 'mb-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 text-center'; }} />
         </div>
       ) : null}
       {isMcqQuestion(q, answerKeyMap) ? (

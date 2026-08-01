@@ -104,6 +104,16 @@ export const apiClient = {
         return await res.json();
     },
 
+    async getAppConfig() {
+        try {
+            const res = await fetchWithTimeout(`${API_BASE}/config`);
+            if (!res.ok) return {};
+            return await res.json();
+        } catch {
+            return {};
+        }
+    },
+
     async createAssessment(formData) {
         const token = getToken();
         const controller = new AbortController();

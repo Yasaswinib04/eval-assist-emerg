@@ -240,6 +240,95 @@ Return ONLY a JSON array. No markdown, no explanation."""
     return []
 
 
+# ════════════════════════════════════════════════════════════════════════
+# Keyword-based concept tagger — fast, deterministic, works offline.
+# Used as fallback when LLM calls fail. Covers NCERT Class 8 Biology topics.
+# ════════════════════════════════════════════════════════════════════════
+_BIOLOGY_TOPICS = [
+    (r"microorganism|bacteria|virus|fungi|protozoa|pathogen|antibiotic|vaccin|pasteuris|preservation|nitrogen fix|nitrogen cycl|carbon cycl|ferment|yeast|mold|curing|decompos|carrier|communicable|disease|tuberculosis|cholera|malaria|polio|immunity|antibod",
+     "Microorganisms: Friend and Foe", ["Types of Microorganisms"]),
+    (r"crop|agricultur|sowing|irrigation|manure|fertilis|harvest|weed|plough|tillage|seed|soil|pesticide|herbicide|organic|green manure|compost|crop rotation|yield|granary|silo|threshing|winnowing",
+     "Crop Production and Management", ["Types of Plants"]),
+    (r"conserv|deforest|afforest|biodiversity|wildlife|sanctuary|national park|biosphere|endangered|extinct|red data|flora|fauna|species|habitat|ecosystem|migrat|poach|protected area|reserve",
+     "Conservation of Plants and Animals", ["Ecosystem Basics"]),
+    (r"cell|organelle|tissue|membrane|cytoplasm|nucleus|mitochondria|chloroplast|vacuole|ribosome|endoplasmic|golgi|chromosome|gene|dna|prokaryot|eukaryot|unicellular|multicellular|protoplasm|plasma|nucleolus|plastid|lysosome|plant cell|animal cell",
+     "Cell: Structure and Functions", ["Basic Biology Concepts"]),
+    (r"reproduc|gamete|zygote|embryo|foetus|fertilis|fertiliz|sperm|ovum|ovary|testis|uterus|oviduct|menstrual|puberty|adolescen|hormone|testosterone|estrogen|metamorphosis|budding|binary fission|cloning|asexual|sexual|ivf|gestation|placenta|foetal|egg|sperm",
+     "Reproduction in Animals", ["Cell Structure Basics"]),
+    (r"force|pressure|friction|gravity|liquid pressure|atmospheric|contact force|non-contact|muscular|electrostatic|magnetic|spring balance",
+     "Force and Pressure", ["Basic Measurement"]),
+    (r"friction|sliding|rolling|static|fluid|drag|lubricant|ball bearing|brake|tread|shoe sole",
+     "Friction", ["Force Basics"]),
+    (r"light|reflect|refract|mirror|lens|concave|convex|focal|retina|cornea|iris|pupil|optic|braille|spectrum|prism|dispersion|rainbow|angle of incidence|angle of reflection|virtual image|real image|kaleidoscope|periscope",
+     "Light", ["Basic Ray Optics"]),
+    (r"combustion|flame|fuel|ignition|calorific|oxygen|burn|inflammable|explos|fire extinguisher|carbon dioxide|global warming|acid rain|smog|catalyst|candle|zone",
+     "Combustion and Flame", ["States of Matter"]),
+    (r"pollution|air|water|greenhouse|ozone|cfc|smog|acid rain|global warming|sewage|treatment|potable|purification|contaminant|effluent|eutrophication|biodegradable|non-biodegradable|recycle|waste|landfill|incineration|compost|ganga",
+     "Pollution of Air and Water", ["Environment Basics"]),
+    (r"star|planet|moon|solar system|orbit|satellite|asteroid|comet|meteor|galaxy|constellation|phase|eclipse|lunar|tidal|gravitation|rotation|revolution|axis|pole|equator|season|celestial|universe|telescope|observatory|mercury|venus|mars|jupiter|saturn|uranus|neptune",
+     "Stars and the Solar System", ["Basic Astronomy"]),
+    (r"sound|vibration|frequency|amplitude|pitch|loudness|decibel|noise|music|audible|ultrasound|infrasound|eardrum|oscillation|time period|hertz|echo|sonar",
+     "Sound", ["Wave Basics"]),
+    (r"chemical effect|electric current|electrode|electroplate|electrolyte|cathode|anode|ion|charge|led|tester|conductor|distilled water",
+     "Chemical Effects of Electric Current", ["Electric Current Basics"]),
+    (r"coal|petroleum|natural gas|fossil fuel|exhaustible|inexhaustible|carbonisation|coke|tar|bitumen|refinery|petrochemical|lpg|cng|naphthalene|paraffin",
+     "Coal and Petroleum", ["Natural Resources"]),
+]
+
+_SKILL_SIGNALS = [
+    (r"\b(define|what\s+is|state|name|list|give|mention|identify|which|choose|select|tick|fill\s+in)\b", "Recall"),
+    (r"\b(explain|describe|elaborate|discuss|write\s+about|how|why|account\s+for)\b", "Understanding"),
+    (r"\b(appl|use|solve|calculate|find|example|instance|case|illustrate|demonstrate)\b", "Application"),
+    (r"\b(analyz|compar|contrast|differentiate|distinguish|justify|evaluate|critique|reason|draw\s+conclusion)\b", "Analysis"),
+]
+
+_DIFFICULTY_SIGNALS = [
+    (r"\b(define|what\s+is|state|name|list|give|mention|identify|which|choose)\b", "Easy"),
+    (r"\b(explain|describe|elaborate|why|how|discuss|illustrate)\b", "Medium"),
+    (r"\b(analyze|compare|contrast|differentiate|justify|evaluate|critique|draw\s+conclusion|assess)\b", "Hard"),
+]
+
+
+def _keyword_tag_questions(questions: List[Dict[str, Any]], subject: str = "") -> List[Dict[str, Any]]:
+    """Tag questions with concept/skill/difficulty using keyword matching.
+
+    Fast, deterministic, works offline. Only fills fields that are empty.
+    Returns the same list, mutated in-place.
+    """
+    for q in questions:
+        text_lower = (q.get("text", "") or "").lower()
+
+        if not q.get("concept"):
+            for pattern, concept_name, prereqs in _BIOLOGY_TOPICS:
+                if re.search(pattern, text_lower):
+                    q["concept"] = concept_name
+                    q["prerequisites"] = list(prereqs) if prereqs else []
+                    break
+            if not q.get("concept"):
+                words = [w for w in text_lower.split() if len(w) > 3]
+                q["concept"] = (words[0].title() if words else f"Topic {q.get('number', '?')}")[:60]
+                q["prerequisites"] = []
+
+        if not q.get("skill") or q.get("skill") not in {"Recall", "Understanding", "Application", "Analysis"}:
+            for pattern, skill in _SKILL_SIGNALS:
+                if re.search(pattern, text_lower):
+                    q["skill"] = skill
+                    break
+            if not q.get("skill") or q.get("skill") not in {"Recall", "Understanding", "Application", "Analysis"}:
+                q["skill"] = "Recall"
+
+        if not q.get("difficulty") or q.get("difficulty") not in {"Easy", "Medium", "Hard"}:
+            for pattern, difficulty in _DIFFICULTY_SIGNALS:
+                if re.search(pattern, text_lower):
+                    q["difficulty"] = difficulty
+                    break
+            if not q.get("difficulty") or q.get("difficulty") not in {"Easy", "Medium", "Hard"}:
+                max_marks = q.get("maxMarks", 1)
+                q["difficulty"] = "Hard" if max_marks >= 4 else ("Medium" if max_marks >= 2 else "Easy")
+
+    return questions
+
+
 def tag_question_concepts(questions: List[Dict[str, Any]], subject: str = "") -> List[Dict[str, Any]]:
     """Fill in concept/skill/difficulty/prerequisites via LLM (DeepSeek/Ollama).
 
@@ -248,10 +337,11 @@ def tag_question_concepts(questions: List[Dict[str, Any]], subject: str = "") ->
     fields. Deliberately not curriculum-dependent: the model infers concepts
     directly from question text + subject, same as the image path does.
     Skips questions that already have a concept (e.g. tagged by Qwen).
+    Falls back to keyword matching when no LLM is reachable.
     """
     missing = [q for q in questions if not q.get("concept")]
     if not missing:
-        return questions
+        return _keyword_tag_questions(questions, subject)
 
     subject_context = f" This is a {subject} exam." if subject else ""
     items = "\n".join(f'{q["number"]}. {q["text"]}' for q in missing)
@@ -286,9 +376,9 @@ Return ONLY a JSON array like [{{"number": 1, "concept": "...", "skill": "...", 
                     q["difficulty"] = difficulty if difficulty in valid_difficulty else "Medium"
                     q["prerequisites"] = tag.get("prerequisites") or []
     except Exception as e:
-        print(f"  Concept tagging failed: {e}")
+        print(f"  Concept tagging LLM failed: {e} — using keyword fallback")
 
-    return questions
+    return _keyword_tag_questions(questions, subject)
 
 
 def parse_questions_text(text: str) -> List[Dict[str, Any]]:

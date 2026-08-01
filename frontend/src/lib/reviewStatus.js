@@ -26,9 +26,11 @@ export const getMarkStatus = (q, ev, currentMark) => {
   const mark = currentMark ?? ev.teacherMark ?? ev.aiMark;
   if (mark !== ev.aiMark) return "overridden";
   if (ev.needsReview) return "review";
-  if (ev.isCorrect === false || ev.isCorrect === true) {
-    return ev.isCorrect ? "correct" : "wrong";
-  }
+  const isCorrect = ev.isCorrect;
+  if (isCorrect === true || isCorrect === "correct") return "correct";
+  if (isCorrect === false || isCorrect === "incorrect") return "wrong";
+  if (isCorrect === "partial") return "partial";
+  if (mark == null) return null;
   if (mark === 0 && q.maxMarks <= 2) return "wrong";
   if (mark >= q.maxMarks) return "correct";
   return "partial";

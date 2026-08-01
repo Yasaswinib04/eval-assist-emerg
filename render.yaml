@@ -25,3 +25,7 @@ services:
         sync: false
       - key: DEEPSEEK_MODEL
         value: deepseek-chat
+      - key: POSTHOG_API_KEY
+        value: phc_zQHJiSrf6KDzuYWLxkNpNyNbbewqEPfL5RuJcRGotqob
+      - key: POSTHOG_HOST
+        value: https://us.i.posthog.com
