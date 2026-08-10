@@ -24,7 +24,7 @@ export const Sidebar = () => {
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
     { to: "/score-entry", label: "Quick Score Entry", icon: Zap, testId: "nav-score-entry" },
-    { to: "/class/class-8-biology", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
+    { to: "/class", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
   ];
 
   const onAssessment = isAssessmentPage(location.pathname);
@@ -180,7 +180,7 @@ export const MobileNav = () => {
   const globalLinks = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
     { to: "/score-entry", label: "Quick Score Entry", icon: Zap, testId: "nav-score-entry" },
-    { to: "/class/class-8-biology", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
+    { to: "/class", label: "Class Performance", icon: BarChart3, testId: "nav-class" },
   ];
 
   const assessmentLinks = [

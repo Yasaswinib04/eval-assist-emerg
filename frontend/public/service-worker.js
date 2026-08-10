@@ -1,4 +1,4 @@
-const CACHE_VERSION = "4";
+const CACHE_VERSION = "5";
 const CACHE_NAME = `evalassist-v${CACHE_VERSION}`;
 
 self.addEventListener("install", (event) => {

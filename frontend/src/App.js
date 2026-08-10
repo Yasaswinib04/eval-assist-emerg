@@ -43,6 +43,7 @@ function App() {
             <Route element={<Protected><Layout /></Protected>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/upload" element={<Upload />} />
+              <Route path="/class" element={<ClassPerformance />} />
               <Route path="/class/:className" element={<ClassPerformance />} />
               <Route path="/analysis/:id" element={<Analysis />} />
               <Route path="/processing/:id" element={<Processing />} />
