@@ -81,11 +81,11 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50" data-testid="landing-page">
-      <header className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-10 border-b border-stone-200 bg-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-stone-50" data-testid="landing-page">
+      <header className="flex items-center justify-between h-14 shrink-0 px-4 sm:px-6 lg:px-10 border-b border-stone-200 bg-white">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-lg bg-blue-800 text-white flex items-center justify-center shrink-0">
-            <BookCheck size={20} strokeWidth={2.5} />
+          <div className="h-8 w-8 rounded-lg bg-blue-800 text-white flex items-center justify-center shrink-0">
+            <BookCheck size={18} strokeWidth={2.5} />
           </div>
           <div className="font-display font-semibold text-stone-900 text-lg">EvalAssist</div>
         </Link>
@@ -94,19 +94,19 @@ const Landing = () => {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-12 md:py-20 lg:py-28">
-        <div className="text-center">
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-stone-900 leading-tight">
-            Grade 60 answer sheets<br />
-            <span className="text-blue-800">in 2 minutes</span>. You stay in<br />
-            control of every mark.
+      <main className="flex-1 min-h-0 flex items-center max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10">
+        <div className="w-full grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
+        <div className="text-center lg:text-left">
+          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-stone-900 leading-tight">
+            Grade 60 answer sheets <span className="text-blue-800">in 2 minutes</span>.
+            You stay in control of every mark.
           </h1>
 
-          <p className="mt-6 text-lg text-stone-600 max-w-2xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-stone-600">
             EvalAssist uses AI to evaluate handwritten answer sheets for AP &amp; Telangana state board exams. Teachers approve every final mark.
           </p>
 
-          <div className="mt-10 flex flex-col items-center justify-center gap-3">
+          <div className="mt-6 flex flex-col items-center lg:items-start justify-center gap-3">
             {googleReady ? (
               <button
                 onClick={handleGoogle}
@@ -131,29 +131,31 @@ const Landing = () => {
               <p className="text-red-600 text-sm">{error}</p>
             )}
           </div>
-        </div>
 
-        {/* Metrics */}
-        <div className="mt-12 flex flex-wrap justify-center gap-3">
-          {[
-            { icon: Zap, label: "Fast", sub: "2 min/paper" },
-            { icon: Shield, label: "Trustworthy", sub: "Teacher approves" },
-            { icon: TrendingUp, label: "Insights", sub: "Class analytics" },
-          ].map((f) => (
-            <div key={f.label} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-stone-200 shadow-sm">
-              <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center">
-                <f.icon size={15} />
+          {/* Metrics */}
+          <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-2">
+            {[
+              { icon: Zap, label: "Fast", sub: "2 min/paper" },
+              { icon: Shield, label: "Trustworthy", sub: "Teacher approves" },
+              { icon: TrendingUp, label: "Insights", sub: "Class analytics" },
+            ].map((f) => (
+              <div key={f.label} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-stone-200 shadow-sm">
+                <div className="h-7 w-7 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center">
+                  <f.icon size={13} />
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-stone-900">{f.label}</div>
+                  <div className="text-[10px] text-stone-500">{f.sub}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-stone-900">{f.label}</div>
-                <div className="text-[11px] text-stone-500">{f.sub}</div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <p className="mt-5 text-xs text-stone-500">A pilot product · Designed for Andhra Pradesh &amp; Telangana state boards</p>
         </div>
 
         {/* Preview card */}
-        <div className="mt-12 max-w-md mx-auto">
+        <div className="hidden lg:block max-w-md w-full mx-auto">
           <div className="bg-white border border-stone-200 rounded-2xl shadow-lg p-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-3 w-3 rounded-full bg-rose-400" />
@@ -200,11 +202,8 @@ const Landing = () => {
             </div>
           </div>
         </div>
+        </div>
       </main>
-
-      <footer className="border-t border-stone-200 py-6 text-center text-xs text-stone-500">
-        A pilot product · Designed for Andhra Pradesh &amp; Telangana state boards
-      </footer>
     </div>
   );
 };

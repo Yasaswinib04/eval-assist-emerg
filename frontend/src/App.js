@@ -15,6 +15,7 @@ import ClassPerformance from "@/pages/ClassPerformance";
 import StudentProfile from "@/pages/StudentProfile";
 import ScoreEntry from "@/pages/ScoreEntry";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
 
 const Protected = ({ children }) => {
@@ -32,6 +33,7 @@ const Public = ({ children }) => {
 function App() {
   return (
     <div className="App">
+      <ErrorBoundary>
       <AppProvider>
         <WarmUp>
           <BrowserRouter>
@@ -59,6 +61,7 @@ function App() {
         <FeedbackWidget />
         <Toaster richColors position="top-right" />
       </AppProvider>
+      </ErrorBoundary>
     </div>
   );
 }

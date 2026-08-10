@@ -50,10 +50,21 @@ function WarmUp({ children }) {
 
   if (status === "up") return children;
 
+  // Mirrors the pre-boot screen in index.html so the handoff from static
+  // HTML to React is invisible rather than a flash of a different layout.
   if (status === "checking") {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <Loader2 size={28} className="animate-spin text-blue-800" />
+      <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center gap-4">
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-blue-800 text-white">
+          <BookCheck size={28} strokeWidth={2.5} />
+        </div>
+        <div className="font-display text-xl font-semibold text-stone-900">
+          EvalAssist
+        </div>
+        <div className="flex items-center gap-2">
+          <Loader2 size={16} className="animate-spin text-blue-800" />
+          <span className="text-sm text-stone-500">Connecting…</span>
+        </div>
       </div>
     );
   }
