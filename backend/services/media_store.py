@@ -66,3 +66,23 @@ async def fetch_bytes(db, rel_path: str) -> Optional[Tuple[bytes, str]]:
     except Exception as e:
         print(f"[media_store] decode failed for {rel_path}: {e}")
         return None
+
+
+async def restore_to_disk(db, rel_path: str, abs_path: str) -> bool:
+    """Re-materialize a Mongo-stored file at `abs_path`. Returns True if the
+    file now exists on disk (already present, or restored from Mongo)."""
+    import os
+    if os.path.exists(abs_path):
+        return True
+    fetched = await fetch_bytes(db, rel_path)
+    if not fetched:
+        return False
+    data, _ = fetched
+    try:
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        with open(abs_path, "wb") as f:
+            f.write(data)
+        return True
+    except Exception as e:
+        print(f"[media_store] restore failed for {rel_path}: {e}")
+        return False

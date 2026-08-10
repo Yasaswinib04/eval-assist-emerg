@@ -79,6 +79,20 @@ def _parse_student_groups(raw: Optional[str], file_count: int) -> List[dict]:
         return []
 
 
+@router.post("/cleanup-demo-data")
+async def cleanup_demo_data(db=Depends(get_db), current_user=Depends(get_current_user)):
+    """Delete the old seeded demo rows (asm-001…asm-004 and their students/
+    evaluations/questions) that predate real usage. Safe to run repeatedly —
+    only touches documents with the known demo-seed id patterns."""
+    demo_asm_ids = ["asm-001", "asm-002", "asm-003", "asm-004", "sa1"]
+    deleted = {}
+    deleted["assessments"] = (await db.assessments.delete_many({"_id": {"$in": demo_asm_ids}})).deleted_count
+    for coll in ["students", "evaluations", "questions", "chapters", "interventions"]:
+        deleted[coll] = (await db[coll].delete_many({"assessmentId": {"$in": demo_asm_ids}})).deleted_count
+    deleted["students_legacy"] = (await db.students.delete_many({"_id": {"$regex": "^stu-0"}})).deleted_count
+    return {"deleted": deleted}
+
+
 @router.get("/")
 async def get_assessments(db=Depends(get_db)):
     assessments = await db.assessments.find().to_list(100)
@@ -310,10 +324,11 @@ async def analyze_qpaper_endpoint(id: str, db=Depends(get_db)):
         await _set_stage(db, id, "qpaper_skipped", error_key="qpaper_openrouter_missing")
         return {"status": "skipped", "message": "OPENROUTER_API_KEY not configured"}
 
+    from backend.services.media_store import restore_to_disk
     image_paths = []
     for img in qimages:
         abs_path = os.path.join(os.path.dirname(__file__), "..", "..", img)
-        if os.path.exists(abs_path):
+        if await restore_to_disk(db, img, abs_path):
             image_paths.append(abs_path)
 
     if not image_paths:
@@ -772,14 +787,17 @@ async def _run_ocr_pipeline(
                 else:
                     sheet_paths = [os.path.join(os.path.dirname(__file__), "..", "..", img) for img in assessment.get("sheetImages", [])]
 
-                if not sheet_paths:
-                    sheet_paths = [os.path.join(os.path.dirname(__file__), "..", "..", "media", "samples", "answer_sheets", f"{name}.jpeg")
-                                  for name in ["Karan","Rahul","Aryan","Janu","Tara","Dev","Priya","Sanya"]]
-                    sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
-
-                # Validate that resolved paths exist on disk
+                # Validate that resolved paths exist on disk; restore from Mongo
+                # (durable copy) when the ephemeral disk was wiped by a redeploy.
+                from backend.services.media_store import restore_to_disk
+                repo_root = os.path.join(os.path.dirname(__file__), "..", "..")
                 sheet_paths_recorded = len(sheet_paths)
-                sheet_paths = [p for p in sheet_paths if os.path.exists(p)]
+                restored = []
+                for p in sheet_paths:
+                    rel = os.path.relpath(p, repo_root) if os.path.isabs(p) or p.startswith(repo_root) else p
+                    if await restore_to_disk(db, rel.replace(os.sep, "/"), p):
+                        restored.append(p)
+                sheet_paths = restored
 
                 if not sheet_paths and sheet_paths_recorded:
                     # Paths were recorded (uploaded earlier) but are gone from disk — most likely
