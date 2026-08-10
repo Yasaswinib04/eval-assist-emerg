@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { BookCheck, Upload, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
+import { BookCheck, Upload, Sparkles, CheckCircle2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
 const Bar = ({ label, right, color, width }) => (
@@ -14,66 +14,75 @@ const Bar = ({ label, right, color, width }) => (
   </>
 );
 
+// All three slides show the SAME example test so the numbers tell one story:
+// Unit Test — Mathematics, 40 marks, 36 papers. Ravi scores 26/40 on every slide.
 const SLIDES = [
   {
     caption: "Unit Test — Mathematics",
-    label: "AI suggests a mark for every answer — you accept or change it",
+    label: "AI suggests a mark for each answer — you accept or change it",
     content: (
-      <div className="space-y-2">
-        {[
-          { q: "Q3 · Solve for x: 2x + 5 = 15", mark: "2/2", state: "ok" },
-          { q: "Q4 · Area of a triangle, b=6 h=4", mark: "1/2", state: "review" },
-          { q: "Q5 · Simplify 3(a + 2b) − 2a", mark: "3/3", state: "ok" },
-          { q: "Q6 · Word problem: train speed", mark: "2/4", state: "review" },
-        ].map((r) => (
-          <div key={r.q} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-stone-50 border border-stone-100">
-            <span className="text-[11px] text-stone-700 truncate">{r.q}</span>
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${r.state === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-              {r.mark}{r.state === "review" ? " · check" : ""}
-            </span>
-          </div>
-        ))}
+      <div>
+        <div className="flex items-center justify-between px-3 py-2 mb-2 rounded-lg bg-blue-50 border border-blue-100">
+          <span className="text-[11px] font-semibold text-stone-800">Ravi's answer sheet <span className="font-normal text-stone-500">· Roll 11</span></span>
+          <span className="text-[11px] font-bold text-blue-800">26/40 total</span>
+        </div>
+        <div className="space-y-2">
+          {[
+            { q: "Q3 · Solve for x: 2x + 5 = 15", mark: "2/2 marks", state: "ok" },
+            { q: "Q4 · Area of a triangle, b=6 h=4", mark: "1/2 · check", state: "review" },
+            { q: "Q5 · Simplify 3(a + 2b) − 2a", mark: "3/3 marks", state: "ok" },
+            { q: "Q6 · Word problem: train speed", mark: "2/4 · check", state: "review" },
+          ].map((r) => (
+            <div key={r.q} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-stone-50 border border-stone-100">
+              <span className="text-[11px] text-stone-700 truncate">{r.q}</span>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${r.state === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                {r.mark}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     ),
   },
   {
-    caption: "SA1 — Science",
-    label: "See which chapters your class struggles with",
+    caption: "Unit Test — Mathematics",
+    label: "After grading, see which chapters the class found hard",
     content: (
       <div>
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="bg-blue-50 rounded-lg p-3 text-center">
-            <div className="text-[10px] text-stone-500 uppercase font-bold">Papers</div>
-            <div className="text-xl font-display font-semibold text-stone-900">42</div>
+            <div className="text-[10px] text-stone-500 uppercase font-bold">Papers Graded</div>
+            <div className="text-xl font-display font-semibold text-stone-900">36</div>
           </div>
           <div className="bg-emerald-50 rounded-lg p-3 text-center">
-            <div className="text-[10px] text-stone-500 uppercase font-bold">Avg Score</div>
-            <div className="text-xl font-display font-semibold text-stone-900">68%</div>
+            <div className="text-[10px] text-stone-500 uppercase font-bold">Class Avg</div>
+            <div className="text-xl font-display font-semibold text-stone-900">24/40</div>
           </div>
           <div className="bg-amber-50 rounded-lg p-3 text-center">
-            <div className="text-[10px] text-stone-500 uppercase font-bold">Review</div>
-            <div className="text-xl font-display font-semibold text-stone-900">11</div>
+            <div className="text-[10px] text-stone-500 uppercase font-bold">To Review</div>
+            <div className="text-xl font-display font-semibold text-stone-900">9</div>
           </div>
         </div>
+        <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-stone-400">Chapter-wise class average</div>
         <div className="space-y-1.5">
-          <Bar label="Light — Reflection" right="2 Q · 3 marks" color="bg-blue-600" width="10%" />
-          <Bar label="Force &amp; Pressure" right="4 Q · 7 marks" color="bg-emerald-600" width="20%" />
-          <Bar label="Chemical Effects" right="3 Q · 4 marks" color="bg-amber-600" width="15%" />
-          <Bar label="Cell Structure" right="8 Q · 26 marks" color="bg-rose-600" width="55%" />
+          <Bar label="Linear Equations" right="Class avg 82%" color="bg-emerald-600" width="82%" />
+          <Bar label="Algebraic Expressions" right="Class avg 71%" color="bg-blue-600" width="71%" />
+          <Bar label="Mensuration" right="Class avg 48%" color="bg-amber-600" width="48%" />
+          <Bar label="Word Problems" right="Class avg 34%" color="bg-rose-600" width="34%" />
         </div>
       </div>
     ),
   },
   {
-    caption: "Class Performance — Social Studies",
-    label: "Track every student across assessments",
+    caption: "Unit Test — Mathematics",
+    label: "And how each student did — out of 40 marks",
     content: (
       <div className="space-y-2">
         {[
-          { name: "Ananya", roll: "08-03", score: "34/40", pct: 85, color: "bg-emerald-600" },
-          { name: "Ravi", roll: "08-11", score: "26/40", pct: 65, color: "bg-blue-600" },
-          { name: "Meena", roll: "08-07", score: "21/40", pct: 52, color: "bg-amber-600" },
-          { name: "Kiran", roll: "08-15", score: "14/40", pct: 35, color: "bg-rose-600" },
+          { name: "Ananya", roll: "Roll 3", score: "34/40", pct: 85, color: "bg-emerald-600" },
+          { name: "Ravi", roll: "Roll 11", score: "26/40", pct: 65, color: "bg-blue-600" },
+          { name: "Meena", roll: "Roll 7", score: "21/40", pct: 52, color: "bg-amber-600" },
+          { name: "Kiran", roll: "Roll 15", score: "14/40", pct: 35, color: "bg-rose-600" },
         ].map((s) => (
           <div key={s.roll} className="px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
             <div className="flex items-center justify-between text-[11px]">
@@ -83,6 +92,7 @@ const SLIDES = [
             <div className="mt-1.5 h-1.5 bg-stone-200 rounded-full overflow-hidden"><div className={`h-full ${s.color}`} style={{ width: `${s.pct}%` }} /></div>
           </div>
         ))}
+        <p className="text-[10px] text-stone-400 text-center pt-1">Example data — your own classes appear after sign-in</p>
       </div>
     ),
   },
@@ -95,12 +105,28 @@ const Landing = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [slide, setSlide] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchStartX = useRef(null);
   const clientIdRef = useRef("");
 
   useEffect(() => {
-    const timer = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), 4500);
+    if (paused) return;
+    const timer = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [paused]);
+
+  const goToSlide = (i) => {
+    setPaused(true);
+    setSlide((i + SLIDES.length) % SLIDES.length);
+  };
+
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) > 40) goToSlide(slide + (dx < 0 ? 1 : -1));
+  };
 
   useEffect(() => {
     if (user) return;
@@ -236,28 +262,44 @@ const Landing = () => {
         </div>
 
         {/* Preview carousel */}
-        <div className="max-w-md w-full mx-auto">
-          <div className="bg-white border border-stone-200 rounded-2xl shadow-lg p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-3 w-3 rounded-full bg-rose-400" />
-              <div className="h-3 w-3 rounded-full bg-amber-400" />
-              <div className="h-3 w-3 rounded-full bg-emerald-400" />
-              <div className="flex-1" />
-              <span className="text-[10px] text-stone-400 font-medium">{SLIDES[slide].caption}</span>
+        <div className="max-w-md w-full mx-auto select-none">
+          <div className="relative">
+            <div className="bg-white border border-stone-200 rounded-2xl shadow-lg p-5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-3 w-3 rounded-full bg-rose-400" />
+                <div className="h-3 w-3 rounded-full bg-amber-400" />
+                <div className="h-3 w-3 rounded-full bg-emerald-400" />
+                <div className="flex-1" />
+                <span className="text-[10px] text-stone-400 font-medium">{SLIDES[slide].caption}</span>
+              </div>
+              <div className="min-h-[250px]">{SLIDES[slide].content}</div>
             </div>
-            <div className="min-h-[230px]">{SLIDES[slide].content}</div>
+            <button
+              onClick={() => goToSlide(slide - 1)}
+              aria-label="Previous"
+              className="absolute -left-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white border border-stone-200 shadow text-stone-600 hover:text-blue-800 hover:border-blue-300 flex items-center justify-center"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => goToSlide(slide + 1)}
+              aria-label="Next"
+              className="absolute -right-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white border border-stone-200 shadow text-stone-600 hover:text-blue-800 hover:border-blue-300 flex items-center justify-center"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
           <div className="mt-3 flex items-center justify-center gap-2">
             {SLIDES.map((s, i) => (
               <button
-                key={s.caption}
-                onClick={() => setSlide(i)}
-                aria-label={s.caption}
+                key={i}
+                onClick={() => goToSlide(i)}
+                aria-label={`Slide ${i + 1}`}
                 className={`h-2 rounded-full transition-all ${i === slide ? "w-6 bg-blue-800" : "w-2 bg-stone-300 hover:bg-stone-400"}`}
               />
             ))}
           </div>
-          <p className="mt-2 text-center text-[11px] text-stone-500">{SLIDES[slide].label}</p>
+          <p className="mt-2 text-center text-[11px] text-stone-500">{SLIDES[slide].label} · <span className="text-stone-400">swipe to explore</span></p>
         </div>
         </div>
       </main>
