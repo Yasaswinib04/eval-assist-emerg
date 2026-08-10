@@ -1,4 +1,5 @@
 import { Component } from "react";
+import posthog from "posthog-js";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 const RELOAD_FLAG = "evalassist-chunk-reload";
@@ -24,12 +25,14 @@ class ErrorBoundary extends Component {
       return;
     }
     console.error("Unhandled UI error:", error, info?.componentStack);
-    if (window.posthog?.capture) {
-      window.posthog.capture("ui_crash", {
-        message: error?.message,
-        path: window.location.pathname,
-      });
-    }
+    // posthog.capture is a no-op until init() runs, so this is safe even
+    // when /api/config never returned a key.
+    posthog.capture("ui_crash", {
+      message: error?.message,
+      name: error?.name,
+      path: window.location.pathname,
+      component_stack: info?.componentStack?.slice(0, 2000),
+    });
   }
 
   render() {

@@ -4,13 +4,103 @@ import { useApp } from "@/contexts/AppContext";
 import { BookCheck, Upload, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 import { apiClient } from "@/data/apiClient";
 
+const Bar = ({ label, right, color, width }) => (
+  <>
+    <div className="flex items-center justify-between text-[11px] text-stone-500 mt-2 first:mt-0">
+      <span>{label}</span>
+      <span>{right}</span>
+    </div>
+    <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden"><div className={`h-full ${color}`} style={{ width }} /></div>
+  </>
+);
+
+const SLIDES = [
+  {
+    caption: "Unit Test — Mathematics",
+    label: "AI suggests a mark for every answer — you accept or change it",
+    content: (
+      <div className="space-y-2">
+        {[
+          { q: "Q3 · Solve for x: 2x + 5 = 15", mark: "2/2", state: "ok" },
+          { q: "Q4 · Area of a triangle, b=6 h=4", mark: "1/2", state: "review" },
+          { q: "Q5 · Simplify 3(a + 2b) − 2a", mark: "3/3", state: "ok" },
+          { q: "Q6 · Word problem: train speed", mark: "2/4", state: "review" },
+        ].map((r) => (
+          <div key={r.q} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-stone-50 border border-stone-100">
+            <span className="text-[11px] text-stone-700 truncate">{r.q}</span>
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${r.state === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+              {r.mark}{r.state === "review" ? " · check" : ""}
+            </span>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    caption: "SA1 — Science",
+    label: "See which chapters your class struggles with",
+    content: (
+      <div>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-blue-50 rounded-lg p-3 text-center">
+            <div className="text-[10px] text-stone-500 uppercase font-bold">Papers</div>
+            <div className="text-xl font-display font-semibold text-stone-900">42</div>
+          </div>
+          <div className="bg-emerald-50 rounded-lg p-3 text-center">
+            <div className="text-[10px] text-stone-500 uppercase font-bold">Avg Score</div>
+            <div className="text-xl font-display font-semibold text-stone-900">68%</div>
+          </div>
+          <div className="bg-amber-50 rounded-lg p-3 text-center">
+            <div className="text-[10px] text-stone-500 uppercase font-bold">Review</div>
+            <div className="text-xl font-display font-semibold text-stone-900">11</div>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Bar label="Light — Reflection" right="2 Q · 3 marks" color="bg-blue-600" width="10%" />
+          <Bar label="Force &amp; Pressure" right="4 Q · 7 marks" color="bg-emerald-600" width="20%" />
+          <Bar label="Chemical Effects" right="3 Q · 4 marks" color="bg-amber-600" width="15%" />
+          <Bar label="Cell Structure" right="8 Q · 26 marks" color="bg-rose-600" width="55%" />
+        </div>
+      </div>
+    ),
+  },
+  {
+    caption: "Class Performance — Social Studies",
+    label: "Track every student across assessments",
+    content: (
+      <div className="space-y-2">
+        {[
+          { name: "Ananya", roll: "08-03", score: "34/40", pct: 85, color: "bg-emerald-600" },
+          { name: "Ravi", roll: "08-11", score: "26/40", pct: 65, color: "bg-blue-600" },
+          { name: "Meena", roll: "08-07", score: "21/40", pct: 52, color: "bg-amber-600" },
+          { name: "Kiran", roll: "08-15", score: "14/40", pct: 35, color: "bg-rose-600" },
+        ].map((s) => (
+          <div key={s.roll} className="px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-medium text-stone-800">{s.name} <span className="text-stone-400">· {s.roll}</span></span>
+              <span className="font-semibold text-stone-700">{s.score}</span>
+            </div>
+            <div className="mt-1.5 h-1.5 bg-stone-200 rounded-full overflow-hidden"><div className={`h-full ${s.color}`} style={{ width: `${s.pct}%` }} /></div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+];
+
 const Landing = () => {
   const { user, googleLogin } = useApp();
   const navigate = useNavigate();
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [slide, setSlide] = useState(0);
   const clientIdRef = useRef("");
+
+  useEffect(() => {
+    const timer = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), 4500);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (user) return;
@@ -145,7 +235,7 @@ const Landing = () => {
           </div>
         </div>
 
-        {/* Preview card */}
+        {/* Preview carousel */}
         <div className="max-w-md w-full mx-auto">
           <div className="bg-white border border-stone-200 rounded-2xl shadow-lg p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -153,45 +243,21 @@ const Landing = () => {
               <div className="h-3 w-3 rounded-full bg-amber-400" />
               <div className="h-3 w-3 rounded-full bg-emerald-400" />
               <div className="flex-1" />
-              <span className="text-[10px] text-stone-400 font-medium">SA1 — Biological Science</span>
+              <span className="text-[10px] text-stone-400 font-medium">{SLIDES[slide].caption}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <div className="text-[10px] text-stone-500 uppercase font-bold">Papers</div>
-                <div className="text-xl font-display font-semibold text-stone-900">42</div>
-              </div>
-              <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                <div className="text-[10px] text-stone-500 uppercase font-bold">Avg Score</div>
-                <div className="text-xl font-display font-semibold text-stone-900">68%</div>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-3 text-center">
-                <div className="text-[10px] text-stone-500 uppercase font-bold">Review</div>
-                <div className="text-xl font-display font-semibold text-stone-900">11</div>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-stone-500">
-                <span>Cell — Structure &amp; Functions</span>
-                <span>2 Q · 3 marks</span>
-              </div>
-              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden"><div className="h-full bg-blue-600 w-[10%]" /></div>
-              <div className="flex items-center justify-between text-[11px] text-stone-500 mt-2">
-                <span>Microorganisms — Friend &amp; Foe</span>
-                <span>4 Q · 7 marks</span>
-              </div>
-              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-600 w-[20%]" /></div>
-              <div className="flex items-center justify-between text-[11px] text-stone-500 mt-2">
-                <span>Crop Production &amp; Management</span>
-                <span>3 Q · 4 marks</span>
-              </div>
-              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden"><div className="h-full bg-amber-600 w-[15%]" /></div>
-              <div className="flex items-center justify-between text-[11px] text-stone-500 mt-2">
-                <span>Reproduction in Animals</span>
-                <span>8 Q · 26 marks</span>
-              </div>
-              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden"><div className="h-full bg-rose-600 w-[55%]" /></div>
-            </div>
+            <div className="min-h-[230px]">{SLIDES[slide].content}</div>
           </div>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            {SLIDES.map((s, i) => (
+              <button
+                key={s.caption}
+                onClick={() => setSlide(i)}
+                aria-label={s.caption}
+                className={`h-2 rounded-full transition-all ${i === slide ? "w-6 bg-blue-800" : "w-2 bg-stone-300 hover:bg-stone-400"}`}
+              />
+            ))}
+          </div>
+          <p className="mt-2 text-center text-[11px] text-stone-500">{SLIDES[slide].label}</p>
         </div>
         </div>
       </main>
